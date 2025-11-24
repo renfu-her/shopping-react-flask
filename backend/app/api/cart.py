@@ -125,7 +125,7 @@ def update_cart_item(
             detail="Cart item not found"
         )
     
-    item.quantity = quantity
+    item.quantity = item_data.quantity
     db.commit()
     db.refresh(cart)
     

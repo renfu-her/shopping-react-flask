@@ -1,7 +1,7 @@
 from app.schemas.user import UserCreate, UserResponse, UserLogin
 from app.schemas.product import ProductResponse, ProductListResponse
 from app.schemas.category import CategoryResponse, CategoryTreeResponse
-from app.schemas.cart import CartItemCreate, CartItemResponse, CartResponse
+from app.schemas.cart import CartItemCreate, CartItemUpdate, CartItemResponse, CartResponse
 from app.schemas.order import OrderCreate, OrderResponse, OrderItemResponse
 from app.schemas.ad import AdResponse
 from app.schemas.news import NewsResponse, NewsListResponse
@@ -17,6 +17,7 @@ __all__ = [
     "CategoryResponse",
     "CategoryTreeResponse",
     "CartItemCreate",
+    "CartItemUpdate",
     "CartItemResponse",
     "CartResponse",
     "OrderCreate",
