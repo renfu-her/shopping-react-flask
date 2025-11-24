@@ -5,7 +5,7 @@ from app.models.user import User
 from app.models.cart import Cart
 from app.models.cart_item import CartItem
 from app.models.product import Product
-from app.schemas.cart import CartItemCreate, CartResponse, CartItemResponse
+from app.schemas.cart import CartItemCreate, CartItemUpdate, CartResponse, CartItemResponse
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/cart", tags=["cart"])
@@ -101,12 +101,12 @@ def add_to_cart(
 @router.put("/items/{item_id}", response_model=CartResponse)
 def update_cart_item(
     item_id: int,
-    quantity: int,
+    item_data: CartItemUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """更新購物車項目數量"""
-    if quantity < 1:
+    if item_data.quantity < 1:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Quantity must be at least 1"

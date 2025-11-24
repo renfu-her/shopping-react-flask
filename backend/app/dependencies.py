@@ -43,12 +43,25 @@ async def get_current_user(
 
 
 async def get_current_user_optional(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(HTTPBearer(auto_error=False)),
     db: Session = Depends(get_db)
 ) -> User | None:
     """可選的獲取當前用戶（用於可選認證的端點）"""
+    if credentials is None:
+        return None
     try:
-        return await get_current_user(credentials, db)
-    except HTTPException:
+        token = credentials.credentials
+        payload = decode_access_token(token)
+        
+        if payload is None:
+            return None
+        
+        user_id: int = payload.get("sub")
+        if user_id is None:
+            return None
+        
+        user = db.query(User).filter(User.id == user_id).first()
+        return user
+    except Exception:
         return None
 
