@@ -10,6 +10,7 @@ from .news import router as news_router
 from .about import router as about_router
 from .faq import router as faq_router
 from .orders import router as orders_router
+from .upload import router as upload_router
 
 router = APIRouter(prefix="/backend/admin", tags=["admin"])
 
@@ -25,4 +26,5 @@ router.include_router(news_router)
 router.include_router(about_router)
 router.include_router(faq_router)
 router.include_router(orders_router)
+router.include_router(upload_router)
 

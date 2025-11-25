@@ -7,6 +7,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/js/admin-common.js"></script>
+    <script src="/static/js/admin-upload.js"></script>
     <style>
         #loading {
             position: fixed;
@@ -78,10 +79,7 @@
                             <label class="block text-sm font-medium mb-2">描述</label>
                             <textarea id="description" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
                         </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-2">圖片 URL <span class="text-red-500">*</span></label>
-                            <input type="url" id="image" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                        </div>
+                        ${createImageUploadHTML('image-upload', 'image-preview', isEdit ? '' : '')}
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-2">分類 <span class="text-red-500">*</span></label>
                             <select id="category_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
@@ -131,7 +129,15 @@
                 document.getElementById('title').value = product.title;
                 document.getElementById('price').value = product.price;
                 document.getElementById('description').value = product.description || '';
-                document.getElementById('image').value = product.image;
+                // 设置图片预览
+                if (product.image) {
+                    const previewDiv = document.getElementById('image-preview');
+                    const previewImg = document.getElementById('image-preview-img');
+                    const urlInput = document.getElementById('image-upload-url');
+                    if (previewImg) previewImg.src = product.image;
+                    if (previewDiv) previewDiv.classList.remove('hidden');
+                    if (urlInput) urlInput.value = product.image;
+                }
                 document.getElementById('category_id').value = product.category_id;
                 document.getElementById('stock').value = product.stock;
                 document.getElementById('is_active').checked = product.is_active;
@@ -147,7 +153,7 @@
                 title: document.getElementById('title').value,
                 price: parseFloat(document.getElementById('price').value),
                 description: document.getElementById('description').value,
-                image: document.getElementById('image').value,
+                image: document.getElementById('image-upload-url').value,
                 category_id: parseInt(document.getElementById('category_id').value),
                 stock: parseInt(document.getElementById('stock').value),
                 is_active: document.getElementById('is_active').checked

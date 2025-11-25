@@ -7,6 +7,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/js/admin-common.js"></script>
+    <script src="/static/js/admin-upload.js"></script>
     <style>
         #loading {
             position: fixed;
@@ -76,8 +77,7 @@
                             <textarea id="content" rows="8" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
                         </div>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium mb-2">圖片 URL <span class="text-red-500">*</span></label>
-                            <input type="url" id="image" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            ${createImageUploadHTML('image-upload', 'image-preview', isEdit ? '' : '')}
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-2">日期 <span class="text-red-500">*</span></label>
@@ -107,7 +107,15 @@
                 document.getElementById('title').value = news.title;
                 document.getElementById('excerpt').value = news.excerpt || '';
                 document.getElementById('content').value = news.content;
-                document.getElementById('image').value = news.image;
+                // 设置图片预览
+                if (news.image) {
+                    const previewDiv = document.getElementById('image-preview');
+                    const previewImg = document.getElementById('image-preview-img');
+                    const urlInput = document.getElementById('image-upload-url');
+                    if (previewImg) previewImg.src = news.image;
+                    if (previewDiv) previewDiv.classList.remove('hidden');
+                    if (urlInput) urlInput.value = news.image;
+                }
                 document.getElementById('date').value = news.date;
             } catch (error) {
                 alert('載入失敗: ' + error.message);
@@ -121,7 +129,7 @@
                 title: document.getElementById('title').value,
                 excerpt: document.getElementById('excerpt').value,
                 content: document.getElementById('content').value,
-                image: document.getElementById('image').value,
+                image: document.getElementById('image-upload-url').value,
                 date: document.getElementById('date').value
             };
 

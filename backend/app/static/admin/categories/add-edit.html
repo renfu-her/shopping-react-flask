@@ -7,6 +7,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/js/admin-common.js"></script>
+    <script src="/static/js/admin-upload.js"></script>
     <style>
         #loading {
             position: fixed;
@@ -77,9 +78,9 @@
                                 ${categories.filter(c => c.parent_id === 0).map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-2">圖片 URL <span id="image-label-note" class="text-gray-500 text-xs">(僅父分類為 0 時需要)</span></label>
-                            <input type="url" id="image" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <div class="mb-4" id="image-upload-container">
+                            <label class="block text-sm font-medium mb-2">圖片 <span id="image-label-note" class="text-gray-500 text-xs">(僅父分類為 0 時需要)</span></label>
+                            ${createImageUploadHTML('image-upload', 'image-preview', isEdit ? '' : '')}
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-2">描述</label>
@@ -125,7 +126,15 @@
                 const category = await res.json();
                 document.getElementById('name').value = category.name;
                 document.getElementById('parent_id').value = category.parent_id || 0;
-                document.getElementById('image').value = category.image || '';
+                // 设置图片预览
+                if (category.image) {
+                    const previewDiv = document.getElementById('image-preview');
+                    const previewImg = document.getElementById('image-preview-img');
+                    const urlInput = document.getElementById('image-upload-url');
+                    if (previewImg) previewImg.src = category.image;
+                    if (previewDiv) previewDiv.classList.remove('hidden');
+                    if (urlInput) urlInput.value = category.image;
+                }
                 document.getElementById('description').value = category.description || '';
             } catch (error) {
                 alert('載入失敗: ' + error.message);
@@ -144,8 +153,8 @@
             
             // 只有父分類為 0 時才需要圖片
             if (parentId === 0) {
-                const image = document.getElementById('image').value;
-                if (image) data.image = image;
+                const imageUrl = document.getElementById('image-upload-url')?.value;
+                if (imageUrl) data.image = imageUrl;
             }
 
             try {
