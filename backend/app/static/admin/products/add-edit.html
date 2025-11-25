@@ -83,8 +83,7 @@
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-2">分類 <span class="text-red-500">*</span></label>
                             <select id="category_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                                <option value="">請選擇分類</option>
-                                ${categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+                                ${buildCategoryOptions()}
                             </select>
                         </div>
                         <div class="mb-4">
@@ -119,6 +118,35 @@
             } catch (error) {
                 console.error('載入分類失敗:', error);
             }
+        }
+
+        /**
+         * 构建层级分类选项（排除顶层分类，只显示子分类）
+         * @returns {string} HTML 选项字符串
+         */
+        function buildCategoryOptions() {
+            // 过滤出顶层分类（parent_id 为 null 或 0）
+            const rootCategories = categories.filter(cat => !cat.parent_id || cat.parent_id === 0);
+            // 过滤出子分类（parent_id 不为 null 且不为 0）
+            const childCategories = categories.filter(cat => cat.parent_id && cat.parent_id !== 0);
+            
+            let options = '<option value="">請選擇分類</option>';
+            
+            // 遍历顶层分类
+            rootCategories.forEach(rootCat => {
+                // 添加顶层分类（不可选择，作为分组标题）
+                options += `<option value="${rootCat.id}" disabled style="font-weight: bold; background-color: #f3f4f6;">${rootCat.name}</option>`;
+                
+                // 找到该顶层分类的所有子分类
+                const children = childCategories.filter(child => child.parent_id === rootCat.id);
+                
+                // 添加子分类（可选择，有缩进）
+                children.forEach(child => {
+                    options += `<option value="${child.id}">&nbsp;&nbsp;&nbsp;&nbsp;${child.name}</option>`;
+                });
+            });
+            
+            return options;
         }
 
         async function loadProductData(id) {
