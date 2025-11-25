@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ 管理 - 快點訂 Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/js/admin-common.js"></script>
+    <style>
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div>
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; text-align: center;">載入中...</p>
+        </div>
+    </div>
+    <script>
+        async function initFaqPage() {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            const pageTitle = document.getElementById('page-title');
+            const content = document.getElementById('page-content');
+            
+            if (!pageTitle || !content) {
+                console.error('無法找到頁面元素');
+                return;
+            }
+            
+            pageTitle.textContent = 'FAQ 管理';
+            content.innerHTML = `
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">FAQ 管理</h2>
+                        <a href="/backend/faq/add" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                            + 新增 FAQ
+                        </a>
+                    </div>
+                    <div class="flex gap-4 mb-6">
+                        <input type="text" id="search" placeholder="搜尋問題..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
+                        <select id="page-size" class="px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="10">10 筆/頁</option>
+                            <option value="20">20 筆/頁</option>
+                            <option value="50">50 筆/頁</option>
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">排序</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">ID</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">問題</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex justify-between items-center">
+                        <span id="pagination-info" class="text-sm text-gray-600"></span>
+                        <div id="pagination" class="flex gap-2"></div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('search').addEventListener('input', () => loadData(1));
+            document.getElementById('page-size').addEventListener('change', () => loadData(1));
+            loadData(1);
+        }
+
+        let currentPage = 1;
+
+        async function loadData(page = 1) {
+            const search = document.getElementById('search').value;
+            const pageSize = document.getElementById('page-size').value;
+
+            const params = new URLSearchParams({ page, page_size: pageSize });
+            if (search) params.append('search', search);
+
+            try {
+                const res = await apiRequest(`${API_BASE}/faq?${params}`);
+                if (!res) return;
+                const data = await res.json();
+                renderTable(data);
+                renderPagination(data);
+                currentPage = page;
+            } catch (error) {
+                console.error('載入失敗:', error);
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = data.faqs.map(item => `
+                <tr>
+                    <td class="px-4 py-3">${item.order_index}</td>
+                    <td class="px-4 py-3">${item.id}</td>
+                    <td class="px-4 py-3">${item.question}</td>
+                    <td class="px-4 py-3">
+                        <a href="/backend/faq/edit?id=${item.id}" class="text-blue-600 hover:text-blue-800 mr-2">編輯</a>
+                        <button onclick="deleteItem(${item.id})" class="text-red-600 hover:text-red-800">刪除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderPagination(data) {
+            document.getElementById('pagination-info').textContent = 
+                `顯示 ${(data.page - 1) * data.page_size + 1}-${Math.min(data.page * data.page_size, data.total)} / 共 ${data.total} 筆`;
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            for (let i = 1; i <= data.total_pages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = `px-4 py-2 border rounded-lg ${i === data.page ? 'bg-blue-600 text-white' : 'border-gray-300 hover:bg-gray-50'}`;
+                btn.onclick = () => loadData(i);
+                pagination.appendChild(btn);
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('確定要刪除這個 FAQ 嗎？')) return;
+            try {
+                const res = await apiRequest(`${API_BASE}/faq/${id}`, {
+                    method: 'DELETE'
+                });
+                if (!res) return;
+                if (res.ok) {
+                    loadData(currentPage);
+                }
+            } catch (error) {
+                alert('刪除失敗: ' + error.message);
+            }
+        }
+
+        window.deleteItem = deleteItem;
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                loadBaseAndInit(initFaqPage);
+            });
+        } else {
+            loadBaseAndInit(initFaqPage);
+        }
+    </script>
+</body>
+</html>
+

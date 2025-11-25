@@ -87,50 +87,134 @@ async def admin_login_page():
 
 @app.get("/backend/users")
 async def admin_users_page():
-    """使用者管理頁面"""
-    return FileResponse(static_dir / "users.html")
+    """使用者管理頁面 - 列表"""
+    return FileResponse(static_dir / "admin" / "users" / "index.html")
+
+
+@app.get("/backend/users/add")
+async def admin_users_add_page():
+    """使用者管理頁面 - 新增"""
+    return FileResponse(static_dir / "admin" / "users" / "add-edit.html")
+
+
+@app.get("/backend/users/edit")
+async def admin_users_edit_page():
+    """使用者管理頁面 - 編輯"""
+    return FileResponse(static_dir / "admin" / "users" / "add-edit.html")
 
 
 @app.get("/backend/ads")
 async def admin_ads_page():
-    """Banner 管理頁面"""
-    return FileResponse(static_dir / "ads.html")
+    """Banner 管理頁面 - 列表"""
+    return FileResponse(static_dir / "admin" / "ads" / "index.html")
+
+
+@app.get("/backend/ads/add")
+async def admin_ads_add_page():
+    """Banner 管理頁面 - 新增"""
+    return FileResponse(static_dir / "admin" / "ads" / "add-edit.html")
+
+
+@app.get("/backend/ads/edit")
+async def admin_ads_edit_page():
+    """Banner 管理頁面 - 編輯"""
+    return FileResponse(static_dir / "admin" / "ads" / "add-edit.html")
 
 
 @app.get("/backend/products")
 async def admin_products_page():
-    """產品管理頁面"""
-    return FileResponse(static_dir / "products.html")
+    """產品管理頁面 - 列表"""
+    return FileResponse(static_dir / "admin" / "products" / "index.html")
+
+
+@app.get("/backend/products/add")
+async def admin_products_add_page():
+    """產品管理頁面 - 新增"""
+    return FileResponse(static_dir / "admin" / "products" / "add-edit.html")
+
+
+@app.get("/backend/products/edit")
+async def admin_products_edit_page():
+    """產品管理頁面 - 編輯"""
+    return FileResponse(static_dir / "admin" / "products" / "add-edit.html")
 
 
 @app.get("/backend/categories")
 async def admin_categories_page():
-    """分類管理頁面"""
-    return FileResponse(static_dir / "categories.html")
+    """分類管理頁面 - 列表"""
+    return FileResponse(static_dir / "admin" / "categories" / "index.html")
+
+
+@app.get("/backend/categories/add")
+async def admin_categories_add_page():
+    """分類管理頁面 - 新增"""
+    return FileResponse(static_dir / "admin" / "categories" / "add-edit.html")
+
+
+@app.get("/backend/categories/edit")
+async def admin_categories_edit_page():
+    """分類管理頁面 - 編輯"""
+    return FileResponse(static_dir / "admin" / "categories" / "add-edit.html")
 
 
 @app.get("/backend/news")
 async def admin_news_page():
-    """新聞管理頁面"""
-    return FileResponse(static_dir / "news.html")
+    """新聞管理頁面 - 列表"""
+    return FileResponse(static_dir / "admin" / "news" / "index.html")
+
+
+@app.get("/backend/news/add")
+async def admin_news_add_page():
+    """新聞管理頁面 - 新增"""
+    return FileResponse(static_dir / "admin" / "news" / "add-edit.html")
+
+
+@app.get("/backend/news/edit")
+async def admin_news_edit_page():
+    """新聞管理頁面 - 編輯"""
+    return FileResponse(static_dir / "admin" / "news" / "add-edit.html")
 
 
 @app.get("/backend/about")
 async def admin_about_page():
-    """關於我們管理頁面"""
-    return FileResponse(static_dir / "about.html")
+    """關於我們管理頁面 - 列表"""
+    return FileResponse(static_dir / "admin" / "about" / "index.html")
+
+
+@app.get("/backend/about/add")
+async def admin_about_add_page():
+    """關於我們管理頁面 - 新增"""
+    return FileResponse(static_dir / "admin" / "about" / "add-edit.html")
+
+
+@app.get("/backend/about/edit")
+async def admin_about_edit_page():
+    """關於我們管理頁面 - 編輯"""
+    return FileResponse(static_dir / "admin" / "about" / "add-edit.html")
 
 
 @app.get("/backend/faq")
 async def admin_faq_page():
-    """FAQ 管理頁面"""
-    return FileResponse(static_dir / "faq.html")
+    """FAQ 管理頁面 - 列表"""
+    return FileResponse(static_dir / "admin" / "faq" / "index.html")
+
+
+@app.get("/backend/faq/add")
+async def admin_faq_add_page():
+    """FAQ 管理頁面 - 新增"""
+    return FileResponse(static_dir / "admin" / "faq" / "add-edit.html")
+
+
+@app.get("/backend/faq/edit")
+async def admin_faq_edit_page():
+    """FAQ 管理頁面 - 編輯"""
+    return FileResponse(static_dir / "admin" / "faq" / "add-edit.html")
 
 
 @app.get("/backend/orders")
 async def admin_orders_page():
-    """訂單管理頁面"""
-    return FileResponse(static_dir / "orders.html")
+    """訂單管理頁面 - 列表（只讀）"""
+    return FileResponse(static_dir / "admin" / "orders" / "index.html")
 
 
 @app.get("/")

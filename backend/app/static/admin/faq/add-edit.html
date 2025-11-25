@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ 管理 - 快點訂 Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/js/admin-common.js"></script>
+    <style>
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div>
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; text-align: center;">載入中...</p>
+        </div>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        const isEdit = !!id;
+
+        async function initFaqFormPage() {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            const pageTitle = document.getElementById('page-title');
+            const content = document.getElementById('page-content');
+            
+            if (!pageTitle || !content) {
+                console.error('無法找到頁面元素');
+                return;
+            }
+            
+            pageTitle.textContent = isEdit ? '編輯 FAQ' : '新增 FAQ';
+            content.innerHTML = `
+                <div class="bg-white rounded-lg shadow-sm p-6 max-w-2xl">
+                    <h2 class="text-xl font-bold mb-6">${isEdit ? '編輯 FAQ' : '新增 FAQ'}</h2>
+                    <form id="form" onsubmit="handleSubmit(event)">
+                        <input type="hidden" id="id" value="${id || ''}">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">問題 <span class="text-red-500">*</span></label>
+                            <input type="text" id="question" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">答案 <span class="text-red-500">*</span></label>
+                            <textarea id="answer" rows="6" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">排序索引</label>
+                            <input type="number" id="order_index" value="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="flex gap-2 mt-6">
+                            <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">儲存</button>
+                            <a href="/backend/faq" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 text-center">取消</a>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            if (isEdit) {
+                loadFaqData(id);
+            }
+        }
+
+        async function loadFaqData(id) {
+            try {
+                const res = await apiRequest(`${API_BASE}/faq/${id}`);
+                if (!res) return;
+                const faq = await res.json();
+                document.getElementById('question').value = faq.question;
+                document.getElementById('answer').value = faq.answer;
+                document.getElementById('order_index').value = faq.order_index;
+            } catch (error) {
+                alert('載入失敗: ' + error.message);
+            }
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const formId = document.getElementById('id').value;
+            const data = {
+                question: document.getElementById('question').value,
+                answer: document.getElementById('answer').value,
+                order_index: parseInt(document.getElementById('order_index').value)
+            };
+
+            try {
+                const url = formId ? `${API_BASE}/faq/${formId}` : `${API_BASE}/faq`;
+                const method = formId ? 'PUT' : 'POST';
+                const res = await apiRequest(url, {
+                    method,
+                    body: JSON.stringify(data)
+                });
+                if (!res) return;
+                if (res.ok) {
+                    window.location.href = '/backend/faq';
+                } else {
+                    const error = await res.json();
+                    alert('操作失敗: ' + (error.detail || '未知錯誤'));
+                }
+            } catch (error) {
+                alert('操作失敗: ' + error.message);
+            }
+        }
+
+        window.handleSubmit = handleSubmit;
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                loadBaseAndInit(initFaqFormPage);
+            });
+        } else {
+            loadBaseAndInit(initFaqFormPage);
+        }
+    </script>
+</body>
+</html>
+

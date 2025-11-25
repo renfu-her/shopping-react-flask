@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分類管理 - 快點訂 Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/js/admin-common.js"></script>
+    <style>
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div>
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; text-align: center;">載入中...</p>
+        </div>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        const isEdit = !!id;
+        let categories = [];
+
+        async function initCategoriesFormPage() {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            const pageTitle = document.getElementById('page-title');
+            const content = document.getElementById('page-content');
+            
+            if (!pageTitle || !content) {
+                console.error('無法找到頁面元素');
+                return;
+            }
+            
+            await loadCategories();
+            
+            pageTitle.textContent = isEdit ? '編輯分類' : '新增分類';
+            content.innerHTML = `
+                <div class="bg-white rounded-lg shadow-sm p-6 max-w-2xl">
+                    <h2 class="text-xl font-bold mb-6">${isEdit ? '編輯分類' : '新增分類'}</h2>
+                    <form id="form" onsubmit="handleSubmit(event)">
+                        <input type="hidden" id="id" value="${id || ''}">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">分類名稱 <span class="text-red-500">*</span></label>
+                            <input type="text" id="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">父分類</label>
+                            <select id="parent_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="0">根分類</option>
+                                ${categories.filter(c => c.parent_id === 0).map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">圖片 URL <span id="image-label-note" class="text-gray-500 text-xs">(僅父分類為 0 時需要)</span></label>
+                            <input type="url" id="image" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">描述</label>
+                            <textarea id="description" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                        </div>
+                        <div class="flex gap-2 mt-6">
+                            <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">儲存</button>
+                            <a href="/backend/categories" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 text-center">取消</a>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            document.getElementById('parent_id').addEventListener('change', (e) => {
+                const imageLabel = document.getElementById('image-label-note');
+                if (e.target.value === '0') {
+                    imageLabel.textContent = '(僅父分類為 0 時需要)';
+                } else {
+                    imageLabel.textContent = '(子分類不需要圖片)';
+                }
+            });
+
+            if (isEdit) {
+                loadCategoryData(id);
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const res = await apiRequest(`${API_BASE}/categories`);
+                if (!res) return;
+                const data = await res.json();
+                categories = data.categories || [];
+            } catch (error) {
+                console.error('載入分類失敗:', error);
+            }
+        }
+
+        async function loadCategoryData(id) {
+            try {
+                const res = await apiRequest(`${API_BASE}/categories/${id}`);
+                if (!res) return;
+                const category = await res.json();
+                document.getElementById('name').value = category.name;
+                document.getElementById('parent_id').value = category.parent_id || 0;
+                document.getElementById('image').value = category.image || '';
+                document.getElementById('description').value = category.description || '';
+            } catch (error) {
+                alert('載入失敗: ' + error.message);
+            }
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const formId = document.getElementById('id').value;
+            const parentId = parseInt(document.getElementById('parent_id').value);
+            const data = {
+                name: document.getElementById('name').value,
+                parent_id: parentId,
+                description: document.getElementById('description').value
+            };
+            
+            // 只有父分類為 0 時才需要圖片
+            if (parentId === 0) {
+                const image = document.getElementById('image').value;
+                if (image) data.image = image;
+            }
+
+            try {
+                const url = formId ? `${API_BASE}/categories/${formId}` : `${API_BASE}/categories`;
+                const method = formId ? 'PUT' : 'POST';
+                const res = await apiRequest(url, {
+                    method,
+                    body: JSON.stringify(data)
+                });
+                if (!res) return;
+                if (res.ok) {
+                    window.location.href = '/backend/categories';
+                } else {
+                    const error = await res.json();
+                    alert('操作失敗: ' + (error.detail || '未知錯誤'));
+                }
+            } catch (error) {
+                alert('操作失敗: ' + error.message);
+            }
+        }
+
+        window.handleSubmit = handleSubmit;
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                loadBaseAndInit(initCategoriesFormPage);
+            });
+        } else {
+            loadBaseAndInit(initCategoriesFormPage);
+        }
+    </script>
+</body>
+</html>
+
