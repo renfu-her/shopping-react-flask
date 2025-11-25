@@ -1,5 +1,255 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-25 22:33:50] - 提取 Admin 頁面內嵌 CSS 到 admin-common.css
+
+### 修改內容
+
+#### 將所有內嵌 CSS 提取到統一的外部文件
+- **時間**: 2025-11-25 22:33:50
+- **功能**: 將所有 admin 頁面中的內嵌 CSS 樣式提取到 `admin-common.css` 文件中，減少代碼重複，提高可維護性
+- **修改檔案**:
+  - `app/static/css/admin-common.css` - 新增文件，包含所有 admin 頁面共用的 CSS 樣式
+  - 所有 `app/static/admin/**/*.html` 文件（15 個文件）- 移除內嵌 `<style>` 標籤，改為引用外部 CSS 文件
+- **變更詳情**:
+  - 創建 `admin-common.css` 文件，包含載入動畫相關的 CSS 樣式
+  - 在所有 admin 頁面的 `<head>` 中添加 `<link rel="stylesheet" href="/static/css/admin-common.css">`
+  - 移除所有頁面中的內嵌 `<style>` 標籤及其內容
+  - 保持 CSS 樣式順序：CSS link 在 script 之前載入
+- **功能特點**:
+  - **代碼重用**: 所有 admin 頁面共用同一份 CSS 文件，減少重複代碼
+  - **易於維護**: CSS 樣式集中管理，修改一處即可影響所有頁面
+  - **性能優化**: 瀏覽器可以緩存 CSS 文件，減少重複下載
+  - **結構清晰**: HTML 文件更簡潔，樣式和結構分離
+
+### 技術細節
+
+#### 新增文件結構
+```
+backend/app/static/css/admin-common.css
+```
+
+#### CSS 內容
+```css
+/* 載入動畫樣式 */
+#loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+}
+
+#loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+```
+
+#### HTML 引用方式
+```html
+<head>
+    <!-- ... meta tags ... -->
+    <link rel="stylesheet" href="/static/css/admin-common.css">
+    <script src="/static/js/admin-common.js"></script>
+    <!-- ... 其他 script ... -->
+</head>
+```
+
+### 影響範圍
+
+- **新增文件**: `app/static/css/admin-common.css`
+- **修改文件**: 所有 15 個 admin 子頁面
+- **功能**: 所有功能保持不變，只是將 CSS 樣式外部化
+- **性能**: 瀏覽器可以緩存 CSS 文件，提升載入速度
+
+### 注意事項
+
+1. **載入順序**: CSS link 標籤應放在 script 標籤之前，確保樣式優先載入
+2. **路徑**: CSS 文件路徑為 `/static/css/admin-common.css`，確保路徑正確
+3. **向後兼容**: 所有功能保持不變，只是改變了 CSS 的載入方式
+4. **未來擴展**: 可以在 `admin-common.css` 中添加更多共用的 admin 樣式
+
+### 後續改進建議
+
+1. 考慮將更多共用的 admin 樣式添加到 `admin-common.css`
+2. 考慮使用 CSS 變量（CSS Variables）來統一管理顏色、間距等設計系統
+3. 考慮使用 CSS 預處理器（如 Sass/Less）來進一步組織樣式
+
+---
+
+## [2025-11-25 22:31:06] - 優化 Admin 頁面載入動畫顯示效果
+
+### 修改內容
+
+#### 改進載入動畫的顯示和隱藏效果
+- **時間**: 2025-11-25 22:31:06
+- **問題**: 載入動畫在頁面載入時會突然出現和消失，造成視覺上的閃爍
+- **修改檔案**:
+  - `app/static/js/admin-common.js` - 改進載入動畫隱藏邏輯
+  - 所有 `app/static/admin/**/*.html` 文件（15 個文件）- 優化載入動畫樣式
+- **變更詳情**:
+  - 將載入動畫尺寸從 40px 縮小到 32px，邊框從 4px 縮小到 3px
+  - 將動畫速度從 1s 加快到 0.8s，讓動畫更流暢
+  - 添加淡出過渡效果（`transition: opacity 0.3s ease-out`）
+  - 使用 `hidden` class 來控制淡出，而不是直接設置 `display: none`
+  - 延遲隱藏載入動畫，確保在頁面內容完全初始化後再隱藏
+  - 添加 `pointer-events: none` 在淡出時，避免點擊干擾
+- **功能特點**:
+  - **平滑過渡**: 載入動畫會平滑淡出，而不是突然消失
+  - **更小的尺寸**: 載入動畫更小更精緻，不會過於突兀
+  - **更好的時機**: 在頁面內容完全載入後才隱藏，避免閃爍
+  - **更好的體驗**: 整體載入體驗更流暢自然
+
+### 技術細節
+
+#### 載入動畫樣式改進
+```css
+#loading {
+    /* ... 其他樣式 ... */
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+}
+#loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.spinner {
+    border: 3px solid #f3f3f3;  /* 從 4px 改為 3px */
+    border-top: 3px solid #3498db;  /* 從 4px 改為 3px */
+    width: 32px;  /* 從 40px 改為 32px */
+    height: 32px;  /* 從 40px 改為 32px */
+    animation: spin 0.8s linear infinite;  /* 從 1s 改為 0.8s */
+}
+```
+
+#### 隱藏邏輯改進
+```javascript
+// 頁面內容初始化完成後再隱藏載入提示（添加淡出動畫）
+setTimeout(() => {
+    const loadingDiv = document.getElementById('loading');
+    if (loadingDiv) {
+        loadingDiv.classList.add('hidden');  // 使用 class 觸發淡出
+        setTimeout(() => {
+            loadingDiv.style.display = 'none';  // 淡出完成後移除
+        }, 300);
+    }
+}, 100);
+```
+
+### 影響範圍
+
+- **前端頁面**: 所有 15 個 admin 子頁面
+- **用戶體驗**: 載入動畫更平滑，視覺效果更好
+- **性能**: 無影響，只是改進了視覺效果
+
+### 注意事項
+
+1. **淡出時間**: 淡出動畫持續 0.3 秒，確保平滑過渡
+2. **隱藏時機**: 在頁面內容初始化完成後再隱藏，避免閃爍
+3. **向後兼容**: 所有功能保持不變，只是改進了視覺效果
+
+---
+
+## [2025-11-25 22:26:27] - 修復 Admin 頁面 jQuery 載入問題
+
+### 修改內容
+
+#### 修復 "$ is not defined" 錯誤
+- **時間**: 2025-11-25 22:26:27
+- **問題**: 移除重複資源後，`admin-common.js` 中的 `initNavigation()` 函數在 jQuery 載入前就被調用，導致 `$ is not defined` 錯誤
+- **修改檔案**:
+  - `app/static/js/admin-common.js`
+- **變更詳情**:
+  - 修改 `loadBaseAndInit` 函數，不再移除 `base.html` 中的 script 標籤
+  - 改為提取 `base.html` 中的 link 和 script 標籤，並按順序載入
+  - 先載入 CSS link 標籤
+  - 替換 body 內容
+  - 按順序載入所有 script 標籤，並等待載入完成
+  - 添加 jQuery 載入檢查，確保 jQuery 已載入後再調用 `initNavigation()`
+  - 添加最多 5 秒的等待機制，確保 jQuery 完全載入
+- **功能特點**:
+  - **正確的載入順序**: 確保資源按正確順序載入
+  - **異步載入處理**: 使用 Promise 等待腳本載入完成
+  - **錯誤處理**: 添加超時檢查，避免無限等待
+  - **向後兼容**: 保持所有功能不變
+
+### 技術細節
+
+#### 載入流程
+1. 提取 `base.html` 中的 link 和 script 標籤
+2. 先添加 CSS link 標籤到 head
+3. 替換 body 內容
+4. 按順序載入所有 script 標籤（使用 Promise 等待）
+5. 檢查 jQuery 是否已載入（最多等待 5 秒）
+6. 調用 `initNavigation()` 初始化導航菜單
+
+#### 腳本載入邏輯
+```javascript
+const loadScripts = async () => {
+    for (const script of headScripts) {
+        if (script.src) {
+            if (!document.querySelector(`script[src="${script.src}"]`)) {
+                await new Promise((resolve, reject) => {
+                    const newScript = document.createElement('script');
+                    newScript.src = script.src;
+                    newScript.onload = resolve;
+                    newScript.onerror = reject;
+                    document.head.appendChild(newScript);
+                });
+            }
+        }
+    }
+};
+```
+
+#### jQuery 載入檢查
+```javascript
+// 確保 jQuery 已載入（等待最多 5 秒）
+let jqueryReady = false;
+for (let i = 0; i < 50; i++) {
+    if (typeof window.$ !== 'undefined' || typeof window.jQuery !== 'undefined') {
+        jqueryReady = true;
+        break;
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+}
+```
+
+### 影響範圍
+
+- **前端頁面**: 所有使用 `admin-common.js` 的 admin 子頁面
+- **功能**: 修復了 jQuery 未載入導致的錯誤
+- **性能**: 無影響，只是改進了載入順序
+
+### 注意事項
+
+1. **載入順序**: 確保 jQuery 在 `initNavigation()` 之前載入
+2. **超時處理**: 如果 jQuery 載入超時，會記錄警告但繼續執行
+3. **向後兼容**: 所有功能保持不變
+
+---
+
 ## [2025-11-25 20:04:47] - 公開產品 API 更新：添加分類名稱欄位
 
 ### 修改內容
@@ -410,5 +660,83 @@ setTimeout(() => {
 
 ---
 
-**最後更新**: 2025-11-25 21:08:27
+## [2025-11-25 22:24:14] - Admin 頁面資源載入優化：統一使用 base.html 的資源
+
+### 修改內容
+
+#### 移除重複的 script 和 link 標籤
+- **時間**: 2025-11-25 22:24:14
+- **功能**: 從所有 `static/admin` 目錄下的子頁面中移除重複的 jQuery、Tailwind CSS 和 Font Awesome 引用，統一使用 `base.html` 中已載入的資源
+- **修改檔案**:
+  - `app/static/admin/about/index.html`
+  - `app/static/admin/about/add-edit.html`
+  - `app/static/admin/ads/index.html`
+  - `app/static/admin/ads/add-edit.html`
+  - `app/static/admin/categories/index.html`
+  - `app/static/admin/categories/add-edit.html`
+  - `app/static/admin/products/index.html`
+  - `app/static/admin/products/add-edit.html`
+  - `app/static/admin/users/index.html`
+  - `app/static/admin/users/add-edit.html`
+  - `app/static/admin/orders/index.html`
+  - `app/static/admin/news/index.html`
+  - `app/static/admin/news/add-edit.html`
+  - `app/static/admin/faq/index.html`
+  - `app/static/admin/faq/add-edit.html`
+- **變更詳情**:
+  - 移除所有頁面中重複的 jQuery CDN 引用（`<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>`）
+  - 移除所有頁面中重複的 Tailwind CSS CDN 引用（`<script src="https://cdn.tailwindcss.com"></script>`）
+  - 移除部分頁面中重複的 Font Awesome CSS 引用（`<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">`）
+  - 保留 `admin-common.js` 引用（必須在載入 base.html 之前載入）
+  - 保留頁面特定的 JS 文件（如 `admin-upload.js`、`admin-simplemde.js`、`admin-pagination.js`）
+- **功能特點**:
+  - **減少重複載入**: 避免重複載入相同的資源，提升頁面載入速度
+  - **統一資源管理**: 所有共用資源（jQuery、Tailwind CSS、Font Awesome、SimpleMDE）統一在 `base.html` 中管理
+  - **簡化維護**: 資源版本更新只需修改 `base.html` 一處
+  - **保持功能**: 所有頁面功能保持不變，因為 `base.html` 已包含所需資源
+
+### 技術細節
+
+#### base.html 已包含的資源
+- **jQuery**: `https://code.jquery.com/jquery-3.7.1.min.js`
+- **Tailwind CSS**: `https://cdn.tailwindcss.com`
+- **Font Awesome**: `https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css`
+- **SimpleMDE CSS**: `https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.css`
+- **SimpleMDE JS**: `https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.js`
+
+#### 載入流程
+1. 各子頁面載入 `admin-common.js`（包含 `loadBaseAndInit` 函數）
+2. `loadBaseAndInit` 函數動態載入 `base.html`
+3. `base.html` 中包含所有共用資源（jQuery、Tailwind CSS、Font Awesome、SimpleMDE）
+4. 子頁面特定的 JS 文件（如 `admin-upload.js`、`admin-simplemde.js`）在子頁面中載入
+
+#### 保留的資源引用
+- **admin-common.js**: 必須保留，因為它包含載入 base.html 的邏輯
+- **admin-upload.js**: 頁面特定的上傳功能
+- **admin-simplemde.js**: SimpleMDE 編輯器的包裝函數（依賴 base.html 中的 SimpleMDE）
+- **admin-pagination.js**: 頁面特定的分頁功能
+
+### 影響範圍
+
+- **前端頁面**: 15 個 admin 子頁面（8 個 index.html + 7 個 add-edit.html）
+- **頁面載入**: 減少重複資源載入，提升載入速度
+- **維護性**: 資源版本更新只需修改 `base.html`
+- **功能**: 所有頁面功能保持不變
+
+### 注意事項
+
+1. **載入順序**: `admin-common.js` 必須在載入 base.html 之前載入
+2. **資源依賴**: 頁面特定的 JS 文件（如 `admin-simplemde.js`）依賴 base.html 中的 SimpleMDE
+3. **向後兼容**: 所有功能保持不變，只是移除了重複的資源引用
+4. **CDN 依賴**: 所有資源仍依賴 CDN，確保網絡連接正常
+
+### 後續改進建議
+
+1. 考慮將頁面特定的 JS 文件也整合到 base.html 中（如果所有頁面都需要）
+2. 考慮使用本地資源替代 CDN，提升載入速度和穩定性
+3. 考慮使用構建工具（如 webpack）打包和優化資源
+
+---
+
+**最後更新**: 2025-11-25 22:24:14
 

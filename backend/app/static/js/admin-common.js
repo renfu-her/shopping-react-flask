@@ -63,44 +63,82 @@ async function loadBaseAndInit(initPageFunction) {
         const html = await response.text();
         console.log('base.html 加载成功');
         
-        // 移除 base.html 中的 script 标签，避免重复执行
+        // 解析 base.html
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
-        const scripts = doc.querySelectorAll('script');
-        scripts.forEach(script => script.remove());
+        
+        // 提取 head 中的 link 和 script 标签
+        const headLinks = doc.head.querySelectorAll('link');
+        const headScripts = doc.head.querySelectorAll('script');
         
         // 将 base.html 的 body 内容替换当前页面的 body 内容
         const baseBody = doc.body;
         const baseApp = baseBody.querySelector('#app');
         
         if (baseApp) {
+            // 先添加 head 中的 link 标签（CSS）
+            headLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && !document.querySelector(`link[href="${href}"]`)) {
+                    const newLink = document.createElement('link');
+                    newLink.rel = link.getAttribute('rel') || 'stylesheet';
+                    newLink.href = href;
+                    const integrity = link.getAttribute('integrity');
+                    if (integrity) newLink.integrity = integrity;
+                    const crossOrigin = link.getAttribute('crossorigin');
+                    if (crossOrigin) newLink.crossOrigin = crossOrigin;
+                    const referrerPolicy = link.getAttribute('referrerpolicy');
+                    if (referrerPolicy) newLink.referrerPolicy = referrerPolicy;
+                    document.head.appendChild(newLink);
+                }
+            });
+            
             // 替换整个 body 内容
             document.body.innerHTML = baseBody.innerHTML;
             console.log('body 内容已替换');
             
-            // 确保 jQuery 已加载
-            if (!document.querySelector('script[src*="jquery"]')) {
-                const jqueryScript = document.createElement('script');
-                jqueryScript.src = 'https://code.jquery.com/jquery-3.7.1.min.js';
-                document.head.appendChild(jqueryScript);
+            // 加载 head 中的 script 标签（按顺序）
+            const loadScripts = async () => {
+                for (const script of headScripts) {
+                    const src = script.getAttribute('src');
+                    if (src) {
+                        // 外部脚本
+                        if (!document.querySelector(`script[src="${src}"]`)) {
+                            await new Promise((resolve, reject) => {
+                                const newScript = document.createElement('script');
+                                newScript.src = src;
+                                newScript.onload = resolve;
+                                newScript.onerror = () => {
+                                    console.warn(`脚本加载失败: ${src}`);
+                                    resolve(); // 即使失败也继续
+                                };
+                                document.head.appendChild(newScript);
+                            });
+                        }
+                    } else if (script.textContent.trim()) {
+                        // 内联脚本（跳过，因为通常不需要执行）
+                        console.log('跳过内联脚本');
+                    }
+                }
+            };
+            
+            // 等待所有脚本加载完成
+            await loadScripts();
+            console.log('所有脚本已加载');
+            
+            // 确保 jQuery 已加载（等待最多 5 秒）
+            let jqueryReady = false;
+            for (let i = 0; i < 50; i++) {
+                if (typeof window.$ !== 'undefined' || typeof window.jQuery !== 'undefined') {
+                    jqueryReady = true;
+                    console.log('jQuery 已加载');
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
             
-            // 确保 Tailwind CSS 已加载
-            if (!document.querySelector('script[src*="tailwindcss"]')) {
-                const tailwindScript = document.createElement('script');
-                tailwindScript.src = 'https://cdn.tailwindcss.com';
-                document.head.appendChild(tailwindScript);
-            }
-            
-            // 确保 Font Awesome CSS 已加载
-            if (!document.querySelector('link[href*="font-awesome"]')) {
-                const faLink = document.createElement('link');
-                faLink.rel = 'stylesheet';
-                faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
-                faLink.integrity = 'sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==';
-                faLink.crossOrigin = 'anonymous';
-                faLink.referrerPolicy = 'no-referrer';
-                document.head.appendChild(faLink);
+            if (!jqueryReady) {
+                console.warn('jQuery 加载超时，但继续执行');
             }
             
             // 设置登出按钮
@@ -119,14 +157,8 @@ async function loadBaseAndInit(initPageFunction) {
                 });
             }
             
-            // 初始化导航菜单
+            // 初始化导航菜单（现在 jQuery 已经加载）
             initNavigation();
-            
-            // 隐藏加载提示
-            const loadingDiv = document.getElementById('loading');
-            if (loadingDiv) {
-                loadingDiv.style.display = 'none';
-            }
             
             // 初始化页面（延迟一下确保 DOM 已更新）
             setTimeout(() => {
@@ -138,6 +170,17 @@ async function loadBaseAndInit(initPageFunction) {
                         console.error('页面初始化函数执行失败:', error);
                     }
                 }
+                
+                // 页面内容初始化完成后再隐藏加载提示（添加淡出动画）
+                setTimeout(() => {
+                    const loadingDiv = document.getElementById('loading');
+                    if (loadingDiv) {
+                        loadingDiv.classList.add('hidden');
+                        setTimeout(() => {
+                            loadingDiv.style.display = 'none';
+                        }, 300);
+                    }
+                }, 100);
             }, 200);
         } else {
             throw new Error('base.html 中找不到 #app 元素');
