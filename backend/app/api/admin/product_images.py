@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List
 from pydantic import BaseModel
+from pathlib import Path
+import os
 import logging
 
 from app.database import get_db
@@ -10,6 +12,10 @@ from app.models.user import User
 from app.models.product import Product
 from app.models.product_image import ProductImage
 from app.dependencies import get_current_admin
+
+# 获取上传目录路径（与 upload.py 保持一致）
+BASE_DIR = Path(__file__).parent.parent.parent
+UPLOAD_DIR = BASE_DIR / "static" / "uploads"
 
 
 class ProductImageAdd(BaseModel):
@@ -162,7 +168,7 @@ def delete_product_image(
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """刪除產品圖片"""
+    """刪除產品圖片（同時刪除文件）"""
     try:
         image = db.query(ProductImage).filter(
             ProductImage.id == image_id,
@@ -172,6 +178,26 @@ def delete_product_image(
         if not image:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
         
+        # 刪除實際文件
+        image_url = image.image_url
+        if image_url:
+            # 從 URL 中提取文件名（例如：/static/uploads/filename.webp）
+            if image_url.startswith('/static/uploads/'):
+                filename = image_url.replace('/static/uploads/', '')
+                file_path = UPLOAD_DIR / filename
+                
+                # 檢查文件是否存在並刪除
+                if file_path.exists() and file_path.is_file():
+                    try:
+                        os.remove(file_path)
+                        logger.info(f"已刪除文件: {file_path}")
+                    except OSError as e:
+                        logger.warning(f"刪除文件失敗: {file_path}, 錯誤: {e}")
+                        # 文件刪除失敗不影響數據庫記錄的刪除，繼續執行
+                else:
+                    logger.warning(f"文件不存在: {file_path}")
+        
+        # 刪除數據庫記錄
         db.delete(image)
         db.commit()
         return None
