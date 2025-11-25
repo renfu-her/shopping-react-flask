@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>分類管理 - 購物車管理 Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/js/admin-common.js"></script>
@@ -75,7 +76,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">ID</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">圖片</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">圖標</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">分類名稱</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">父分類</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">操作</th>
@@ -124,21 +125,22 @@
             tbody.innerHTML = data.categories.map(cat => {
                 const parent = categories.find(c => c.id === cat.parent_id);
                 
-                // 判断是否为 Font Awesome 图标类名
+                // 渲染图标：优先作为 Font Awesome 图标类名处理
                 let imageHtml = '-';
                 if (cat.image) {
                     const imageValue = cat.image.trim();
-                    // 检查是否是 Font Awesome 图标类名（包含 fa- 或 fa-solid 等）
-                    if (imageValue.includes('fa-') || imageValue.startsWith('fa ')) {
-                        // 确保类名格式正确（可能包含多个类名，用空格分隔）
-                        const iconClasses = imageValue.split(/\s+/).filter(c => c).join(' ');
-                        imageHtml = `<i class="${iconClasses} text-2xl text-blue-600"></i>`;
-                    } else if (imageValue.startsWith('http') || imageValue.startsWith('/')) {
-                        // 如果是 URL 路径，显示图片
+                    
+                    // 如果是完整的 URL（http:// 或 https://），显示为图片
+                    if (imageValue.startsWith('http://') || imageValue.startsWith('https://')) {
+                        imageHtml = `<img src="${imageValue}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`;
+                    } else if (imageValue.startsWith('/static/') || imageValue.startsWith('/uploads/')) {
+                        // 如果是相对路径的图片，显示为图片
                         imageHtml = `<img src="${imageValue}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`;
                     } else {
-                        // 其他情况，尝试作为 Font Awesome 类名
-                        imageHtml = `<i class="${imageValue} text-2xl text-blue-600"></i>`;
+                        // 其他情况都视为 Font Awesome 图标类名（如：fa-solid fa-microchip）
+                        // 清理并规范化类名
+                        const iconClasses = imageValue.split(/\s+/).filter(c => c && c.length > 0).join(' ');
+                        imageHtml = `<i class="${iconClasses} text-2xl text-blue-600"></i>`;
                     }
                 }
                 
