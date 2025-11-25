@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>分類管理 - 購物車管理 Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/js/admin-common.js"></script>
@@ -79,8 +80,8 @@
                             </select>
                         </div>
                         <div class="mb-4" id="image-upload-container">
-                            <label class="block text-sm font-medium mb-2">圖片 <span id="image-label-note" class="text-gray-500 text-xs">(僅父分類為 0 時需要)</span></label>
-                            ${createImageUploadHTML('image-upload', 'image-preview', isEdit ? '' : '')}
+                            <label class="block text-sm font-medium mb-2">圖標 <span id="image-label-note" class="text-gray-500 text-xs">(僅父分類為 0 時需要)</span></label>
+                            ${createFontAwesomeIconSelector('icon-selector', 'icon-preview', isEdit ? '' : '')}
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-2">描述</label>
@@ -126,14 +127,24 @@
                 const category = await res.json();
                 document.getElementById('name').value = category.name;
                 document.getElementById('parent_id').value = category.parent_id || 0;
-                // 设置图片预览
+                // 设置图标预览
                 if (category.image) {
-                    const previewDiv = document.getElementById('image-preview');
-                    const previewImg = document.getElementById('image-preview-img');
-                    const urlInput = document.getElementById('image-upload-url');
-                    if (previewImg) previewImg.src = category.image;
-                    if (previewDiv) previewDiv.classList.remove('hidden');
-                    if (urlInput) urlInput.value = category.image;
+                    const previewDiv = document.getElementById('icon-preview');
+                    const iconDisplay = document.getElementById('icon-display');
+                    const iconInput = document.getElementById('icon-class-input');
+                    if (iconDisplay) {
+                        // 检查是否是 Font Awesome 图标类名
+                        if (category.image.startsWith('fa') || category.image.includes('fa-')) {
+                            iconDisplay.className = category.image + ' text-4xl text-blue-600';
+                            if (previewDiv) previewDiv.classList.remove('hidden');
+                            if (iconInput) iconInput.value = category.image;
+                        } else {
+                            // 如果是图片 URL，显示图片
+                            iconDisplay.innerHTML = '<img src="' + category.image + '" alt="图标" class="max-w-full max-h-16 mx-auto rounded-lg">';
+                            if (previewDiv) previewDiv.classList.remove('hidden');
+                            if (iconInput) iconInput.value = category.image;
+                        }
+                    }
                 }
                 document.getElementById('description').value = category.description || '';
             } catch (error) {
@@ -151,10 +162,10 @@
                 description: document.getElementById('description').value
             };
             
-            // 只有父分類為 0 時才需要圖片
+            // 只有父分類為 0 時才需要圖標
             if (parentId === 0) {
-                const imageUrl = document.getElementById('image-upload-url')?.value;
-                if (imageUrl) data.image = imageUrl;
+                const iconClass = document.getElementById('icon-class-input')?.value;
+                if (iconClass) data.image = iconClass;
             }
 
             try {
@@ -165,17 +176,167 @@
                     body: JSON.stringify(data)
                 });
                 if (!res) return;
+                
                 if (res.ok) {
                     window.location.href = '/backend/categories';
                 } else {
-                    const error = await res.json();
-                    alert('操作失敗: ' + (error.detail || '未知錯誤'));
+                    // 尝试解析错误响应
+                    let errorMessage = '未知錯誤';
+                    try {
+                        const contentType = res.headers.get("content-type");
+                        if (contentType && contentType.includes("application/json")) {
+                            const error = await res.json();
+                            errorMessage = error.detail || error.message || '未知錯誤';
+                        } else {
+                            const text = await res.text();
+                            errorMessage = `伺服器錯誤 (${res.status}): ${text.substring(0, 100)}`;
+                        }
+                    } catch (parseError) {
+                        errorMessage = `伺服器錯誤 (${res.status})`;
+                    }
+                    alert('操作失敗: ' + errorMessage);
                 }
             } catch (error) {
-                alert('操作失敗: ' + error.message);
+                console.error('提交失败:', error);
+                alert('操作失敗: ' + (error.message || '網路錯誤'));
             }
         }
 
+        /**
+         * 创建 Font Awesome 图标选择器
+         */
+        function createFontAwesomeIconSelector(selectorId, previewId, currentIcon = '') {
+            // 预设的图标示例
+            const iconExamples = [
+                { class: 'fas fa-box', name: '盒子' },
+                { class: 'fas fa-tag', name: '标签' },
+                { class: 'fas fa-shopping-bag', name: '购物袋' },
+                { class: 'fas fa-gift', name: '礼物' },
+                { class: 'fas fa-star', name: '星星' },
+                { class: 'fas fa-heart', name: '爱心' },
+                { class: 'fas fa-fire', name: '火焰' },
+                { class: 'fas fa-bolt', name: '闪电' },
+                { class: 'fas fa-crown', name: '皇冠' },
+                { class: 'fas fa-gem', name: '宝石' },
+                { class: 'fas fa-mobile-alt', name: '手机' },
+                { class: 'fas fa-laptop', name: '笔记本' },
+                { class: 'fas fa-tshirt', name: 'T恤' },
+                { class: 'fas fa-home', name: '房屋' },
+                { class: 'fas fa-utensils', name: '餐具' },
+                { class: 'fas fa-dumbbell', name: '哑铃' },
+                { class: 'fas fa-book', name: '书籍' },
+                { class: 'fas fa-gamepad', name: '游戏手柄' },
+                { class: 'fas fa-car', name: '汽车' },
+                { class: 'fas fa-bicycle', name: '自行车' }
+            ];
+            
+            return `
+                <div class="space-y-4">
+                    <!-- 图标预览 -->
+                    <div id="${previewId}" class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 ${currentIcon ? '' : 'hidden'}">
+                        <div class="flex items-center justify-center">
+                            <div id="icon-display" class="text-4xl text-blue-600">
+                                ${currentIcon ? `<i class="${currentIcon}"></i>` : ''}
+                            </div>
+                        </div>
+                        <button type="button" onclick="removeIcon('${previewId}', '${selectorId}')" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- 自定义图标输入 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">自訂圖標類別名稱</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="${selectorId}-input" placeholder="例如: fas fa-box" 
+                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                                onchange="updateIconPreview('${selectorId}', '${previewId}')">
+                            <button type="button" onclick="updateIconPreview('${selectorId}', '${previewId}')" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                預覽
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">格式: fas fa-icon-name 或 far fa-icon-name</p>
+                    </div>
+                    
+                    <!-- 预设图标示例 -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2">或選擇預設圖標</label>
+                        <div class="grid grid-cols-5 gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            ${iconExamples.map(icon => `
+                                <button type="button" 
+                                    onclick="selectIcon('${icon.class}', '${previewId}')"
+                                    class="flex flex-col items-center justify-center p-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                                    <i class="${icon.class} text-3xl text-gray-700 mb-2 group-hover:text-blue-600"></i>
+                                    <span class="text-xs text-gray-600 group-hover:text-blue-600 font-medium">${icon.name}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- 隐藏的图标类名输入框（用于提交表单） -->
+                    <input type="hidden" id="icon-class-input" value="${currentIcon}">
+                </div>
+            `;
+        }
+        
+        /**
+         * 选择图标
+         */
+        function selectIcon(iconClass, previewId) {
+            const previewDiv = document.getElementById(previewId);
+            const iconDisplay = document.getElementById('icon-display');
+            const iconInput = document.getElementById('icon-class-input');
+            
+            if (iconDisplay) {
+                iconDisplay.className = iconClass + ' text-4xl text-blue-600';
+            }
+            if (previewDiv) {
+                previewDiv.classList.remove('hidden');
+            }
+            if (iconInput) {
+                iconInput.value = iconClass;
+            }
+        }
+        
+        /**
+         * 更新图标预览
+         */
+        function updateIconPreview(selectorId, previewId) {
+            const input = document.getElementById(selectorId + '-input');
+            const iconClass = input?.value.trim();
+            
+            if (iconClass) {
+                selectIcon(iconClass, previewId);
+            }
+        }
+        
+        /**
+         * 移除图标
+         */
+        function removeIcon(previewId, selectorId) {
+            const previewDiv = document.getElementById(previewId);
+            const iconInput = document.getElementById('icon-class-input');
+            const textInput = document.getElementById(selectorId + '-input');
+            
+            if (previewDiv) {
+                previewDiv.classList.add('hidden');
+            }
+            if (iconInput) {
+                iconInput.value = '';
+            }
+            if (textInput) {
+                textInput.value = '';
+            }
+        }
+        
+        window.selectIcon = selectIcon;
+        window.updateIconPreview = updateIconPreview;
+        window.removeIcon = removeIcon;
+        window.createFontAwesomeIconSelector = createFontAwesomeIconSelector;
+        
         window.handleSubmit = handleSubmit;
         
         if (document.readyState === 'loading') {

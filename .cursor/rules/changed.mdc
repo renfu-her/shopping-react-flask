@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+backend 所有的修改或更新，就要寫一份給 CHANGED.md
+frontend 也是一樣，寫到 frontend/
