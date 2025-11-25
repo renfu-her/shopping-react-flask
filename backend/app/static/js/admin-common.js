@@ -108,13 +108,8 @@ async function loadBaseAndInit(initPageFunction) {
                 });
             }
             
-            // 高亮当前页面
-            const currentPath = window.location.pathname;
-            document.querySelectorAll('.admin-nav-item').forEach(item => {
-                if (item.getAttribute('href') === currentPath) {
-                    item.classList.add('bg-gray-700');
-                }
-            });
+            // 初始化导航菜单
+            initNavigation();
             
             // 隐藏加载提示
             const loadingDiv = document.getElementById('loading');
@@ -159,6 +154,55 @@ async function loadBaseAndInit(initPageFunction) {
             </div>
         `;
     }
+}
+
+/**
+ * 初始化导航菜单（展开/折叠和高亮）
+ */
+function initNavigation() {
+    const currentPath = window.location.pathname;
+    
+    // 设置可折叠菜单
+    $('.nav-group-header').on('click', function() {
+        const group = $(this).data('group');
+        const items = $(`#${group}-items`);
+        const groupDiv = $(this).closest('.nav-group');
+        
+        // 切换展开/折叠
+        items.toggleClass('expanded');
+        groupDiv.toggleClass('expanded');
+    });
+    
+    // 高亮当前页面
+    $('.admin-nav-item').each(function() {
+        const itemPath = $(this).data('path') || $(this).attr('href');
+        // 检查当前路径是否匹配（包括 /add 和 /edit）
+        if (currentPath === itemPath || 
+            currentPath.startsWith(itemPath + '/') ||
+            currentPath.startsWith(itemPath + '?') ||
+            (itemPath === '/backend/users' && (currentPath === '/backend/users' || currentPath.startsWith('/backend/users/'))) ||
+            (itemPath === '/backend/ads' && (currentPath === '/backend/ads' || currentPath.startsWith('/backend/ads/'))) ||
+            (itemPath === '/backend/products' && (currentPath === '/backend/products' || currentPath.startsWith('/backend/products/'))) ||
+            (itemPath === '/backend/categories' && (currentPath === '/backend/categories' || currentPath.startsWith('/backend/categories/'))) ||
+            (itemPath === '/backend/news' && (currentPath === '/backend/news' || currentPath.startsWith('/backend/news/'))) ||
+            (itemPath === '/backend/about' && (currentPath === '/backend/about' || currentPath.startsWith('/backend/about/'))) ||
+            (itemPath === '/backend/faq' && (currentPath === '/backend/faq' || currentPath.startsWith('/backend/faq/'))) ||
+            (itemPath === '/backend/orders' && (currentPath === '/backend/orders' || currentPath.startsWith('/backend/orders/')))
+        ) {
+            $(this).addClass('active bg-gray-700');
+            
+            // 自动展开包含当前页面的菜单组
+            const groupItems = $(this).closest('.nav-group-items');
+            if (groupItems.length) {
+                groupItems.addClass('expanded');
+                groupItems.closest('.nav-group').addClass('expanded');
+            }
+        }
+    });
+    
+    // 默认展开所有菜单组
+    $('.nav-group-items').addClass('expanded');
+    $('.nav-group').addClass('expanded');
 }
 
 /**
