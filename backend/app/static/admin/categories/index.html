@@ -123,14 +123,29 @@
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = data.categories.map(cat => {
                 const parent = categories.find(c => c.id === cat.parent_id);
+                
+                // 判断是否为 Font Awesome 图标类名
+                let imageHtml = '-';
+                if (cat.image) {
+                    const imageValue = cat.image.trim();
+                    // 检查是否是 Font Awesome 图标类名（包含 fa- 或 fa-solid 等）
+                    if (imageValue.includes('fa-') || imageValue.startsWith('fa ')) {
+                        // 确保类名格式正确（可能包含多个类名，用空格分隔）
+                        const iconClasses = imageValue.split(/\s+/).filter(c => c).join(' ');
+                        imageHtml = `<i class="${iconClasses} text-2xl text-blue-600"></i>`;
+                    } else if (imageValue.startsWith('http') || imageValue.startsWith('/')) {
+                        // 如果是 URL 路径，显示图片
+                        imageHtml = `<img src="${imageValue}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`;
+                    } else {
+                        // 其他情况，尝试作为 Font Awesome 类名
+                        imageHtml = `<i class="${imageValue} text-2xl text-blue-600"></i>`;
+                    }
+                }
+                
                 return `
                 <tr>
                     <td class="px-4 py-3">${cat.id}</td>
-                    <td class="px-4 py-3">
-                        ${cat.image ? (cat.image.startsWith('fa') || cat.image.includes('fa-') ? 
-                            `<i class="${cat.image} text-2xl text-blue-600"></i>` : 
-                            `<img src="${cat.image}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`) : '-'}
-                    </td>
+                    <td class="px-4 py-3">${imageHtml}</td>
                     <td class="px-4 py-3">${cat.name}</td>
                     <td class="px-4 py-3">${parent ? parent.name : '根分類'}</td>
                     <td class="px-4 py-3">

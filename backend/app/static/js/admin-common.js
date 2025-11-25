@@ -92,6 +92,17 @@ async function loadBaseAndInit(initPageFunction) {
                 document.head.appendChild(tailwindScript);
             }
             
+            // 确保 Font Awesome CSS 已加载
+            if (!document.querySelector('link[href*="font-awesome"]')) {
+                const faLink = document.createElement('link');
+                faLink.rel = 'stylesheet';
+                faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+                faLink.integrity = 'sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==';
+                faLink.crossOrigin = 'anonymous';
+                faLink.referrerPolicy = 'no-referrer';
+                document.head.appendChild(faLink);
+            }
+            
             // 设置登出按钮
             const logoutBtn = document.getElementById('logout-btn');
             if (logoutBtn) {
