@@ -59,7 +59,7 @@
             
             pageTitle.textContent = isEdit ? '編輯 FAQ' : '新增 FAQ';
             content.innerHTML = `
-                <div class="bg-white rounded-lg shadow-sm p-6 max-w-2xl">
+                <div class="bg-white rounded-lg shadow-sm p-6 w-full h-full">
                     <h2 class="text-xl font-bold mb-6">${isEdit ? '編輯 FAQ' : '新增 FAQ'}</h2>
                     <form id="form" onsubmit="handleSubmit(event)">
                         <input type="hidden" id="id" value="${id || ''}">
