@@ -8,6 +8,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/js/admin-common.js"></script>
+    <script src="/static/js/admin-simplemde.js"></script>
     <script src="/static/js/admin-upload.js"></script>
     <style>
         #loading {
@@ -47,6 +48,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
         const isEdit = !!id;
+        let descriptionEditor = null; // SimpleMDE 编辑器实例
         let categories = [];
 
         async function initCategoriesFormPage() {
@@ -104,6 +106,14 @@
                 }
             });
 
+            // 初始化 SimpleMDE 编辑器
+            setTimeout(() => {
+                descriptionEditor = initSimpleMDE('description', {
+                    placeholder: '輸入分類描述（支援 Markdown 格式）...',
+                    toolbar: ['bold', 'italic', '|', 'heading', '|', 'quote', 'code', '|', 'link', '|', 'preview']
+                });
+            }, 100);
+            
             if (isEdit) {
                 loadCategoryData(id);
             }
@@ -146,7 +156,12 @@
                         }
                     }
                 }
-                document.getElementById('description').value = category.description || '';
+                // 设置 SimpleMDE 编辑器内容
+                if (descriptionEditor) {
+                    setSimpleMDEValue(descriptionEditor, category.description || '');
+                } else {
+                    document.getElementById('description').value = category.description || '';
+                }
             } catch (error) {
                 alert('載入失敗: ' + error.message);
             }
@@ -159,7 +174,7 @@
             const data = {
                 name: document.getElementById('name').value,
                 parent_id: parentId,
-                description: document.getElementById('description').value
+                description: descriptionEditor ? getSimpleMDEValue(descriptionEditor) : document.getElementById('description').value
             };
             
             // 只有父分類為 0 時才需要圖標

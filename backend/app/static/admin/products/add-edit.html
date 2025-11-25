@@ -9,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/js/admin-common.js"></script>
     <script src="/static/js/admin-upload.js"></script>
+    <script src="/static/js/admin-simplemde.js"></script>
     <style>
         #loading {
             position: fixed;
@@ -49,6 +50,7 @@
         const isEdit = !!id;
         let categories = [];
         let productImages = []; // 存储产品图片列表
+        let descriptionEditor = null; // SimpleMDE 编辑器实例
 
         async function initProductsFormPage() {
             await new Promise(resolve => setTimeout(resolve, 50));
@@ -118,6 +120,14 @@
 
             // 初始化图片管理功能
             initImageManagement();
+            
+            // 初始化 SimpleMDE 编辑器
+            setTimeout(() => {
+                descriptionEditor = initSimpleMDE('description', {
+                    placeholder: '輸入產品描述（支援 Markdown 格式）...',
+                    toolbar: ['bold', 'italic', '|', 'heading', '|', 'quote', 'code', '|', 'link', 'image', '|', 'preview']
+                });
+            }, 100);
             
             if (isEdit) {
                 loadProductData(id);
@@ -445,7 +455,12 @@
                 const product = await res.json();
                 document.getElementById('title').value = product.title;
                 document.getElementById('price').value = product.price;
-                document.getElementById('description').value = product.description || '';
+                // 设置 SimpleMDE 编辑器内容
+                if (descriptionEditor) {
+                    setSimpleMDEValue(descriptionEditor, product.description || '');
+                } else {
+                    document.getElementById('description').value = product.description || '';
+                }
                 document.getElementById('category_id').value = product.category_id;
                 document.getElementById('stock').value = product.stock;
                 document.getElementById('is_active').checked = product.is_active;
@@ -490,7 +505,7 @@
             const data = {
                 title: document.getElementById('title').value,
                 price: parseFloat(document.getElementById('price').value),
-                description: document.getElementById('description').value,
+                description: descriptionEditor ? getSimpleMDEValue(descriptionEditor) : document.getElementById('description').value,
                 image: firstImage, // 使用第一张图片作为主图
                 category_id: parseInt(document.getElementById('category_id').value),
                 stock: parseInt(document.getElementById('stock').value),

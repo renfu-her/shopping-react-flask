@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/js/admin-common.js"></script>
     <script src="/static/js/admin-upload.js"></script>
+    <script src="/static/js/admin-simplemde.js"></script>
     <style>
         #loading {
             position: fixed;
@@ -46,6 +47,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
         const isEdit = !!id;
+        let contentEditor = null; // SimpleMDE 编辑器实例
 
         async function initAboutFormPage() {
             await new Promise(resolve => setTimeout(resolve, 50));
@@ -83,6 +85,13 @@
                 </div>
             `;
 
+            // 初始化 SimpleMDE 编辑器
+            setTimeout(() => {
+                contentEditor = initSimpleMDE('content', {
+                    placeholder: '輸入關於我們內容（支援 Markdown 格式）...'
+                });
+            }, 100);
+            
             if (isEdit) {
                 loadAboutData(id);
             }
@@ -94,7 +103,12 @@
                 if (!res) return;
                 const about = await res.json();
                 document.getElementById('title').value = about.title;
-                document.getElementById('content').value = about.content;
+                // 设置 SimpleMDE 编辑器内容
+                if (contentEditor) {
+                    setSimpleMDEValue(contentEditor, about.content || '');
+                } else {
+                    document.getElementById('content').value = about.content || '';
+                }
                 // 设置图片预览
                 if (about.image) {
                     const previewDiv = document.getElementById('image-preview');
@@ -114,7 +128,7 @@
             const formId = document.getElementById('id').value;
             const data = {
                 title: document.getElementById('title').value,
-                content: document.getElementById('content').value,
+                content: contentEditor ? getSimpleMDEValue(contentEditor) : document.getElementById('content').value,
                 image: document.getElementById('image-upload-url').value || null
             };
 

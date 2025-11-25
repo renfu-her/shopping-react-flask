@@ -57,3 +57,95 @@ if image_url.startswith('/static/uploads/'):
 
 **最後更新**: 2025-11-25 16:55:44
 
+---
+
+## [2025-11-25 17:09:34] - 整合 SimpleMDE Markdown 編輯器
+
+### 修改內容
+
+#### Admin 內容管理整合 SimpleMDE 編輯器
+- **時間**: 2025-11-25 17:09:34
+- **功能**: 在所有需要內容編輯的 admin 頁面中整合 SimpleMDE Markdown 編輯器
+- **參考**: [SimpleMDE Markdown Editor](https://github.com/sparksuite/simplemde-markdown-editor)
+- **修改檔案**:
+  - `app/static/base.html` - 添加 SimpleMDE CSS 和 JS CDN 連結
+  - `app/static/js/admin-simplemde.js` - 新增 SimpleMDE 工具函數
+  - `app/static/admin/products/add-edit.html` - 產品描述使用 Markdown 編輯器
+  - `app/static/admin/news/add-edit.html` - 新聞內容使用 Markdown 編輯器
+  - `app/static/admin/about/add-edit.html` - 關於我們內容使用 Markdown 編輯器
+  - `app/static/admin/faq/add-edit.html` - FAQ 答案使用 Markdown 編輯器
+  - `app/static/admin/categories/add-edit.html` - 分類描述使用 Markdown 編輯器
+- **變更詳情**:
+  - 在 `base.html` 中添加 SimpleMDE 1.11.2 的 CDN 連結（CSS 和 JS）
+  - 創建 `admin-simplemde.js` 工具文件，提供統一的編輯器初始化函數
+  - 所有內容編輯欄位從普通 `textarea` 升級為 SimpleMDE 編輯器
+  - 支援 Markdown 語法高亮、預覽、快捷鍵等功能
+- **功能特點**:
+  - **語法高亮**: 編輯時即時顯示 Markdown 語法樣式
+  - **工具欄**: 提供常用 Markdown 格式按鈕（粗體、斜體、標題、連結、圖片等）
+  - **預覽功能**: 支援即時預覽和並排預覽模式
+  - **快捷鍵**: 支援常用快捷鍵（Cmd-B 粗體、Cmd-I 斜體等）
+  - **自動保存**: 可選的自動保存功能
+  - **拼寫檢查**: 可選的拼寫檢查（預設關閉）
+  - **全螢幕編輯**: 支援全螢幕編輯模式
+
+### 技術細節
+
+#### SimpleMDE 配置
+- **版本**: 1.11.2
+- **CDN**: jsDelivr
+- **依賴**: CodeMirror（已包含）、Font Awesome（已存在）
+
+#### 工具函數 (`admin-simplemde.js`)
+- `initSimpleMDE(textareaId, options)` - 初始化編輯器
+- `getSimpleMDEValue(simplemde)` - 獲取編輯器內容
+- `setSimpleMDEValue(simplemde, value)` - 設置編輯器內容
+
+#### 各頁面配置
+- **產品管理**: 描述欄位，簡化工具欄（粗體、斜體、標題、引用、代碼、連結、圖片、預覽）
+- **新聞管理**: 內容欄位，完整工具欄
+- **關於我們**: 內容欄位，完整工具欄
+- **FAQ 管理**: 答案欄位，完整工具欄
+- **分類管理**: 描述欄位，簡化工具欄
+
+#### 編輯器初始化
+```javascript
+// 延遲初始化，確保 DOM 已載入
+setTimeout(() => {
+    descriptionEditor = initSimpleMDE('description', {
+        placeholder: '輸入內容（支援 Markdown 格式）...',
+        toolbar: ['bold', 'italic', '|', 'heading', '|', 'quote', 'code', '|', 'link', '|', 'preview']
+    });
+}, 100);
+```
+
+#### 數據處理
+- **載入數據**: 使用 `setSimpleMDEValue()` 設置編輯器內容
+- **提交數據**: 使用 `getSimpleMDEValue()` 獲取編輯器內容
+- **向後兼容**: 如果編輯器未初始化，回退到普通 textarea
+
+### 影響範圍
+
+- **前端頁面**: 5 個 admin 編輯頁面
+- **用戶體驗**: 大幅提升內容編輯體驗
+- **數據格式**: 支援 Markdown 格式的內容存儲
+- **向後兼容**: 現有數據不受影響，可正常顯示和編輯
+
+### 注意事項
+
+1. **Markdown 格式**: 所有內容欄位現在支援 Markdown 格式
+2. **前端渲染**: 前端顯示時需要 Markdown 解析器（如 marked.js）
+3. **編輯器載入**: 使用 `setTimeout` 確保 DOM 完全載入後再初始化
+4. **CDN 依賴**: 依賴 jsDelivr CDN，確保網絡連接正常
+
+### 後續改進建議
+
+1. 在前端添加 Markdown 解析器，正確顯示 Markdown 內容
+2. 添加圖片上傳功能到編輯器工具欄
+3. 自定義工具欄按鈕，添加更多實用功能
+4. 實現自動保存功能
+
+---
+
+**最後更新**: 2025-11-25 17:09:34
+
