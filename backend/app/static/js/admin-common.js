@@ -78,6 +78,13 @@ async function loadBaseAndInit(initPageFunction) {
             document.body.innerHTML = baseBody.innerHTML;
             console.log('body 内容已替换');
             
+            // 确保 jQuery 已加载
+            if (!document.querySelector('script[src*="jquery"]')) {
+                const jqueryScript = document.createElement('script');
+                jqueryScript.src = 'https://code.jquery.com/jquery-3.7.1.min.js';
+                document.head.appendChild(jqueryScript);
+            }
+            
             // 确保 Tailwind CSS 已加载
             if (!document.querySelector('script[src*="tailwindcss"]')) {
                 const tailwindScript = document.createElement('script');
