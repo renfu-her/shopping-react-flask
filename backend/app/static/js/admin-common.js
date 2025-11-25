@@ -76,6 +76,10 @@ async function loadBaseAndInit(initPageFunction) {
         const baseApp = baseBody.querySelector('#app');
         
         if (baseApp) {
+            // 检查当前页面是否需要 Font Awesome（只有分类管理需要）
+            const currentPath = window.location.pathname;
+            const needsFontAwesome = currentPath.includes('/categories');
+            
             // 先添加 head 中的 link 标签（CSS）
             const linkPromises = [];
             headLinks.forEach(link => {
@@ -91,8 +95,8 @@ async function loadBaseAndInit(initPageFunction) {
                     const referrerPolicy = link.getAttribute('referrerpolicy');
                     if (referrerPolicy) newLink.referrerPolicy = referrerPolicy;
                     
-                    // 对于 Font Awesome CSS，等待加载完成
-                    if (href.includes('font-awesome')) {
+                    // 对于 Font Awesome CSS，只在分类管理页面等待加载完成
+                    if (href.includes('font-awesome') && needsFontAwesome) {
                         linkPromises.push(new Promise((resolve, reject) => {
                             newLink.onload = () => {
                                 // 标记 Font Awesome 已加载
@@ -110,16 +114,22 @@ async function loadBaseAndInit(initPageFunction) {
                                 resolve();
                             }, 5000);
                         }));
+                    } else if (href.includes('font-awesome') && !needsFontAwesome) {
+                        // 非分类管理页面，直接标记为已加载，不等待
+                        document.documentElement.classList.add('fontawesome-loaded');
                     }
                     
                     document.head.appendChild(newLink);
                 }
             });
             
-            // 等待 Font Awesome CSS 加载完成（如果存在）
+            // 等待 Font Awesome CSS 加载完成（仅在分类管理页面）
             if (linkPromises.length > 0) {
                 await Promise.all(linkPromises);
                 console.log('Font Awesome CSS 已加载');
+            } else if (!needsFontAwesome) {
+                // 非分类管理页面，立即标记为已加载
+                document.documentElement.classList.add('fontawesome-loaded');
             }
             
             // 替换整个 body 内容
