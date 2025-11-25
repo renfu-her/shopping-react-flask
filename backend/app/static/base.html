@@ -96,27 +96,9 @@
     </div>
 
     <script>
-        const API_BASE = '/backend/admin';
-        let currentToken = localStorage.getItem('admin_token');
-
-        // 檢查登入狀態
-        if (!currentToken) {
-            window.location.href = '/backend/login';
-        }
-
-        // 登出
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            localStorage.removeItem('admin_token');
-            window.location.href = '/backend/login';
-        });
-
-        // 高亮當前頁面
-        const currentPath = window.location.pathname;
-        document.querySelectorAll('.admin-nav-item').forEach(item => {
-            if (item.getAttribute('href') === currentPath) {
-                item.classList.add('bg-gray-700');
-            }
-        });
+        // 这个脚本只会在 base.html 被直接访问时执行
+        // 当通过 fetch 加载时，不会执行（因为 script 标签不会执行）
+        // 所以不需要在这里检查 token
     </script>
 </body>
 </html>

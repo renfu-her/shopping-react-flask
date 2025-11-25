@@ -29,8 +29,8 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         email=user_data.email,
         name=user_data.name,
         password_hash=hashed_password,
-        role=user_data.role if user_data.role else UserRole.CUSTOMER,
-        status=user_data.status if user_data.status else UserStatus.ACTIVE
+        role=user_data.role,  # 使用 schema 中的默认值（CUSTOMER）
+        status=user_data.status  # 使用 schema 中的默认值（ACTIVE）
     )
     db.add(new_user)
     db.commit()

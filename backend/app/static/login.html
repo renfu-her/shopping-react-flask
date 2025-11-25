@@ -85,10 +85,19 @@
     <script>
         const API_BASE = '/backend/admin';
 
-        // 檢查是否已登入
-        if (localStorage.getItem('admin_token')) {
-            window.location.href = '/backend/users';
-        }
+        // 檢查是否已登入（通過檢查 session）
+        fetch(`${API_BASE}/me`, {
+            method: 'GET',
+            credentials: 'include'  // 重要：包含 cookies
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/backend/users';
+            }
+        })
+        .catch(() => {
+            // 如果檢查失敗，繼續顯示登入頁面
+        });
 
         // 登入表單處理
         document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -100,13 +109,17 @@
                 const response = await fetch(`${API_BASE}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',  // 重要：包含 cookies（session）
                     body: JSON.stringify({ email, password })
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    localStorage.setItem('admin_token', data.access_token);
-                    window.location.href = '/backend/users';
+                    if (data.success) {
+                        window.location.href = '/backend/users';
+                    } else {
+                        alert('登入失敗：' + (data.message || '未知錯誤'));
+                    }
                 } else {
                     // 檢查響應類型
                     const contentType = response.headers.get('content-type');

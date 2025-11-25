@@ -4,16 +4,29 @@ from typing import Optional
 from jose import JWTError, jwt
 from app.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# 配置密码上下文
+# 使用 pbkdf2_sha256 作为主要方案（更兼容，无 72 字节限制）
+# bcrypt 作为备选方案
+pwd_context = CryptContext(
+    schemes=["pbkdf2_sha256", "bcrypt"],
+    default="pbkdf2_sha256",
+    deprecated="auto",
+    pbkdf2_sha256__default_rounds=29000
+)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """驗證密碼"""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception:
+        # 如果验证失败，返回 False
+        return False
 
 
 def get_password_hash(password: str) -> str:
     """生成密碼雜湊"""
+    # 使用 pbkdf2_sha256，没有 72 字节限制
     return pwd_context.hash(password)
 
 

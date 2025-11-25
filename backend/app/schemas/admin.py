@@ -10,8 +10,8 @@ class AdminLogin(BaseModel):
 
 
 class AdminLoginResponse(BaseModel):
-    access_token: str
-    token_type: str
+    success: bool
+    message: str
     user: dict
 
 

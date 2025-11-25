@@ -1,0 +1,183 @@
+/**
+ * 后台管理通用 JavaScript 函数
+ */
+
+const API_BASE = '/backend/admin';
+
+/**
+ * 检查登录状态（通过 session）
+ */
+async function checkAuth() {
+    try {
+        console.log('检查认证状态...');
+        const response = await fetch(`${API_BASE}/me`, {
+            method: 'GET',
+            credentials: 'include'  // 重要：包含 cookies
+        });
+        
+        if (!response.ok) {
+            console.log('认证失败，状态码:', response.status);
+            if (response.status === 401) {
+                window.location.href = '/backend/login';
+            }
+            return false;
+        }
+        console.log('认证成功');
+        return true;
+    } catch (error) {
+        console.error('认证检查出错:', error);
+        // 如果是网络错误，不要立即重定向，让用户看到错误信息
+        if (error.message && error.message.includes('Failed to fetch')) {
+            console.error('网络错误，无法连接到服务器');
+            return false;
+        }
+        window.location.href = '/backend/login';
+        return false;
+    }
+}
+
+/**
+ * 加载 base.html 并初始化页面
+ * @param {Function} initPageFunction - 页面初始化函数
+ */
+async function loadBaseAndInit(initPageFunction) {
+    try {
+        // 先检查登录状态
+        const isAuth = await checkAuth();
+        if (!isAuth) {
+            console.log('未通过认证，已重定向到登录页面');
+            return;
+        }
+
+        console.log('认证通过，开始加载 base.html');
+
+        // 加载 base.html
+        const response = await fetch('/static/base.html', {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`加载 base.html 失败: ${response.status} ${response.statusText}`);
+        }
+        
+        const html = await response.text();
+        console.log('base.html 加载成功');
+        
+        // 移除 base.html 中的 script 标签，避免重复执行
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const scripts = doc.querySelectorAll('script');
+        scripts.forEach(script => script.remove());
+        
+        // 将 base.html 的 body 内容替换当前页面的 body 内容
+        const baseBody = doc.body;
+        const baseApp = baseBody.querySelector('#app');
+        
+        if (baseApp) {
+            // 替换整个 body 内容
+            document.body.innerHTML = baseBody.innerHTML;
+            console.log('body 内容已替换');
+            
+            // 确保 Tailwind CSS 已加载
+            if (!document.querySelector('script[src*="tailwindcss"]')) {
+                const tailwindScript = document.createElement('script');
+                tailwindScript.src = 'https://cdn.tailwindcss.com';
+                document.head.appendChild(tailwindScript);
+            }
+            
+            // 设置登出按钮
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    try {
+                        await fetch(`${API_BASE}/logout`, {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+                    } catch (error) {
+                        console.error('登出失敗:', error);
+                    }
+                    window.location.href = '/backend/login';
+                });
+            }
+            
+            // 高亮当前页面
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.admin-nav-item').forEach(item => {
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('bg-gray-700');
+                }
+            });
+            
+            // 隐藏加载提示
+            const loadingDiv = document.getElementById('loading');
+            if (loadingDiv) {
+                loadingDiv.style.display = 'none';
+            }
+            
+            // 初始化页面（延迟一下确保 DOM 已更新）
+            setTimeout(() => {
+                console.log('开始初始化页面内容');
+                if (typeof initPageFunction === 'function') {
+                    try {
+                        initPageFunction();
+                    } catch (error) {
+                        console.error('页面初始化函数执行失败:', error);
+                    }
+                }
+            }, 200);
+        } else {
+            throw new Error('base.html 中找不到 #app 元素');
+        }
+    } catch (error) {
+        console.error('載入 base.html 失敗:', error);
+        
+        // 隐藏加载提示
+        const loadingDiv = document.getElementById('loading');
+        if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+        }
+        
+        // 显示错误信息给用户
+        document.body.innerHTML = `
+            <div style="padding: 20px; font-family: Arial, sans-serif;">
+                <h1>加载错误</h1>
+                <p>无法加载页面内容: ${error.message}</p>
+                <p>请检查：</p>
+                <ul>
+                    <li>是否已登录？<a href="/backend/login">点击这里登录</a></li>
+                    <li>服务器是否正常运行？</li>
+                    <li>浏览器控制台是否有更多错误信息？</li>
+                </ul>
+            </div>
+        `;
+    }
+}
+
+/**
+ * 发送 API 请求（使用 session 认证）
+ */
+async function apiRequest(url, options = {}) {
+    const defaultOptions = {
+        credentials: 'include',  // 重要：包含 cookies（session）
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    };
+
+    try {
+        const response = await fetch(url, { ...defaultOptions, ...options });
+        
+        if (response.status === 401) {
+            window.location.href = '/backend/login';
+            return null;
+        }
+        
+        return response;
+    } catch (error) {
+        console.error('API 請求失敗:', error);
+        throw error;
+    }
+}
+

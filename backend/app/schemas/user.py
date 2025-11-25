@@ -8,8 +8,8 @@ class UserCreate(BaseModel):
     email: EmailStr
     name: str
     password: str
-    role: Optional[UserRole] = UserRole.CUSTOMER
-    status: Optional[UserStatus] = UserStatus.ACTIVE
+    role: UserRole = UserRole.CUSTOMER  # 默认值为 CUSTOMER，但可以指定
+    status: UserStatus = UserStatus.ACTIVE  # 默认值为 ACTIVE，但可以指定
 
 
 class UserLogin(BaseModel):

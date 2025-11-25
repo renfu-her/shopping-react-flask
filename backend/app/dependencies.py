@@ -1,62 +1,48 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
-from app.core.security import decode_access_token
-
-security = HTTPBearer()
+from app.core.session import get_session_user_id, is_authenticated
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
     db: Session = Depends(get_db)
 ) -> User:
-    """從 JWT token 獲取當前用戶"""
-    token = credentials.credentials
-    payload = decode_access_token(token)
-    
-    if payload is None:
+    """從 Session 獲取當前用戶"""
+    if not is_authenticated(request):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Not authenticated"
         )
     
-    user_id: int = payload.get("sub")
+    user_id = get_session_user_id(request)
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Not authenticated"
         )
     
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="User not found"
         )
     
     return user
 
 
 async def get_current_user_optional(
-    credentials: HTTPAuthorizationCredentials | None = Depends(HTTPBearer(auto_error=False)),
+    request: Request,
     db: Session = Depends(get_db)
 ) -> User | None:
     """可選的獲取當前用戶（用於可選認證的端點）"""
-    if credentials is None:
+    if not is_authenticated(request):
         return None
+    
     try:
-        token = credentials.credentials
-        payload = decode_access_token(token)
-        
-        if payload is None:
-            return None
-        
-        user_id: int = payload.get("sub")
+        user_id = get_session_user_id(request)
         if user_id is None:
             return None
         

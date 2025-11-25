@@ -5,34 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Banner 管理 - 快點訂 Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/js/admin-common.js"></script>
 </head>
 <body>
-    <div id="base-content"></div>
     <script>
-        // 載入 base.html 的內容
-        fetch('/static/base.html')
-            .then(r => r.text())
-            .then(html => {
-                document.getElementById('base-content').innerHTML = html;
-                initAdsPage();
-            });
-    </script>
-    <script>
-        const API_BASE = '/backend/admin';
-        let currentToken = localStorage.getItem('admin_token');
+        // API_BASE 已在 admin-common.js 中定义
         let currentPage = 1;
 
-        function initAdsPage() {
-            if (!currentToken) {
-                window.location.href = '/backend/login';
+        async function initAdsPage() {
+            // 等待一下确保 base.html 已加载
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            const pageTitle = document.getElementById('page-title');
+            const content = document.getElementById('page-content');
+            
+            if (!pageTitle || !content) {
+                console.error('無法找到頁面元素');
                 return;
             }
-
-            // 設置頁面標題
-            document.getElementById('page-title').textContent = '首頁 Banner 管理';
             
-            // 設置內容區域
-            const content = document.getElementById('page-content');
+            // 設置頁面標題
+            pageTitle.textContent = '首頁 Banner 管理';
             content.innerHTML = `
                 <div class="bg-white rounded-lg shadow-sm p-6">
                     <div class="flex justify-between items-center mb-6">
@@ -135,13 +128,8 @@
             if (status !== '') params.append('status_filter', status);
 
             try {
-                const res = await fetch(`${API_BASE}/banners?${params}`, {
-                    headers: { 'Authorization': `Bearer ${currentToken}` }
-                });
-                if (res.status === 401) {
-                    window.location.href = '/backend/login';
-                    return;
-                }
+                const res = await apiRequest(`${API_BASE}/banners?${params}`);
+                if (!res) return;
                 const data = await res.json();
                 renderTable(data);
                 renderPagination(data);
@@ -198,9 +186,8 @@
 
         async function editItem(id) {
             try {
-                const res = await fetch(`${API_BASE}/banners/${id}`, {
-                    headers: { 'Authorization': `Bearer ${currentToken}` }
-                });
+                const res = await apiRequest(`${API_BASE}/banners/${id}`);
+                if (!res) return;
                 const ad = await res.json();
                 document.getElementById('modal-title').textContent = '編輯 Banner';
                 document.getElementById('id').value = ad.id;
@@ -229,14 +216,11 @@
             try {
                 const url = id ? `${API_BASE}/banners/${id}` : `${API_BASE}/banners`;
                 const method = id ? 'PUT' : 'POST';
-                const res = await fetch(url, {
+                const res = await apiRequest(url, {
                     method,
-                    headers: {
-                        'Authorization': `Bearer ${currentToken}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(data)
                 });
+                if (!res) return;
                 if (res.ok) {
                     closeModal();
                     loadData(currentPage);
@@ -251,10 +235,10 @@
 
         async function toggleStatus(id) {
             try {
-                const res = await fetch(`${API_BASE}/banners/${id}/toggle-status`, {
-                    method: 'PATCH',
-                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                const res = await apiRequest(`${API_BASE}/banners/${id}/toggle-status`, {
+                    method: 'PATCH'
                 });
+                if (!res) return;
                 if (res.ok) {
                     loadData(currentPage);
                 }
@@ -266,10 +250,10 @@
         async function deleteItem(id) {
             if (!confirm('確定要刪除這個 Banner 嗎？')) return;
             try {
-                const res = await fetch(`${API_BASE}/banners/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                const res = await apiRequest(`${API_BASE}/banners/${id}`, {
+                    method: 'DELETE'
                 });
+                if (!res) return;
                 if (res.ok) {
                     loadData(currentPage);
                 }
@@ -289,6 +273,11 @@
         window.toggleStatus = toggleStatus;
         window.deleteItem = deleteItem;
         window.closeModal = closeModal;
+        
+        // 页面加载完成后，使用通用函数加载 base.html 并初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            loadBaseAndInit(initAdsPage);
+        });
     </script>
 </body>
 </html>

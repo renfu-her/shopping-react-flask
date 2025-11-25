@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 from .login import router as login_router
+from .logout import router as logout_router
+from .me import router as me_router
 from .users import router as users_router
 from .ads import router as ads_router
 from .products import router as products_router
@@ -13,6 +15,8 @@ router = APIRouter(prefix="/backend/admin", tags=["admin"])
 
 # 包含所有子路由
 router.include_router(login_router)
+router.include_router(logout_router)
+router.include_router(me_router)
 router.include_router(users_router)
 router.include_router(ads_router)
 router.include_router(products_router)
