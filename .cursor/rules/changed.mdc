@@ -1,5 +1,15 @@
 ---
 alwaysApply: true
 ---
-backend 所有的修改或更新，就要寫一份給 CHANGED.md
-frontend 也是一樣，寫到 frontend/
+所有修改或更新必須記錄到對應的 CHANGED.md 文件：
+
+1. Backend 修改 → 記錄到 `backend/CHANGED.md`
+2. Frontend 修改 → 記錄到 `frontend/CHANGED.md`
+
+記錄格式：
+- 包含當前電腦時間（使用 `date` 命令獲取）
+- 詳細說明修改內容
+- 列出所有影響的檔案
+- 說明功能變更和技術細節
+
+每次修改後立即更新對應的 CHANGED.md 文件。
