@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List
 from app.database import get_db
 from app.models.product import Product
 from app.models.product_category import ProductCategory
-from app.schemas.product import ProductResponse, ProductListResponse
+from app.schemas.product import ProductResponse, ProductListResponse, ProductImageResponse
 from math import ceil
 
 router = APIRouter(prefix="/api/products", tags=["products"])
@@ -18,7 +18,10 @@ def get_products(
     db: Session = Depends(get_db)
 ):
     """獲取產品列表（支援分類篩選、分頁）"""
-    query = db.query(Product).filter(Product.is_active == True)
+    query = db.query(Product).options(
+        joinedload(Product.category),
+        joinedload(Product.images)
+    ).filter(Product.is_active == True)
     
     if category_id:
         query = query.filter(Product.category_id == category_id)
@@ -28,8 +31,36 @@ def get_products(
     
     products = query.offset((page - 1) * page_size).limit(page_size).all()
     
+    # 構建包含分類名稱和圖片的產品響應
+    product_responses = []
+    for p in products:
+        # 構建產品圖片列表
+        product_images = [
+            ProductImageResponse(
+                id=img.id,
+                image_url=img.image_url,
+                order_index=img.order_index
+            )
+            for img in sorted(p.images, key=lambda x: x.order_index) if p.images
+        ]
+        
+        product_dict = {
+            "id": p.id,
+            "title": p.title,
+            "price": p.price,
+            "description": p.description,
+            "image": p.image,
+            "category_id": p.category_id,
+            "category_name": p.category.name if p.category else None,
+            "stock": p.stock,
+            "is_active": p.is_active,
+            "created_at": p.created_at,
+            "product_images": product_images
+        }
+        product_responses.append(ProductResponse(**product_dict))
+    
     return ProductListResponse(
-        products=[ProductResponse.model_validate(p) for p in products],
+        products=product_responses,
         total=total,
         page=page,
         page_size=page_size,
@@ -40,7 +71,10 @@ def get_products(
 @router.get("/{product_id}", response_model=ProductResponse)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     """獲取產品詳情"""
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = db.query(Product).options(
+        joinedload(Product.category),
+        joinedload(Product.images)
+    ).filter(Product.id == product_id).first()
     
     if not product:
         raise HTTPException(
@@ -48,7 +82,30 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
             detail="Product not found"
         )
     
-    return ProductResponse.model_validate(product)
+    # 構建產品圖片列表
+    product_images = [
+        ProductImageResponse(
+            id=img.id,
+            image_url=img.image_url,
+            order_index=img.order_index
+        )
+        for img in sorted(product.images, key=lambda x: x.order_index) if product.images
+    ]
+    
+    product_dict = {
+        "id": product.id,
+        "title": product.title,
+        "price": product.price,
+        "description": product.description,
+        "image": product.image,
+        "category_id": product.category_id,
+        "category_name": product.category.name if product.category else None,
+        "stock": product.stock,
+        "is_active": product.is_active,
+        "created_at": product.created_at,
+        "product_images": product_images
+    }
+    return ProductResponse(**product_dict)
 
 
 @router.get("/categories/list", response_model=List[dict])

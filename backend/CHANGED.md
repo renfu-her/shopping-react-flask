@@ -1,5 +1,204 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-25 20:04:47] - 公開產品 API 更新：添加分類名稱欄位
+
+### 修改內容
+
+#### 公開產品 API 返回分類名稱
+- **時間**: 2025-11-25 20:04:47
+- **功能**: 在公開產品 API 響應中添加 `category_name` 欄位，直接返回分類名稱，無需前端額外查詢
+- **修改檔案**:
+  - `app/schemas/product.py` - 更新 `ProductResponse` schema
+  - `app/api/products.py` - 更新所有公開產品相關 API 端點
+- **變更詳情**:
+  - 在 `ProductResponse` schema 中添加 `category_name: Optional[str] = None` 欄位
+  - 使用 SQLAlchemy `joinedload` 在查詢時預加載分類關係
+  - 更新產品列表 API (`GET /api/products`) 以包含分類名稱
+  - 更新產品詳情 API (`GET /api/products/{product_id}`) 以包含分類名稱
+  - 使用手動構建響應字典的方式，確保分類名稱正確包含在響應中
+- **功能特點**:
+  - **直接返回分類名稱**: API 響應直接包含 `category_name`，前端無需額外查詢
+  - **性能優化**: 使用 `joinedload` 預加載分類關係，減少數據庫查詢次數
+  - **向後兼容**: `category_id` 欄位仍然保留，確保現有代碼不受影響
+  - **空值處理**: 如果分類不存在，`category_name` 返回 `None`
+
+### 技術細節
+
+#### Schema 更新
+```python
+class ProductResponse(BaseModel):
+    # ... 其他欄位 ...
+    category_id: int
+    category_name: Optional[str] = None  # 新增欄位
+    # ... 其他欄位 ...
+```
+
+#### 查詢優化
+- 使用 `joinedload(Product.category)` 預加載分類關係
+- 在構建響應時從 `product.category.name` 獲取分類名稱
+- 產品列表和詳情端點都使用相同的模式
+
+#### 受影響的 API 端點
+1. **GET /api/products** - 產品列表（支援分類篩選、分頁）
+2. **GET /api/products/{product_id}** - 產品詳情
+
+#### 響應格式示例
+```json
+{
+  "id": 1,
+  "title": "產品名稱",
+  "price": 100.0,
+  "category_id": 5,
+  "category_name": "電子產品",  // 新增欄位
+  "stock": 10,
+  "is_active": true,
+  // ... 其他欄位
+}
+```
+
+### 影響範圍
+- **前端**: 前端可以直接從產品 API 響應中獲取分類名稱，無需額外查詢分類 API
+- **性能**: 減少前端需要發送的 API 請求次數
+- **一致性**: 公開 API 和 Admin API 現在都返回分類名稱，保持一致性
+
+---
+
+## [2025-11-25 20:01:47] - Admin 產品管理 API 更新：添加分類名稱欄位
+
+### 修改內容
+
+#### Admin 產品 API 返回分類名稱
+- **時間**: 2025-11-25 20:01:47
+- **功能**: 在 admin 產品 API 響應中添加 `category_name` 欄位，直接返回分類名稱，無需前端額外查詢
+- **修改檔案**:
+  - `app/schemas/admin.py` - 更新 `ProductResponseAdmin` schema
+  - `app/api/admin/products.py` - 更新所有產品相關 API 端點
+- **變更詳情**:
+  - 在 `ProductResponseAdmin` schema 中添加 `category_name: Optional[str]` 欄位
+  - 使用 SQLAlchemy `joinedload` 在查詢時預加載分類關係
+  - 更新所有產品 API 端點（列表、詳情、創建、更新）以包含分類名稱
+  - 使用手動構建響應字典的方式，確保分類名稱正確包含在響應中
+- **功能特點**:
+  - **直接返回分類名稱**: API 響應直接包含 `category_name`，前端無需額外查詢
+  - **性能優化**: 使用 `joinedload` 預加載分類關係，減少數據庫查詢次數
+  - **向後兼容**: `category_id` 欄位仍然保留，確保現有代碼不受影響
+  - **空值處理**: 如果分類不存在，`category_name` 返回 `None`
+
+### 技術細節
+
+#### Schema 更新
+```python
+class ProductResponseAdmin(BaseModel):
+    # ... 其他欄位 ...
+    category_id: int
+    category_name: Optional[str] = None  # 新增欄位
+    # ... 其他欄位 ...
+```
+
+#### 查詢優化
+- 使用 `joinedload(Product.category)` 預加載分類關係
+- 在構建響應時從 `product.category.name` 獲取分類名稱
+- 所有產品相關端點都使用相同的模式
+
+#### 受影響的 API 端點
+1. **GET /backend/admin/products** - 產品列表
+2. **GET /backend/admin/products/{product_id}** - 產品詳情
+3. **POST /backend/admin/products** - 創建產品
+4. **PUT /backend/admin/products/{product_id}** - 更新產品
+
+#### 響應格式示例
+```json
+{
+  "id": 1,
+  "title": "產品名稱",
+  "price": 100.0,
+  "category_id": 5,
+  "category_name": "電子產品",  // 新增欄位
+  "stock": 10,
+  "is_active": true,
+  // ... 其他欄位
+}
+```
+
+### 影響範圍
+
+- **API 端點**: 所有 admin 產品相關端點
+- **前端頁面**: `app/static/admin/products/index.html`（可以簡化，直接使用 `category_name`）
+- **數據庫**: 無變更
+- **向後兼容**: 完全向後兼容，現有調用不受影響
+
+### 注意事項
+
+1. 前端可以選擇使用 `category_name` 直接顯示，無需再查詢分類列表
+2. 如果分類被刪除，`category_name` 會返回 `None`，前端需要處理這種情況
+3. `category_id` 欄位仍然保留，用於更新操作和向後兼容
+
+### 後續改進建議
+
+1. 前端可以移除單獨的分類查詢邏輯，直接使用 API 返回的 `category_name`
+2. 考慮在其他產品 API（如 `/api/products`）中也添加分類名稱欄位
+
+---
+
+## [2025-11-25 20:00:17] - Admin 產品管理 API 更新：添加狀態篩選功能
+
+### 修改內容
+
+#### Admin 產品列表 API 添加狀態篩選
+- **時間**: 2025-11-25 20:00:17
+- **功能**: 在 admin 產品列表 API 中添加 `status_filter` 參數，支援按啟用/停用狀態篩選產品
+- **修改檔案**:
+  - `app/api/admin/products.py`
+- **變更詳情**:
+  - 在 `get_products` 函數中添加 `status_filter` 查詢參數（Optional[str]）
+  - 實現狀態篩選邏輯：將字符串 "true"/"false" 轉換為布爾值並過濾 `is_active` 欄位
+  - 更新函數文檔字符串，說明支援狀態篩選功能
+- **功能特點**:
+  - 支援按啟用狀態篩選：`status_filter=true` 顯示啟用產品
+  - 支援按停用狀態篩選：`status_filter=false` 顯示停用產品
+  - 不提供參數時顯示所有產品（不進行狀態篩選）
+  - 與前端 admin 產品管理頁面的篩選功能完全對應
+
+### 技術細節
+
+#### API 參數
+- **參數名稱**: `status_filter`
+- **類型**: `Optional[str]`
+- **值**: `"true"` 或 `"false"`（字符串格式）
+- **預設值**: `None`（不篩選）
+
+#### 篩選邏輯
+```python
+if status_filter is not None and status_filter != '':
+    is_active = status_filter.lower() == 'true'
+    query = query.filter(Product.is_active == is_active)
+```
+
+#### API 端點
+- **端點**: `GET /backend/admin/products`
+- **查詢參數**:
+  - `search`: 搜尋產品名稱（可選）
+  - `category_id`: 分類篩選（可選）
+  - `status_filter`: 狀態篩選，值為 "true" 或 "false"（可選）
+  - `page`: 頁碼（預設：1）
+  - `page_size`: 每頁筆數（預設：10）
+
+### 影響範圍
+
+- **API 端點**: `GET /backend/admin/products`
+- **前端頁面**: `app/static/admin/products/index.html`（已支援，現在 API 也支援）
+- **數據庫**: 無變更
+- **向後兼容**: 完全向後兼容，現有調用不受影響
+
+### 注意事項
+
+1. `status_filter` 參數為可選，不提供時不進行狀態篩選
+2. 參數值為字符串格式（"true"/"false"），API 會自動轉換為布爾值
+3. 空字符串會被忽略，不進行篩選
+4. 與其他篩選條件（search、category_id）可以組合使用
+
+---
+
 ## [2025-11-25 16:55:44] - 產品圖片刪除功能增強
 
 ### 修改內容
@@ -147,5 +346,69 @@ setTimeout(() => {
 
 ---
 
-**最後更新**: 2025-11-25 17:09:34
+## 2025-11-25 21:08:27 - 添加產品圖片陣列到 API 響應
+
+### 修改內容
+
+在產品 API 響應中添加 `product_images` 陣列，包含產品的所有圖片資訊。
+
+### 修改檔案
+
+1. **`app/schemas/product.py`**
+   - 新增 `ProductImageResponse` schema，包含 `id`、`image_url`、`order_index` 欄位
+   - 在 `ProductResponse` 中添加 `product_images: List[ProductImageResponse] = []` 欄位
+
+2. **`app/api/products.py`**
+   - 在 `get_products()` 函數中：
+     - 添加 `joinedload(Product.images)` 以載入產品圖片關係
+     - 構建 `product_images` 陣列，按 `order_index` 排序
+     - 將 `product_images` 包含在響應中
+   - 在 `get_product()` 函數中：
+     - 添加 `joinedload(Product.images)` 以載入產品圖片關係
+     - 構建 `product_images` 陣列，按 `order_index` 排序
+     - 將 `product_images` 包含在響應中
+
+### 功能變更
+
+- **GET `/api/products`**: 現在返回的每個產品都包含 `product_images` 陣列
+- **GET `/api/products/{product_id}`**: 現在返回的產品詳情包含 `product_images` 陣列
+
+### 技術細節
+
+- 使用 SQLAlchemy 的 `joinedload()` 進行 eager loading，避免 N+1 查詢問題
+- 圖片按 `order_index` 排序，確保顯示順序正確
+- 如果產品沒有圖片，`product_images` 為空陣列 `[]`
+
+### API 響應格式
+
+```json
+{
+  "id": 1,
+  "title": "產品名稱",
+  "price": 99.99,
+  "description": "產品描述",
+  "image": "主圖片URL",
+  "category_id": 1,
+  "category_name": "分類名稱",
+  "stock": 100,
+  "is_active": true,
+  "created_at": "2025-11-25T21:08:27",
+  "product_images": [
+    {
+      "id": 1,
+      "image_url": "圖片URL1",
+      "order_index": 0
+    },
+    {
+      "id": 2,
+      "image_url": "圖片URL2",
+      "order_index": 1
+    }
+  ]
+}
+```
+
+---
+
+**最後更新**: 2025-11-25 21:08:27
 

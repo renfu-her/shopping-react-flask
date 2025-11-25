@@ -117,6 +117,7 @@ class ProductResponseAdmin(BaseModel):
     description: Optional[str]
     image: str
     category_id: int
+    category_name: Optional[str] = None
     stock: int
     is_active: bool
     created_at: datetime
