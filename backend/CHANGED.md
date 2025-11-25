@@ -1,5 +1,142 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-25 22:46:02] - 修復 Admin 頁面 Font Awesome 圖標閃爍問題
+
+### 修改內容
+
+#### 修復某些頁面出現大圖標閃爍的問題
+- **時間**: 2025-11-25 22:46:02
+- **問題**: 首頁 Banner、分類管理、產品管理、訂單管理、FAQ 管理頁面在載入時會出現一個很大的圖標然後消失
+- **原因**: Font Awesome CSS 異步載入，在 CSS 載入完成前，圖標會顯示為大文本（因為 Font Awesome 使用字體圖標）
+- **修改檔案**:
+  - `app/static/css/admin-common.css` - 添加圖標隱藏樣式
+  - `app/static/js/admin-common.js` - 等待 Font Awesome CSS 載入完成
+- **變更詳情**:
+  - 在 `admin-common.css` 中添加樣式，默認隱藏所有 Font Awesome 圖標
+  - 當 Font Awesome CSS 載入完成後，添加 `fontawesome-loaded` class 到 `html` 元素
+  - 在 `admin-common.js` 中，等待 Font Awesome CSS 載入完成後再替換 body 內容
+  - 設置 5 秒超時，避免無限等待
+- **功能特點**:
+  - **防止閃爍**: 圖標在 CSS 載入前不會顯示，避免大圖標閃爍
+  - **自動顯示**: CSS 載入完成後自動顯示圖標
+  - **超時保護**: 即使 CSS 載入失敗，也會在 5 秒後顯示圖標
+  - **向後兼容**: 所有功能保持不變
+
+### 技術細節
+
+#### CSS 樣式
+```css
+/* 防止 Font Awesome 图标在 CSS 加载前显示为大文本 */
+.fa, .fas, .far, .fab, .fal, .fad, .fa-solid, .fa-regular, .fa-brands, .fa-light, .fa-duotone,
+[class*="fa-"] {
+    visibility: hidden;
+    font-size: 0;
+}
+
+/* 当 Font Awesome 加载完成后，图标会正常显示 */
+html.fontawesome-loaded .fa,
+html.fontawesome-loaded .fas,
+/* ... 其他類別 ... */
+html.fontawesome-loaded [class*="fa-"] {
+    visibility: visible;
+    font-size: inherit;
+}
+```
+
+#### JavaScript 邏輯
+```javascript
+// 对于 Font Awesome CSS，等待加载完成
+if (href.includes('font-awesome')) {
+    linkPromises.push(new Promise((resolve, reject) => {
+        newLink.onload = () => {
+            // 标记 Font Awesome 已加载
+            document.documentElement.classList.add('fontawesome-loaded');
+            resolve();
+        };
+        // 设置超时，避免无限等待
+        setTimeout(() => {
+            document.documentElement.classList.add('fontawesome-loaded');
+            resolve();
+        }, 5000);
+    }));
+}
+
+// 等待 Font Awesome CSS 加载完成（如果存在）
+if (linkPromises.length > 0) {
+    await Promise.all(linkPromises);
+    console.log('Font Awesome CSS 已加载');
+}
+```
+
+### 影響範圍
+
+- **前端頁面**: 所有使用 Font Awesome 圖標的 admin 頁面
+- **功能**: 修復了圖標閃爍問題，提升用戶體驗
+- **性能**: 無影響，只是改進了載入順序
+
+### 注意事項
+
+1. **載入順序**: Font Awesome CSS 會在 body 內容替換前載入完成
+2. **超時處理**: 如果 CSS 載入超時，會在 5 秒後自動顯示圖標
+3. **向後兼容**: 所有功能保持不變，只是改進了視覺效果
+
+---
+
+## [2025-11-25 22:35:47] - 修復 FAQ 頁面重複聲明 renderPagination 錯誤
+
+### 修改內容
+
+#### 修復 FAQ 頁面一直 loading 的問題
+- **時間**: 2025-11-25 22:35:47
+- **問題**: FAQ 頁面出現 "Identifier 'renderPagination' has already been declared" 錯誤，導致頁面一直 loading
+- **原因**: FAQ 頁面重複聲明了 `renderPagination` 函數，與 `admin-pagination.js` 中的函數衝突
+- **修改檔案**:
+  - `app/static/admin/faq/index.html`
+- **變更詳情**:
+  - 移除了 FAQ 頁面中重複定義的 `renderPaginationLocal` 函數
+  - 移除了 `const renderPagination = renderPaginationLocal;` 這行重複聲明
+  - 將 `loadData` 函數暴露到全局作用域（`window.loadData`），以便 `admin-pagination.js` 中的 `renderPagination` 可以調用
+  - 添加註釋說明使用 `admin-pagination.js` 中的 `renderPagination` 函數
+- **功能特點**:
+  - **消除衝突**: 不再重複聲明 `renderPagination`，避免語法錯誤
+  - **代碼重用**: 直接使用 `admin-pagination.js` 中的通用分頁函數
+  - **全局訪問**: `loadData` 函數暴露到全局，確保分頁按鈕可以正常工作
+
+### 技術細節
+
+#### 問題原因
+```javascript
+// admin-pagination.js 中已定義
+function renderPagination(data) { ... }
+
+// FAQ 頁面中重複定義（錯誤）
+function renderPaginationLocal(data) { ... }
+const renderPagination = renderPaginationLocal; // 重複聲明錯誤
+```
+
+#### 修復方案
+```javascript
+// 移除重複定義，直接使用 admin-pagination.js 中的函數
+// 將 loadData 暴露到全局作用域
+window.loadData = async function(page = 1) {
+    // ... loadData 實現 ...
+};
+```
+
+### 影響範圍
+
+- **前端頁面**: `app/static/admin/faq/index.html`
+- **功能**: 修復了 FAQ 頁面一直 loading 的問題
+- **性能**: 無影響
+
+### 注意事項
+
+1. **函數作用域**: `loadData` 必須在全局作用域中，以便 `admin-pagination.js` 可以調用
+2. **向後兼容**: 所有功能保持不變，只是修復了錯誤
+3. **代碼重用**: 現在使用統一的 `admin-pagination.js` 分頁函數
+
+---
+
 ## [2025-11-25 22:33:50] - 提取 Admin 頁面內嵌 CSS 到 admin-common.css
 
 ### 修改內容

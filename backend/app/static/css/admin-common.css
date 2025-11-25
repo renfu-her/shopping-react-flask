@@ -2,6 +2,30 @@
  * Admin 页面通用 CSS 样式
  */
 
+/* 防止 Font Awesome 图标在 CSS 加载前显示为大文本 */
+.fa, .fas, .far, .fab, .fal, .fad, .fa-solid, .fa-regular, .fa-brands, .fa-light, .fa-duotone,
+[class*="fa-"] {
+    visibility: hidden;
+    font-size: 0;
+}
+
+/* 当 Font Awesome 加载完成后，图标会正常显示 */
+html.fontawesome-loaded .fa,
+html.fontawesome-loaded .fas,
+html.fontawesome-loaded .far,
+html.fontawesome-loaded .fab,
+html.fontawesome-loaded .fal,
+html.fontawesome-loaded .fad,
+html.fontawesome-loaded .fa-solid,
+html.fontawesome-loaded .fa-regular,
+html.fontawesome-loaded .fa-brands,
+html.fontawesome-loaded .fa-light,
+html.fontawesome-loaded .fa-duotone,
+html.fontawesome-loaded [class*="fa-"] {
+    visibility: visible;
+    font-size: inherit;
+}
+
 /* 加载动画样式 */
 #loading {
     position: fixed;

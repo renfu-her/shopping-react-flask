@@ -77,6 +77,7 @@ async function loadBaseAndInit(initPageFunction) {
         
         if (baseApp) {
             // 先添加 head 中的 link 标签（CSS）
+            const linkPromises = [];
             headLinks.forEach(link => {
                 const href = link.getAttribute('href');
                 if (href && !document.querySelector(`link[href="${href}"]`)) {
@@ -89,9 +90,37 @@ async function loadBaseAndInit(initPageFunction) {
                     if (crossOrigin) newLink.crossOrigin = crossOrigin;
                     const referrerPolicy = link.getAttribute('referrerpolicy');
                     if (referrerPolicy) newLink.referrerPolicy = referrerPolicy;
+                    
+                    // 对于 Font Awesome CSS，等待加载完成
+                    if (href.includes('font-awesome')) {
+                        linkPromises.push(new Promise((resolve, reject) => {
+                            newLink.onload = () => {
+                                // 标记 Font Awesome 已加载
+                                document.documentElement.classList.add('fontawesome-loaded');
+                                resolve();
+                            };
+                            newLink.onerror = () => {
+                                // 即使加载失败也标记，避免一直隐藏
+                                document.documentElement.classList.add('fontawesome-loaded');
+                                resolve();
+                            };
+                            // 设置超时，避免无限等待
+                            setTimeout(() => {
+                                document.documentElement.classList.add('fontawesome-loaded');
+                                resolve();
+                            }, 5000);
+                        }));
+                    }
+                    
                     document.head.appendChild(newLink);
                 }
             });
+            
+            // 等待 Font Awesome CSS 加载完成（如果存在）
+            if (linkPromises.length > 0) {
+                await Promise.all(linkPromises);
+                console.log('Font Awesome CSS 已加载');
+            }
             
             // 替换整个 body 内容
             document.body.innerHTML = baseBody.innerHTML;
