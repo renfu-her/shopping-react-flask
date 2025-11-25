@@ -141,5 +141,176 @@ backend/
 
 ---
 
-**最後更新**: 2025-11-25 11:42:11
+## [2025-11-25] - 分類管理和產品圖片功能改進
+
+### 修復的問題
+
+#### 1. 分類外鍵約束錯誤修復
+- **時間**: 2025-11-25 16:46:05
+- **問題**: 創建分類時出現外鍵約束錯誤（parent_id = 0 無法引用不存在的記錄）
+- **解決方案**: 
+  - 將 `parent_id` 的默認值從 `0` 改為 `NULL`
+  - 修改模型允許 `parent_id` 為 `NULL`（`nullable=True`）
+  - 在 API 中將 `parent_id = 0` 轉換為 `parent_id = None`
+- **影響檔案**:
+  - `app/models/product_category.py` - 模型定義
+  - `app/api/admin/categories.py` - 創建和更新邏輯
+  - `app/api/categories.py` - 前端 API 查詢邏輯
+  - `app/api/products.py` - 分類列表查詢
+  - `app/schemas/category.py` - Schema 定義（parent_id 改為 Optional[int]）
+  - `app/schemas/admin.py` - Admin Schema 定義
+
+#### 2. Pydantic 驗證錯誤修復
+- **時間**: 2025-11-25 16:46:05
+- **問題**: `CategoryResponseAdmin` schema 中 `parent_id` 定義為 `int`，無法處理 `None` 值
+- **解決方案**: 將 `parent_id: int` 改為 `parent_id: Optional[int]`
+- **影響檔案**:
+  - `app/schemas/admin.py`
+
+#### 3. 分類圖標顯示修復
+- **時間**: 2025-11-25 16:46:05
+- **問題**: 分類列表中的圖標無法正確顯示 Font Awesome 圖標
+- **解決方案**:
+  - 在 `base.html` 和 `index.html` 中添加 Font Awesome 6 CSS
+  - 改進圖標檢測邏輯，正確識別 Font Awesome 類名
+  - 優化圖標渲染，支援多種格式（Font Awesome 圖標或圖片 URL）
+- **影響檔案**:
+  - `app/static/base.html` - 添加 Font Awesome CSS
+  - `app/static/admin/categories/index.html` - 圖標顯示邏輯和 CSS
+  - `app/static/js/admin-common.js` - 確保 Font Awesome CSS 加載
+- **更改內容**:
+  - 表格列名從 "圖片" 改為 "圖標"
+  - 圖標正確渲染為 `<i class="fa-solid fa-microchip"></i>` 格式
+
+### 新增的功能
+
+#### 4. 分類下拉菜單層級顯示
+- **時間**: 2025-11-25 16:46:05
+- **功能**: 產品管理頁面的分類下拉菜單顯示層級結構
+- **特點**:
+  - 頂層分類（parent_id = NULL）不可選擇，作為分組標題顯示
+  - 子分類顯示在父分類下方，使用縮進（`&nbsp;&nbsp;&nbsp;&nbsp;`）
+  - 只允許選擇子分類
+- **顯示格式**:
+  ```
+  請選擇分類
+  Electronics (不可選擇，粗體，灰色背景)
+      Audio (可選擇，有縮進)
+      Computers (可選擇，有縮進)
+  ```
+- **影響檔案**:
+  - `app/static/admin/products/add-edit.html` - 新增 `buildCategoryOptions()` 函數
+
+#### 5. 產品多圖片管理功能
+- **時間**: 2025-11-25 16:46:05
+- **功能**: 實現產品多圖片上傳、管理和排序功能
+- **新增檔案**:
+  - `app/models/product_image.py` - ProductImage 模型
+  - `app/api/admin/product_images.py` - 產品圖片管理 API
+- **修改檔案**:
+  - `app/models/product.py` - 添加 `images` 關係
+  - `app/models/__init__.py` - 導出 ProductImage
+  - `app/api/admin/__init__.py` - 註冊 product_images 路由
+  - `app/static/admin/products/add-edit.html` - 多圖片管理界面
+- **API 端點**:
+  - `GET /backend/admin/products/{product_id}/images` - 獲取產品圖片列表
+  - `POST /backend/admin/products/{product_id}/images` - 添加圖片
+  - `PUT /backend/admin/products/{product_id}/images/reorder` - 重新排序圖片
+  - `DELETE /backend/admin/products/{product_id}/images/{image_id}` - 刪除圖片
+- **功能特點**:
+  - 支援多圖片上傳（一次可上傳多張）
+  - 拖拽排序：可拖拽圖片調整順序
+  - 圖片編號顯示：顯示圖片序號（1, 2, 3...）
+  - 圖片刪除：每張圖片都有刪除按鈕
+  - 自動保存：編輯模式下自動保存到數據庫
+  - 響應式設計：使用 Tailwind CSS 網格布局（4 列）
+- **數據庫結構**:
+  ```sql
+  product_images (
+    id, 
+    product_id, 
+    image_url, 
+    order_index,  -- 排序索引
+    created_at, 
+    updated_at
+  )
+  ```
+- **前端功能**:
+  - 圖片上傳：點擊「添加圖片」按鈕上傳
+  - 拖拽排序：拖拽圖片卡片調整順序
+  - 圖片預覽：網格顯示所有圖片
+  - 刪除確認：刪除前彈出確認對話框
+  - 新增模式：圖片先保存在本地，產品創建後再保存到數據庫
+  - 編輯模式：圖片直接保存到數據庫，支援實時更新
+
+### 技術細節
+
+#### 分類模型改進
+- `parent_id` 字段改為 `nullable=True, default=None`
+- 根分類使用 `parent_id = NULL` 表示
+- 所有查詢邏輯從 `parent_id == 0` 改為 `parent_id is None`
+
+#### 產品圖片管理
+- 使用 `order_index` 字段控制圖片顯示順序
+- 拖拽排序後自動更新所有圖片的 `order_index`
+- 第一張圖片作為產品主圖（`product.image` 字段）
+
+#### 前端拖拽實現
+- 使用 HTML5 Drag and Drop API
+- 實現 `dragstart`, `dragend`, `dragover`, `drop` 事件處理
+- 自動計算拖拽後的位置並更新 DOM
+- 拖拽結束後同步更新數據庫順序
+
+### 數據庫遷移注意事項
+
+1. **product_categories 表**:
+   - 現有數據的 `parent_id = 0` 需要手動更新為 `NULL`
+   - 建議執行 SQL: `UPDATE product_categories SET parent_id = NULL WHERE parent_id = 0;`
+
+2. **product_images 表**:
+   - 新表，需要創建
+   - 運行應用後會自動創建（SQLAlchemy `Base.metadata.create_all`）
+
+### 依賴更新
+
+無新增依賴，使用現有的：
+- `pillow>=10.0.0` - 圖片處理（已存在）
+- `sqlalchemy>=2.0.0` - ORM（已存在）
+
+### 目錄結構
+
+```
+backend/
+├── app/
+│   ├── models/
+│   │   ├── product_image.py          # 新增：產品圖片模型
+│   │   └── product.py                # 修改：添加 images 關係
+│   ├── api/
+│   │   └── admin/
+│   │       └── product_images.py     # 新增：產品圖片 API
+│   └── static/
+│       └── admin/
+│           └── products/
+│               └── add-edit.html      # 修改：多圖片管理界面
+└── CHANGELOG.md                       # 本檔案
+```
+
+### 注意事項
+
+1. **分類數據遷移**: 如果數據庫中已有 `parent_id = 0` 的分類，需要手動更新為 `NULL`
+2. **圖片存儲**: 產品圖片使用 `product_images` 表，不再只依賴 `product.image` 字段
+3. **主圖選擇**: 系統自動使用第一張圖片（`order_index = 0`）作為產品主圖
+4. **圖片排序**: 拖拽排序後會立即更新數據庫，無需額外保存操作
+
+### 後續改進建議
+
+1. 分類管理頁面添加圖標選擇器（類似分類編輯頁面）
+2. 產品圖片添加圖片描述/標題功能
+3. 實現圖片批量上傳功能
+4. 添加圖片裁剪/編輯功能
+5. 實現圖片 CDN 整合
+
+---
+
+**最後更新**: 2025-11-25 16:46:05
 
