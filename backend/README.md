@@ -14,7 +14,7 @@ FastAPI 後端系統，提供購物車、訂單、產品管理等完整功能。
 
 ### 前置需求
 
-- Python 3.10+
+- Python 3.12.12（推薦，已在 `.python-version` 中指定）
 - MySQL 資料庫
 - uv (套件管理工具)
 
@@ -32,13 +32,27 @@ FastAPI 後端系統，提供購物車、訂單、產品管理等完整功能。
    ```
 
 3. 設定環境變數:
-   - 複製 `.env` 檔案並修改資料庫連接資訊
-   - 修改 `SECRET_KEY` 和 `SESSION_SECRET_KEY` 為安全的隨機字串
-
-4. 建立資料庫:
-   ```sql
-   CREATE DATABASE shopping-react-flask;
+   ```bash
+   cp .env.example .env
    ```
+   然後編輯 `.env` 檔案：
+   - 修改資料庫連接資訊（預設：username=root, password=空, database=shopping-react-flask）
+   - 修改 `SECRET_KEY` 和 `SESSION_SECRET_KEY` 為安全的隨機字串
+   
+   資料庫配置方式：
+   - **方式 1（推薦）**: 使用 `DATABASE_URL`（完整 URL）
+     - 格式: `mysql+pymysql://用戶名:密碼@主機:端口/資料庫名稱`
+     - 範例: `DATABASE_URL=mysql+pymysql://root@localhost/shopping-react-flask`
+     - 如果密碼為空，可以省略密碼部分
+   - **方式 2**: 使用分開的參數 `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+     - 如果設定了 `DATABASE_URL`，這些參數將被忽略
+
+4. 建立資料庫（可選）:
+   - 系統會在啟動時自動檢查並創建資料庫（如果不存在）
+   - 或者手動創建：
+     ```sql
+     CREATE DATABASE shopping-react-flask;
+     ```
 
 5. 執行應用:
    ```bash
