@@ -76,7 +76,7 @@
                             <label class="block text-sm font-medium mb-2">父分類</label>
                             <select id="parent_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                                 <option value="0">根分類</option>
-                                ${categories.filter(c => c.parent_id === 0).map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+                                ${categories.filter(c => !c.parent_id || c.parent_id === 0).map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
                             </select>
                         </div>
                         <div class="mb-4" id="image-upload-container">

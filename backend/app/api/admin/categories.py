@@ -58,20 +58,23 @@ def create_category(
                 detail="分类名称不能为空"
             )
         
-        # 如果 parent_id != 0，檢查父分類是否存在
-        if category_data.parent_id != 0:
-            parent = db.query(ProductCategory).filter(ProductCategory.id == category_data.parent_id).first()
+        # 將 parent_id = 0 轉換為 None（根分類）
+        parent_id_value = None if category_data.parent_id == 0 else category_data.parent_id
+        
+        # 如果 parent_id 不為 None，檢查父分類是否存在
+        if parent_id_value is not None:
+            parent = db.query(ProductCategory).filter(ProductCategory.id == parent_id_value).first()
             if not parent:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent category not found")
             # 子分類不能有 image
             image_value = None
         else:
-            # 父分類可以有 image（Font Awesome 图标类名）
+            # 父分類（根分類）可以有 image（Font Awesome 图标类名）
             image_value = category_data.image if category_data.image else None
         
         new_category = ProductCategory(
             name=category_data.name.strip(),
-            parent_id=category_data.parent_id,
+            parent_id=parent_id_value,
             image=image_value,
             description=category_data.description.strip() if category_data.description else None
         )
@@ -141,14 +144,18 @@ def update_category(
         if category_data.name is not None:
             category.name = category_data.name
         if category_data.parent_id is not None:
-            if category_data.parent_id != 0:
-                parent = db.query(ProductCategory).filter(ProductCategory.id == category_data.parent_id).first()
+            # 將 parent_id = 0 轉換為 None（根分類）
+            parent_id_value = None if category_data.parent_id == 0 else category_data.parent_id
+            
+            if parent_id_value is not None:
+                parent = db.query(ProductCategory).filter(ProductCategory.id == parent_id_value).first()
                 if not parent:
                     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent category not found")
                 category.image = None  # 子分類不能有 image
-            category.parent_id = category_data.parent_id
+            category.parent_id = parent_id_value
         if category_data.image is not None:
-            if category.parent_id == 0:
+            # 只有根分類（parent_id 為 None）可以有 image
+            if category.parent_id is None:
                 category.image = category_data.image
         if category_data.description is not None:
             category.description = category_data.description

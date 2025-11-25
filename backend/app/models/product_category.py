@@ -9,8 +9,8 @@ class ProductCategory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
-    parent_id = Column(Integer, ForeignKey("product_categories.id"), default=0)
-    image = Column(String(500), nullable=True)  # Only for parent_id = 0
+    parent_id = Column(Integer, ForeignKey("product_categories.id"), nullable=True, default=None)
+    image = Column(String(500), nullable=True)  # Only for parent_id = NULL
     description = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

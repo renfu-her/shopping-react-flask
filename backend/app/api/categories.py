@@ -22,7 +22,7 @@ def get_categories(db: Session = Depends(get_db)):
     root_categories = []
     for cat in all_categories:
         category_node = category_dict[cat.id]
-        if cat.parent_id == 0:
+        if cat.parent_id is None:  # 根分類的 parent_id 為 None
             root_categories.append(category_node)
         else:
             if cat.parent_id in category_dict:

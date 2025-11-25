@@ -60,7 +60,7 @@ def get_categories_list(db: Session = Depends(get_db)):
             "id": cat.id,
             "name": cat.name,
             "parent_id": cat.parent_id,
-            "image": cat.image if cat.parent_id == 0 else None
+            "image": cat.image if cat.parent_id is None else None
         }
         for cat in categories
     ]

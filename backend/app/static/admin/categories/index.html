@@ -127,7 +127,9 @@
                 <tr>
                     <td class="px-4 py-3">${cat.id}</td>
                     <td class="px-4 py-3">
-                        ${cat.image ? `<img src="${cat.image}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">` : '-'}
+                        ${cat.image ? (cat.image.startsWith('fa') || cat.image.includes('fa-') ? 
+                            `<i class="${cat.image} text-2xl text-blue-600"></i>` : 
+                            `<img src="${cat.image}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`) : '-'}
                     </td>
                     <td class="px-4 py-3">${cat.name}</td>
                     <td class="px-4 py-3">${parent ? parent.name : '根分類'}</td>
