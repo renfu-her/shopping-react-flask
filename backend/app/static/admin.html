@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後台管理系統 - 快點訂 Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app">
+        <!-- 登入頁面 -->
+        <div id="login-page" class="min-h-screen gradient-bg flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full mb-4">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">後台管理系統</h1>
+                    <p class="text-gray-500">快點訂 Admin Panel</p>
+                </div>
+                
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            管理員郵箱
+                        </label>
+                        <input type="email" id="email" required 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="請輸入管理員郵箱">
+                    </div>
+                    
+                    <div>
+                        <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                            密碼
+                        </label>
+                        <input type="password" id="password" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="請輸入密碼">
+                    </div>
+                    
+                    <button type="submit" 
+                        class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center">
+                        <span>登入後台</span>
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
+                    </button>
+                    
+                    <p class="text-xs text-gray-500 text-center flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        僅限管理員帳號登入
+                    </p>
+                </form>
+                
+                <div class="mt-6 text-center">
+                    <a href="/" class="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        返回網站首頁
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 後台管理界面 -->
+        <div id="admin-panel" class="hidden min-h-screen bg-gray-100">
+            <!-- Sidebar -->
+            <div class="fixed left-0 top-0 h-full w-64 bg-gray-800 text-white">
+                <div class="p-6 border-b border-gray-700">
+                    <h2 class="text-2xl font-bold">快點訂</h2>
+                </div>
+                <nav class="mt-4">
+                    <a href="#" data-page="users" class="admin-nav-item flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        使用者管理
+                    </a>
+                    <a href="#" data-page="banners" class="admin-nav-item flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        首頁 Banner
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="ml-64">
+                <!-- Header -->
+                <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                    <h1 id="page-title" class="text-2xl font-bold text-gray-900">使用者管理</h1>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-gray-600">管理員</span>
+                        <button id="logout-btn" class="text-gray-600 hover:text-gray-900 flex items-center">
+                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            登出
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Content Area -->
+                <main class="p-6">
+                    <div id="users-page" class="admin-page">
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-bold">使用者管理</h2>
+                                <button id="add-user-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                    + 新增使用者
+                                </button>
+                            </div>
+                            
+                            <div class="flex gap-4 mb-6">
+                                <input type="text" id="user-search" placeholder="搜尋姓名、郵箱..." 
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
+                                <select id="role-filter" class="px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="">所有角色</option>
+                                    <option value="admin">管理員</option>
+                                    <option value="store_manager">商店管理者</option>
+                                    <option value="customer">客戶</option>
+                                </select>
+                                <select id="status-filter" class="px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="">所有狀態</option>
+                                    <option value="active">啟用</option>
+                                    <option value="inactive">停用</option>
+                                </select>
+                                <select id="page-size" class="px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="10">10 筆/頁</option>
+                                    <option value="20">20 筆/頁</option>
+                                    <option value="50">50 筆/頁</option>
+                                </select>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">姓名</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">郵箱</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">角色</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">狀態</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">註冊時間</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
+                                        <!-- 動態載入 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mt-4 flex justify-between items-center">
+                                <span id="users-pagination-info" class="text-sm text-gray-600">顯示 0-0 / 共 0 筆</span>
+                                <div class="flex gap-2">
+                                    <button id="prev-page" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">上一頁</button>
+                                    <div id="page-numbers" class="flex gap-2"></div>
+                                    <button id="next-page" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">下一頁</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="banners-page" class="admin-page hidden">
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-bold">首頁 Banner 管理</h2>
+                                <button id="add-banner-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                    + 新增 Banner
+                                </button>
+                            </div>
+                            
+                            <div class="flex gap-4 mb-6">
+                                <input type="text" id="banner-search" placeholder="搜尋 Banner 名稱..." 
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
+                                <select id="banner-status-filter" class="px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="">所有狀態</option>
+                                    <option value="true">啟用</option>
+                                    <option value="false">停用</option>
+                                </select>
+                                <select id="banner-page-size" class="px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="10">10 筆/頁</option>
+                                    <option value="20">20 筆/頁</option>
+                                    <option value="50">50 筆/頁</option>
+                                </select>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">排序</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">圖片</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Banner 名稱</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">狀態</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">建立時間</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="banners-table-body" class="bg-white divide-y divide-gray-200">
+                                        <!-- 動態載入 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mt-4 flex justify-between items-center">
+                                <span id="banners-pagination-info" class="text-sm text-gray-600">顯示 0-0 / 共 0 筆</span>
+                                <div class="flex gap-2">
+                                    <button id="banner-prev-page" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">上一頁</button>
+                                    <div id="banner-page-numbers" class="flex gap-2"></div>
+                                    <button id="banner-next-page" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">下一頁</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/backend/admin';
+        let currentToken = localStorage.getItem('admin_token');
+        let currentPage = 'users';
+        let currentUserPage = 1;
+        let currentBannerPage = 1;
+
+        // 檢查登入狀態
+        if (currentToken) {
+            showAdminPanel();
+        } else {
+            showLoginPage();
+        }
+
+        // 登入表單處理
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('admin_token', data.access_token);
+                    currentToken = data.access_token;
+                    showAdminPanel();
+                    loadUsers();
+                } else {
+                    alert('登入失敗：' + (await response.json()).detail);
+                }
+            } catch (error) {
+                alert('登入錯誤：' + error.message);
+            }
+        });
+
+        // 登出
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('admin_token');
+            currentToken = null;
+            showLoginPage();
+        });
+
+        // 顯示登入頁面
+        function showLoginPage() {
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('admin-panel').classList.add('hidden');
+        }
+
+        // 顯示管理面板
+        function showAdminPanel() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('admin-panel').classList.remove('hidden');
+        }
+
+        // 導航切換
+        document.querySelectorAll('.admin-nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = item.dataset.page;
+                switchPage(page);
+            });
+        });
+
+        function switchPage(page) {
+            currentPage = page;
+            document.querySelectorAll('.admin-page').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`${page}-page`).classList.remove('hidden');
+            document.querySelectorAll('.admin-nav-item').forEach(item => {
+                item.classList.remove('bg-gray-700');
+            });
+            document.querySelector(`[data-page="${page}"]`).classList.add('bg-gray-700');
+            
+            if (page === 'users') {
+                document.getElementById('page-title').textContent = '使用者管理';
+                loadUsers();
+            } else if (page === 'banners') {
+                document.getElementById('page-title').textContent = '首頁 Banner 管理';
+                loadBanners();
+            }
+        }
+
+        // 載入使用者列表
+        async function loadUsers(page = 1) {
+            const search = document.getElementById('user-search').value;
+            const role = document.getElementById('role-filter').value;
+            const status = document.getElementById('status-filter').value;
+            const pageSize = document.getElementById('page-size').value;
+
+            const params = new URLSearchParams({
+                page: page,
+                page_size: pageSize
+            });
+            if (search) params.append('search', search);
+            if (role) params.append('role', role);
+            if (status) params.append('status_filter', status);
+
+            try {
+                const response = await fetch(`${API_BASE}/users?${params}`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    renderUsers(data);
+                    currentUserPage = page;
+                    updateUserPagination(data);
+                } else if (response.status === 401) {
+                    localStorage.removeItem('admin_token');
+                    showLoginPage();
+                }
+            } catch (error) {
+                console.error('載入使用者失敗：', error);
+            }
+        }
+
+        function renderUsers(data) {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = data.users.map(user => `
+                <tr>
+                    <td class="px-4 py-3">${user.id}</td>
+                    <td class="px-4 py-3">${user.name}</td>
+                    <td class="px-4 py-3">${user.email}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs ${
+                            user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                            user.role === 'store_manager' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                        }">
+                            ${user.role === 'admin' ? '管理員' : user.role === 'store_manager' ? '商店管理者' : '客戶'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs ${
+                            user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }">
+                            ${user.status === 'active' ? '啟用' : '停用'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">${new Date(user.created_at).toLocaleDateString('zh-TW')}</td>
+                    <td class="px-4 py-3">
+                        <button onclick="editUser(${user.id})" class="text-blue-600 hover:text-blue-800 mr-2">編輯</button>
+                        <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-800">刪除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateUserPagination(data) {
+            document.getElementById('users-pagination-info').textContent = 
+                `顯示 ${(data.page - 1) * data.page_size + 1}-${Math.min(data.page * data.page_size, data.total)} / 共 ${data.total} 筆`;
+            
+            const pageNumbers = document.getElementById('page-numbers');
+            pageNumbers.innerHTML = '';
+            for (let i = 1; i <= data.total_pages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = `px-4 py-2 border rounded-lg ${i === data.page ? 'bg-blue-600 text-white' : 'border-gray-300 hover:bg-gray-50'}`;
+                btn.onclick = () => loadUsers(i);
+                pageNumbers.appendChild(btn);
+            }
+        }
+
+        // 載入 Banner 列表
+        async function loadBanners(page = 1) {
+            const search = document.getElementById('banner-search').value;
+            const status = document.getElementById('banner-status-filter').value;
+            const pageSize = document.getElementById('banner-page-size').value;
+
+            const params = new URLSearchParams({
+                page: page,
+                page_size: pageSize
+            });
+            if (search) params.append('search', search);
+            if (status !== '') params.append('status_filter', status);
+
+            try {
+                const response = await fetch(`${API_BASE}/banners?${params}`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    renderBanners(data);
+                    currentBannerPage = page;
+                    updateBannerPagination(data);
+                } else if (response.status === 401) {
+                    localStorage.removeItem('admin_token');
+                    showLoginPage();
+                }
+            } catch (error) {
+                console.error('載入 Banner 失敗：', error);
+            }
+        }
+
+        function renderBanners(data) {
+            const tbody = document.getElementById('banners-table-body');
+            tbody.innerHTML = data.ads.map(ad => `
+                <tr>
+                    <td class="px-4 py-3">${ad.order_index}</td>
+                    <td class="px-4 py-3">${ad.id}</td>
+                    <td class="px-4 py-3">
+                        <img src="${ad.image_url}" alt="${ad.title}" class="w-20 h-12 object-cover rounded">
+                    </td>
+                    <td class="px-4 py-3">${ad.title}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs ${
+                            ad.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }">
+                            ${ad.is_active ? '啟用' : '停用'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">${new Date(ad.created_at).toLocaleDateString('zh-TW')}</td>
+                    <td class="px-4 py-3">
+                        <button onclick="editBanner(${ad.id})" class="text-blue-600 hover:text-blue-800 mr-2">編輯</button>
+                        <button onclick="toggleBannerStatus(${ad.id})" class="text-yellow-600 hover:text-yellow-800 mr-2">停用</button>
+                        <button onclick="deleteBanner(${ad.id})" class="text-red-600 hover:text-red-800">刪除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateBannerPagination(data) {
+            document.getElementById('banners-pagination-info').textContent = 
+                `顯示 ${(data.page - 1) * data.page_size + 1}-${Math.min(data.page * data.page_size, data.total)} / 共 ${data.total} 筆`;
+            
+            const pageNumbers = document.getElementById('banner-page-numbers');
+            pageNumbers.innerHTML = '';
+            for (let i = 1; i <= data.total_pages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = `px-4 py-2 border rounded-lg ${i === data.page ? 'bg-blue-600 text-white' : 'border-gray-300 hover:bg-gray-50'}`;
+                btn.onclick = () => loadBanners(i);
+                pageNumbers.appendChild(btn);
+            }
+        }
+
+        // 事件監聽
+        document.getElementById('user-search').addEventListener('input', () => loadUsers(1));
+        document.getElementById('role-filter').addEventListener('change', () => loadUsers(1));
+        document.getElementById('status-filter').addEventListener('change', () => loadUsers(1));
+        document.getElementById('page-size').addEventListener('change', () => loadUsers(1));
+
+        document.getElementById('banner-search').addEventListener('input', () => loadBanners(1));
+        document.getElementById('banner-status-filter').addEventListener('change', () => loadBanners(1));
+        document.getElementById('banner-page-size').addEventListener('change', () => loadBanners(1));
+
+        // 簡化的編輯/刪除函數（需要實現完整功能）
+        function editUser(id) {
+            alert('編輯功能開發中，ID: ' + id);
+        }
+
+        function deleteUser(id) {
+            if (confirm('確定要刪除這個使用者嗎？')) {
+                fetch(`${API_BASE}/users/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                }).then(() => loadUsers(currentUserPage));
+            }
+        }
+
+        function editBanner(id) {
+            alert('編輯功能開發中，ID: ' + id);
+        }
+
+        function toggleBannerStatus(id) {
+            fetch(`${API_BASE}/banners/${id}/toggle-status`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${currentToken}` }
+            }).then(() => loadBanners(currentBannerPage));
+        }
+
+        function deleteBanner(id) {
+            if (confirm('確定要刪除這個 Banner 嗎？')) {
+                fetch(`${API_BASE}/banners/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                }).then(() => loadBanners(currentBannerPage));
+            }
+        }
+
+        // 初始化
+        if (currentToken) {
+            switchPage('users');
+        }
+    </script>
+</body>
+</html>
+

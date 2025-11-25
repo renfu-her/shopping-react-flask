@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime, timezone
 from app.config import settings
 import logging
 import re
@@ -9,6 +10,25 @@ logger = logging.getLogger(__name__)
 
 # Base class for models
 Base = declarative_base()
+
+
+# 自動設置 created_at 和 updated_at 的事件監聽器
+# 這些事件監聽器會在插入和更新記錄時自動設置時間戳
+@event.listens_for(Base, "before_insert", propagate=True)
+def receive_before_insert(mapper, connection, target):
+    """在插入記錄前自動設置 created_at 和 updated_at"""
+    now = datetime.now(timezone.utc)
+    if hasattr(target, 'created_at') and target.created_at is None:
+        target.created_at = now
+    if hasattr(target, 'updated_at') and target.updated_at is None:
+        target.updated_at = now
+
+
+@event.listens_for(Base, "before_update", propagate=True)
+def receive_before_update(mapper, connection, target):
+    """在更新記錄前自動更新 updated_at"""
+    if hasattr(target, 'updated_at'):
+        target.updated_at = datetime.now(timezone.utc)
 
 
 def ensure_database_exists():
@@ -77,4 +97,3 @@ def get_db():
         yield db
     finally:
         db.close()
-

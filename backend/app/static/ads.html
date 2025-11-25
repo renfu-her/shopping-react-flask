@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banner 管理 - 快點訂 Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="base-content"></div>
+    <script>
+        // 載入 base.html 的內容
+        fetch('/static/base.html')
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('base-content').innerHTML = html;
+                initAdsPage();
+            });
+    </script>
+    <script>
+        const API_BASE = '/backend/admin';
+        let currentToken = localStorage.getItem('admin_token');
+        let currentPage = 1;
+
+        function initAdsPage() {
+            if (!currentToken) {
+                window.location.href = '/backend/login';
+                return;
+            }
+
+            // 設置頁面標題
+            document.getElementById('page-title').textContent = '首頁 Banner 管理';
+            
+            // 設置內容區域
+            const content = document.getElementById('page-content');
+            content.innerHTML = `
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">首頁 Banner 管理</h2>
+                        <button onclick="showCreateModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                            + 新增 Banner
+                        </button>
+                    </div>
+                    
+                    <div class="flex gap-4 mb-6">
+                        <input type="text" id="search" placeholder="搜尋 Banner 名稱..." 
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
+                        <select id="status-filter" class="px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="">所有狀態</option>
+                            <option value="true">啟用</option>
+                            <option value="false">停用</option>
+                        </select>
+                        <select id="page-size" class="px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="10">10 筆/頁</option>
+                            <option value="20">20 筆/頁</option>
+                            <option value="50">50 筆/頁</option>
+                        </select>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">排序</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">ID</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">圖片</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">標題</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">連結</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">狀態</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-between items-center">
+                        <span id="pagination-info" class="text-sm text-gray-600"></span>
+                        <div id="pagination" class="flex gap-2"></div>
+                    </div>
+                </div>
+                
+                <!-- Modal -->
+                <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                        <h3 id="modal-title" class="text-xl font-bold mb-4">新增 Banner</h3>
+                        <form id="form" onsubmit="handleSubmit(event)">
+                            <input type="hidden" id="id">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-2">標題</label>
+                                <input type="text" id="title" required class="w-full px-4 py-2 border rounded-lg">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-2">圖片 URL</label>
+                                <input type="url" id="image_url" required class="w-full px-4 py-2 border rounded-lg">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-2">連結 URL</label>
+                                <input type="url" id="link_url" class="w-full px-4 py-2 border rounded-lg">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-2">排序索引</label>
+                                <input type="number" id="order_index" value="0" class="w-full px-4 py-2 border rounded-lg">
+                            </div>
+                            <div class="mb-4">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="is_active" checked class="mr-2">
+                                    <span>啟用</span>
+                                </label>
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">儲存</button>
+                                <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">取消</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            // 事件監聽
+            document.getElementById('search').addEventListener('input', () => loadData(1));
+            document.getElementById('status-filter').addEventListener('change', () => loadData(1));
+            document.getElementById('page-size').addEventListener('change', () => loadData(1));
+
+            loadData(1);
+        }
+
+        async function loadData(page = 1) {
+            const search = document.getElementById('search').value;
+            const status = document.getElementById('status-filter').value;
+            const pageSize = document.getElementById('page-size').value;
+
+            const params = new URLSearchParams({ page, page_size: pageSize });
+            if (search) params.append('search', search);
+            if (status !== '') params.append('status_filter', status);
+
+            try {
+                const res = await fetch(`${API_BASE}/banners?${params}`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                if (res.status === 401) {
+                    window.location.href = '/backend/login';
+                    return;
+                }
+                const data = await res.json();
+                renderTable(data);
+                renderPagination(data);
+                currentPage = page;
+            } catch (error) {
+                console.error('載入失敗:', error);
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = data.ads.map(ad => `
+                <tr>
+                    <td class="px-4 py-3">${ad.order_index}</td>
+                    <td class="px-4 py-3">${ad.id}</td>
+                    <td class="px-4 py-3"><img src="${ad.image_url}" alt="${ad.title}" class="w-20 h-12 object-cover rounded"></td>
+                    <td class="px-4 py-3">${ad.title}</td>
+                    <td class="px-4 py-3"><a href="${ad.link_url}" target="_blank" class="text-blue-600">${ad.link_url || '-'}</a></td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs ${ad.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                            ${ad.is_active ? '啟用' : '停用'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <button onclick="editItem(${ad.id})" class="text-blue-600 hover:text-blue-800 mr-2">編輯</button>
+                        <button onclick="toggleStatus(${ad.id})" class="text-yellow-600 hover:text-yellow-800 mr-2">${ad.is_active ? '停用' : '啟用'}</button>
+                        <button onclick="deleteItem(${ad.id})" class="text-red-600 hover:text-red-800">刪除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderPagination(data) {
+            document.getElementById('pagination-info').textContent = 
+                `顯示 ${(data.page - 1) * data.page_size + 1}-${Math.min(data.page * data.page_size, data.total)} / 共 ${data.total} 筆`;
+            
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            for (let i = 1; i <= data.total_pages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = `px-4 py-2 border rounded-lg ${i === data.page ? 'bg-blue-600 text-white' : 'border-gray-300 hover:bg-gray-50'}`;
+                btn.onclick = () => loadData(i);
+                pagination.appendChild(btn);
+            }
+        }
+
+        function showCreateModal() {
+            document.getElementById('modal-title').textContent = '新增 Banner';
+            document.getElementById('form').reset();
+            document.getElementById('id').value = '';
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        async function editItem(id) {
+            try {
+                const res = await fetch(`${API_BASE}/banners/${id}`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const ad = await res.json();
+                document.getElementById('modal-title').textContent = '編輯 Banner';
+                document.getElementById('id').value = ad.id;
+                document.getElementById('title').value = ad.title;
+                document.getElementById('image_url').value = ad.image_url;
+                document.getElementById('link_url').value = ad.link_url || '';
+                document.getElementById('order_index').value = ad.order_index;
+                document.getElementById('is_active').checked = ad.is_active;
+                document.getElementById('modal').classList.remove('hidden');
+            } catch (error) {
+                alert('載入失敗: ' + error.message);
+            }
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('id').value;
+            const data = {
+                title: document.getElementById('title').value,
+                image_url: document.getElementById('image_url').value,
+                link_url: document.getElementById('link_url').value,
+                order_index: parseInt(document.getElementById('order_index').value),
+                is_active: document.getElementById('is_active').checked
+            };
+
+            try {
+                const url = id ? `${API_BASE}/banners/${id}` : `${API_BASE}/banners`;
+                const method = id ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    closeModal();
+                    loadData(currentPage);
+                } else {
+                    const error = await res.json();
+                    alert('操作失敗: ' + (error.detail || '未知錯誤'));
+                }
+            } catch (error) {
+                alert('操作失敗: ' + error.message);
+            }
+        }
+
+        async function toggleStatus(id) {
+            try {
+                const res = await fetch(`${API_BASE}/banners/${id}/toggle-status`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                if (res.ok) {
+                    loadData(currentPage);
+                }
+            } catch (error) {
+                alert('操作失敗: ' + error.message);
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('確定要刪除這個 Banner 嗎？')) return;
+            try {
+                const res = await fetch(`${API_BASE}/banners/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                if (res.ok) {
+                    loadData(currentPage);
+                }
+            } catch (error) {
+                alert('刪除失敗: ' + error.message);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        // 將函數暴露到全局
+        window.showCreateModal = showCreateModal;
+        window.editItem = editItem;
+        window.handleSubmit = handleSubmit;
+        window.toggleStatus = toggleStatus;
+        window.deleteItem = deleteItem;
+        window.closeModal = closeModal;
+    </script>
+</body>
+</html>
+

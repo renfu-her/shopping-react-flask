@@ -65,3 +65,25 @@ async def get_current_user_optional(
     except Exception:
         return None
 
+
+async def get_current_admin(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> User:
+    """獲取當前管理員用戶（必須是管理員角色）"""
+    from app.models.user import UserRole, UserStatus
+    
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can access this resource"
+        )
+    
+    if current_user.status != UserStatus.ACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is not active"
+        )
+    
+    return current_user
+

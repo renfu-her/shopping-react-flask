@@ -1,4 +1,4 @@
-from app.schemas.user import UserCreate, UserResponse, UserLogin
+from app.schemas.user import UserCreate, UserResponse, UserLogin, UserUpdate, UserListResponse
 from app.schemas.product import ProductResponse, ProductListResponse
 from app.schemas.category import CategoryResponse, CategoryTreeResponse
 from app.schemas.cart import CartItemCreate, CartItemUpdate, CartItemResponse, CartResponse
