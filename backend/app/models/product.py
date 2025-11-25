@@ -22,4 +22,5 @@ class Product(Base):
     category = relationship("ProductCategory", back_populates="products")
     cart_items = relationship("CartItem", back_populates="product")
     order_items = relationship("OrderItem", back_populates="product")
+    images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan", order_by="ProductImage.order_index")
 

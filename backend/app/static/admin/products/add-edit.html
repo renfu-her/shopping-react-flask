@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>產品管理 - 購物車管理 Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/js/admin-common.js"></script>
@@ -47,6 +48,7 @@
         const id = urlParams.get('id');
         const isEdit = !!id;
         let categories = [];
+        let productImages = []; // 存储产品图片列表
 
         async function initProductsFormPage() {
             await new Promise(resolve => setTimeout(resolve, 50));
@@ -79,7 +81,17 @@
                             <label class="block text-sm font-medium mb-2">描述</label>
                             <textarea id="description" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
                         </div>
-                        ${createImageUploadHTML('image-upload', 'image-preview', isEdit ? '' : '')}
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">產品圖片 <span class="text-red-500">*</span></label>
+                            <div id="product-images-container" class="border border-gray-300 rounded-lg p-4 min-h-[200px]">
+                                <div id="images-list" class="grid grid-cols-4 gap-4 mb-4"></div>
+                                <button type="button" id="add-image-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                    <i class="fa-solid fa-plus mr-2"></i>添加圖片
+                                </button>
+                                <input type="file" id="image-upload-input" accept="image/*" multiple class="hidden">
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">提示：可以拖拽圖片調整順序</p>
+                        </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-2">分類 <span class="text-red-500">*</span></label>
                             <select id="category_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
@@ -104,10 +116,287 @@
                 </div>
             `;
 
+            // 初始化图片管理功能
+            initImageManagement();
+            
             if (isEdit) {
                 loadProductData(id);
             }
         }
+
+        /**
+         * 初始化图片管理功能
+         */
+        function initImageManagement() {
+            const addImageBtn = document.getElementById('add-image-btn');
+            const imageInput = document.getElementById('image-upload-input');
+            
+            if (addImageBtn) {
+                addImageBtn.addEventListener('click', () => {
+                    imageInput?.click();
+                });
+            }
+            
+            if (imageInput) {
+                imageInput.addEventListener('change', async (e) => {
+                    const files = Array.from(e.target.files);
+                    for (const file of files) {
+                        await uploadAndAddImage(file);
+                    }
+                    e.target.value = ''; // 清空 input
+                });
+            }
+        }
+
+        /**
+         * 上传图片并添加到列表
+         */
+        async function uploadAndAddImage(file) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const res = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                if (!res.ok) {
+                    const error = await res.json();
+                    alert('上傳失敗: ' + (error.detail || '未知錯誤'));
+                    return;
+                }
+                
+                const data = await res.json();
+                const imageUrl = data.url;
+                
+                // 如果是编辑模式且产品已存在，直接添加到数据库
+                if (isEdit && id) {
+                    await addImageToProduct(id, imageUrl);
+                } else {
+                    // 新增模式，先添加到本地列表
+                    addImageToLocalList(imageUrl);
+                }
+            } catch (error) {
+                console.error('上傳圖片失敗:', error);
+                alert('上傳失敗: ' + error.message);
+            }
+        }
+
+        /**
+         * 添加图片到产品（API）
+         */
+        async function addImageToProduct(productId, imageUrl) {
+            try {
+                const res = await apiRequest(`${API_BASE}/products/${productId}/images`, {
+                    method: 'POST',
+                    body: JSON.stringify({ image_url: imageUrl })
+                });
+                
+                if (!res) return;
+                
+                if (res.ok) {
+                    const imageData = await res.json();
+                    productImages.push(imageData);
+                    renderImages();
+                } else {
+                    const error = await res.json();
+                    alert('添加圖片失敗: ' + (error.detail || '未知錯誤'));
+                }
+            } catch (error) {
+                console.error('添加圖片失敗:', error);
+                alert('添加圖片失敗: ' + error.message);
+            }
+        }
+
+        /**
+         * 添加图片到本地列表（新增模式）
+         */
+        function addImageToLocalList(imageUrl) {
+            const tempId = Date.now(); // 临时 ID
+            productImages.push({
+                id: tempId,
+                image_url: imageUrl,
+                order_index: productImages.length
+            });
+            renderImages();
+        }
+
+        /**
+         * 渲染图片列表
+         */
+        function renderImages() {
+            const imagesList = document.getElementById('images-list');
+            if (!imagesList) return;
+            
+            // 按 order_index 排序
+            productImages.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+            
+            if (productImages.length === 0) {
+                imagesList.innerHTML = '<p class="text-gray-500 col-span-4">暫無圖片，請點擊「添加圖片」上傳</p>';
+                return;
+            }
+            
+            imagesList.innerHTML = productImages.map((img, index) => `
+                <div class="relative group image-item" data-image-id="${img.id}" draggable="true">
+                    <img src="${img.image_url}" alt="產品圖片" class="w-full h-32 object-cover rounded-lg border-2 border-gray-300">
+                    <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                        ${index + 1}
+                    </div>
+                    <button type="button" onclick="removeImage(${img.id})" class="absolute top-2 left-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="fa-solid fa-times text-xs"></i>
+                    </button>
+                    <div class="absolute bottom-2 left-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded text-center">
+                        拖拽調整順序
+                    </div>
+                </div>
+            `).join('');
+            
+            // 初始化拖拽功能
+            initDragAndDrop();
+        }
+
+        /**
+         * 初始化拖拽排序
+         */
+        function initDragAndDrop() {
+            const imagesList = document.getElementById('images-list');
+            if (!imagesList) return;
+            
+            const items = imagesList.querySelectorAll('.image-item');
+            let draggedElement = null;
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    draggedElement = item;
+                    item.style.opacity = '0.5';
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                item.addEventListener('dragend', () => {
+                    if (draggedElement) {
+                        draggedElement.style.opacity = '1';
+                        updateImageOrderFromDOM();
+                    }
+                });
+                
+                item.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    
+                    const afterElement = getDragAfterElement(imagesList, e.clientX);
+                    if (afterElement == null) {
+                        imagesList.appendChild(draggedElement);
+                    } else {
+                        imagesList.insertBefore(draggedElement, afterElement);
+                    }
+                });
+                
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                });
+            });
+        }
+
+        /**
+         * 从 DOM 更新图片顺序
+         */
+        function updateImageOrderFromDOM() {
+            const imagesList = document.getElementById('images-list');
+            if (!imagesList) return;
+            
+            const items = imagesList.querySelectorAll('.image-item');
+            const newOrder = Array.from(items).map((item, index) => {
+                const imageId = parseInt(item.dataset.imageId);
+                const img = productImages.find(i => i.id === imageId);
+                if (img) {
+                    img.order_index = index;
+                }
+                return imageId;
+            });
+            
+            productImages.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+            renderImages();
+        }
+
+        /**
+         * 获取拖拽后的元素位置
+         */
+        function getDragAfterElement(container, x) {
+            const draggableElements = [...container.querySelectorAll('.image-item:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = x - box.left - box.width / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        /**
+         * 更新图片顺序
+         */
+        async function updateImageOrder() {
+            if (!isEdit || !id) return;
+            
+            const imagesList = document.getElementById('images-list');
+            if (!imagesList) return;
+            
+            const items = imagesList.querySelectorAll('.image-item');
+            const imageIds = Array.from(items).map(item => parseInt(item.dataset.imageId));
+            
+            try {
+                const res = await apiRequest(`${API_BASE}/products/${id}/images/reorder`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ image_ids: imageIds })
+                });
+                
+                if (!res || !res.ok) {
+                    console.error('更新圖片順序失敗');
+                }
+            } catch (error) {
+                console.error('更新圖片順序失敗:', error);
+            }
+        }
+
+        /**
+         * 删除图片
+         */
+        async function removeImage(imageId) {
+            if (!confirm('確定要刪除這張圖片嗎？')) return;
+            
+            // 如果是编辑模式且图片已保存到数据库（ID 不是临时 ID），调用 API 删除
+            // 临时 ID 是时间戳，通常大于 1000000000000（约 2001 年）
+            const isTempId = imageId > 1000000000000;
+            
+            if (isEdit && id && !isTempId) {
+                try {
+                    const res = await apiRequest(`${API_BASE}/products/${id}/images/${imageId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!res || !res.ok) {
+                        alert('刪除圖片失敗');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('刪除圖片失敗:', error);
+                    alert('刪除圖片失敗: ' + error.message);
+                    return;
+                }
+            }
+            
+            // 从本地列表移除
+            productImages = productImages.filter(img => img.id !== imageId);
+            renderImages();
+        }
+
+        window.removeImage = removeImage;
 
         async function loadCategories() {
             try {
@@ -157,31 +446,52 @@
                 document.getElementById('title').value = product.title;
                 document.getElementById('price').value = product.price;
                 document.getElementById('description').value = product.description || '';
-                // 设置图片预览
-                if (product.image) {
-                    const previewDiv = document.getElementById('image-preview');
-                    const previewImg = document.getElementById('image-preview-img');
-                    const urlInput = document.getElementById('image-upload-url');
-                    if (previewImg) previewImg.src = product.image;
-                    if (previewDiv) previewDiv.classList.remove('hidden');
-                    if (urlInput) urlInput.value = product.image;
-                }
                 document.getElementById('category_id').value = product.category_id;
                 document.getElementById('stock').value = product.stock;
                 document.getElementById('is_active').checked = product.is_active;
+                
+                // 加载产品图片
+                await loadProductImages(id);
             } catch (error) {
                 alert('載入失敗: ' + error.message);
             }
         }
 
+        /**
+         * 加载产品图片
+         */
+        async function loadProductImages(productId) {
+            try {
+                const res = await apiRequest(`${API_BASE}/products/${productId}/images`);
+                if (!res) return;
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    productImages = data.images || [];
+                    renderImages();
+                }
+            } catch (error) {
+                console.error('載入產品圖片失敗:', error);
+            }
+        }
+
         async function handleSubmit(e) {
             e.preventDefault();
+            
+            // 验证至少有一张图片
+            if (productImages.length === 0) {
+                alert('請至少上傳一張產品圖片');
+                return;
+            }
+            
             const formId = document.getElementById('id').value;
+            const firstImage = productImages[0].image_url;
+            
             const data = {
                 title: document.getElementById('title').value,
                 price: parseFloat(document.getElementById('price').value),
                 description: document.getElementById('description').value,
-                image: document.getElementById('image-upload-url').value,
+                image: firstImage, // 使用第一张图片作为主图
                 category_id: parseInt(document.getElementById('category_id').value),
                 stock: parseInt(document.getElementById('stock').value),
                 is_active: document.getElementById('is_active').checked
@@ -195,7 +505,21 @@
                     body: JSON.stringify(data)
                 });
                 if (!res) return;
+                
                 if (res.ok) {
+                    const savedProduct = await res.json();
+                    const productId = savedProduct.id;
+                    
+                    // 如果是新增模式，需要将本地图片添加到数据库
+                    if (!formId) {
+                        for (const img of productImages) {
+                            await addImageToProduct(productId, img.image_url);
+                        }
+                    } else {
+                        // 编辑模式，更新图片顺序
+                        await updateImageOrder();
+                    }
+                    
                     window.location.href = '/backend/products';
                 } else {
                     const error = await res.json();
