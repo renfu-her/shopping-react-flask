@@ -1,13 +1,13 @@
-# 更改日志 (CHANGELOG)
+# 更改日誌 (CHANGELOG)
 
-## [2025-11-25] - Admin 界面改进和图片上传功能
+## [2025-11-25] - Admin 介面改進和圖片上傳功能
 
-### 添加的功能
+### 新增的功能
 
-#### 1. Admin 界面品牌名称更改
-- **时间**: 2025-11-25 11:42:11
-- **更改**: 将所有 admin 界面中的 "快點訂" 改为 "購物車管理"
-- **影响文件**:
+#### 1. Admin 介面品牌名稱更改
+- **時間**: 2025-11-25 11:42:11
+- **更改**: 將所有 admin 介面中的 "快點訂" 改為 "購物車管理"
+- **影響檔案**:
   - `app/static/base.html`
   - `app/static/login.html`
   - `app/static/admin/users/index.html` 和 `add-edit.html`
@@ -19,23 +19,23 @@
   - `app/static/admin/faq/index.html` 和 `add-edit.html`
   - `app/static/admin/orders/index.html`
 
-#### 2. Admin 导航菜单重构
-- **时间**: 2025-11-25 11:42:11
+#### 2. Admin 導航選單重構
+- **時間**: 2025-11-25 11:42:11
 - **更改**: 
-  - 将导航菜单重组为两个可折叠的分组：
+  - 將導航選單重組為兩個可折疊的分組：
     - **購物車管理**: 首頁 Banner, 使用者管理, 分類管理, 產品管理, 訂單管理
     - **內容管理**: 關於我們, 新聞管理, FAQ 管理
-  - 添加了展开/折叠功能
-  - 当前页面自动高亮显示（bg-gray-700）
-  - 自动展开包含当前页面的菜单组
-- **影响文件**:
-  - `app/static/base.html` - 导航菜单结构
-  - `app/static/js/admin-common.js` - 添加了 `initNavigation()` 函数
+  - 新增了展開/折疊功能
+  - 當前頁面自動高亮顯示（bg-gray-700）
+  - 自動展開包含當前頁面的選單組
+- **影響檔案**:
+  - `app/static/base.html` - 導航選單結構
+  - `app/static/js/admin-common.js` - 新增了 `initNavigation()` 函數
 
-#### 3. 编辑页面全屏显示
-- **时间**: 2025-11-25 11:42:11
-- **更改**: 所有 add-edit.html 页面的表单容器改为占满整个画面
-- **影响文件**:
+#### 3. 編輯頁面全螢幕顯示
+- **時間**: 2025-11-25 11:42:11
+- **更改**: 所有 add-edit.html 頁面的表單容器改為佔滿整個畫面
+- **影響檔案**:
   - `app/static/admin/users/add-edit.html`
   - `app/static/admin/ads/add-edit.html`
   - `app/static/admin/products/add-edit.html`
@@ -43,41 +43,41 @@
   - `app/static/admin/news/add-edit.html`
   - `app/static/admin/about/add-edit.html`
   - `app/static/admin/faq/add-edit.html`
-  - `app/static/base.html` - 更新 main 标签样式
+  - `app/static/base.html` - 更新 main 標籤樣式
 
-#### 4. 图片上传功能实现
-- **时间**: 2025-11-25 11:42:11
+#### 4. 圖片上傳功能實現
+- **時間**: 2025-11-25 11:42:11
 - **更改**: 
-  - 实现了图片上传 API，支持 jpg/png 自动转换为 webp 格式
-  - 使用 UUID 生成唯一文件名
-  - 添加了图片上传前端组件
-- **新增文件**:
-  - `app/api/admin/upload.py` - 图片上传 API 端点
-  - `app/static/js/admin-upload.js` - 图片上传前端工具库
-- **修改文件**:
-  - `pyproject.toml` - 添加 `pillow>=10.0.0` 依赖
-  - `app/api/admin/__init__.py` - 注册 upload 路由
-  - `app/static/admin/products/add-edit.html` - 集成图片上传
-  - `app/static/admin/ads/add-edit.html` - 集成图片上传
-  - `app/static/admin/categories/add-edit.html` - 集成图片上传
-  - `app/static/admin/news/add-edit.html` - 集成图片上传
-  - `app/static/admin/about/add-edit.html` - 集成图片上传
-- **功能特点**:
-  - 支持格式: jpg, jpeg, png, webp
-  - 自动转换为 webp 格式（质量 85%）
-  - 文件大小限制: 10MB
-  - UUID 文件名: `{uuid}.webp`
-  - 上传目录: `static/uploads/`
-  - 图片预览功能
-  - 上传进度提示
+  - 實現了圖片上傳 API，支援 jpg/png 自動轉換為 webp 格式
+  - 使用 UUID 產生唯一檔案名稱
+  - 新增了圖片上傳前端組件
+- **新增檔案**:
+  - `app/api/admin/upload.py` - 圖片上傳 API 端點
+  - `app/static/js/admin-upload.js` - 圖片上傳前端工具庫
+- **修改檔案**:
+  - `pyproject.toml` - 新增 `pillow>=10.0.0` 依賴
+  - `app/api/admin/__init__.py` - 註冊 upload 路由
+  - `app/static/admin/products/add-edit.html` - 整合圖片上傳
+  - `app/static/admin/ads/add-edit.html` - 整合圖片上傳
+  - `app/static/admin/categories/add-edit.html` - 整合圖片上傳
+  - `app/static/admin/news/add-edit.html` - 整合圖片上傳
+  - `app/static/admin/about/add-edit.html` - 整合圖片上傳
+- **功能特點**:
+  - 支援格式: jpg, jpeg, png, webp
+  - 自動轉換為 webp 格式（品質 85%）
+  - 檔案大小限制: 10MB
+  - UUID 檔案名稱: `{uuid}.webp`
+  - 上傳目錄: `static/uploads/`
+  - 圖片預覽功能
+  - 上傳進度提示
 
-### 技术细节
+### 技術細節
 
-#### 图片上传 API
-- **端点**: `POST /backend/admin/upload`
-- **认证**: 需要管理员权限
-- **请求**: `multipart/form-data` (file)
-- **响应**: 
+#### 圖片上傳 API
+- **端點**: `POST /backend/admin/upload`
+- **認證**: 需要管理員權限
+- **請求**: `multipart/form-data` (file)
+- **響應**: 
   ```json
   {
     "url": "/static/uploads/{uuid}.webp",
@@ -86,60 +86,60 @@
   }
   ```
 
-#### 图片处理
-- 使用 Pillow (PIL) 进行图片处理
-- 自动处理不同颜色模式（RGB, RGBA, P, LA）
-- WebP 质量设置为 85%，压缩方法为 6（最佳压缩）
+#### 圖片處理
+- 使用 Pillow (PIL) 進行圖片處理
+- 自動處理不同顏色模式（RGB, RGBA, P, LA）
+- WebP 品質設定為 85%，壓縮方法為 6（最佳壓縮）
 
-#### 前端组件
-- `uploadImage(file)` - 上传图片函数
-- `createImageUploadHTML(inputId, previewId, currentImageUrl)` - 创建上传组件 HTML
-- `handleImageUpload(inputId, previewId)` - 处理图片上传
-- `removeImage(previewId, inputId)` - 移除图片
+#### 前端組件
+- `uploadImage(file)` - 上傳圖片函數
+- `createImageUploadHTML(inputId, previewId, currentImageUrl)` - 建立上傳組件 HTML
+- `handleImageUpload(inputId, previewId)` - 處理圖片上傳
+- `removeImage(previewId, inputId)` - 移除圖片
 
-### 依赖更新
+### 依賴更新
 
 ```toml
 dependencies = [
     ...
-    "pillow>=10.0.0",  # 新增：图片处理库
+    "pillow>=10.0.0",  # 新增：圖片處理庫
 ]
 ```
 
-### 目录结构
+### 目錄結構
 
 ```
 backend/
 ├── app/
 │   ├── api/
 │   │   └── admin/
-│   │       └── upload.py          # 新增：图片上传 API
+│   │       └── upload.py          # 新增：圖片上傳 API
 │   ├── static/
 │   │   ├── js/
-│   │   │   └── admin-upload.js     # 新增：图片上传前端工具
-│   │   ├── uploads/                # 新增：图片上传目录
+│   │   │   └── admin-upload.js     # 新增：圖片上傳前端工具
+│   │   ├── uploads/                # 新增：圖片上傳目錄
 │   │   └── admin/
-│   │       └── ...                 # 更新的编辑页面
+│   │       └── ...                 # 更新的編輯頁面
 │   └── ...
-└── CHANGELOG.md                    # 本文件
+└── CHANGELOG.md                    # 本檔案
 ```
 
-### 注意事项
+### 注意事項
 
-1. **图片存储**: 上传的图片存储在 `backend/static/uploads/` 目录
-2. **静态文件服务**: 确保 FastAPI 正确配置了静态文件服务
-3. **文件清理**: 建议定期清理未使用的图片文件
-4. **安全性**: 上传功能需要管理员权限，已通过 `get_current_admin` 依赖保护
+1. **圖片儲存**: 上傳的圖片儲存在 `backend/static/uploads/` 目錄
+2. **靜態檔案服務**: 確保 FastAPI 正確設定了靜態檔案服務
+3. **檔案清理**: 建議定期清理未使用的圖片檔案
+4. **安全性**: 上傳功能需要管理員權限，已透過 `get_current_admin` 依賴保護
 
-### 后续改进建议
+### 後續改進建議
 
-1. 添加图片压缩优化（根据用途调整尺寸）
-2. 实现图片删除 API
-3. 添加图片管理界面（查看所有上传的图片）
-4. 实现图片 CDN 集成
-5. 添加图片水印功能
+1. 新增圖片壓縮優化（根據用途調整尺寸）
+2. 實現圖片刪除 API
+3. 新增圖片管理介面（查看所有上傳的圖片）
+4. 實現圖片 CDN 整合
+5. 新增圖片浮水印功能
 
 ---
 
-**最后更新**: 2025-11-25 11:42:11
+**最後更新**: 2025-11-25 11:42:11
 

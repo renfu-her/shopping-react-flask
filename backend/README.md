@@ -41,15 +41,15 @@ FastAPI 後端系統，提供購物車、訂單、產品管理等完整功能。
    
    資料庫配置方式：
    - **方式 1（推薦）**: 使用 `DATABASE_URL`（完整 URL）
-     - 格式: `mysql+pymysql://用戶名:密碼@主機:端口/資料庫名稱`
+     - 格式: `mysql+pymysql://使用者名稱:密碼@主機:埠號/資料庫名稱`
      - 範例: `DATABASE_URL=mysql+pymysql://root@localhost/shopping-react-flask`
      - 如果密碼為空，可以省略密碼部分
    - **方式 2**: 使用分開的參數 `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
      - 如果設定了 `DATABASE_URL`，這些參數將被忽略
 
 4. 建立資料庫（可選）:
-   - 系統會在啟動時自動檢查並創建資料庫（如果不存在）
-   - 或者手動創建：
+   - 系統會在啟動時自動檢查並建立資料庫（如果不存在）
+   - 或者手動建立：
      ```sql
      CREATE DATABASE shopping-react-flask;
      ```
@@ -63,19 +63,19 @@ FastAPI 後端系統，提供購物車、訂單、產品管理等完整功能。
 
 ## API 文檔
 
-啟動應用後，可訪問以下文檔：
+啟動應用後，可存取以下文檔：
 
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
-- 後台管理界面: `http://localhost:8000/backend`（可直接在瀏覽器訪問）
+- 後台管理介面: `http://localhost:8000/backend`（可直接在瀏覽器存取）
 - 後台管理 API: `http://localhost:8000/backend/admin`
 
 ## API 端點
 
 ### 認證 (`/api/auth`)
-- `POST /api/auth/register` - 用戶註冊
-- `POST /api/auth/login` - 用戶登入
-- `GET /api/auth/me` - 獲取當前用戶資訊
+- `POST /api/auth/register` - 使用者註冊
+- `POST /api/auth/login` - 使用者登入
+- `GET /api/auth/me` - 獲取當前使用者資訊
 
 ### 產品 (`/api/products`)
 - `GET /api/products` - 獲取產品列表（支援分頁、分類篩選）
@@ -86,16 +86,16 @@ FastAPI 後端系統，提供購物車、訂單、產品管理等完整功能。
 - `GET /api/categories/{id}` - 獲取分類詳情
 
 ### 購物車 (`/api/cart`)
-- `GET /api/cart` - 獲取當前用戶購物車
-- `POST /api/cart/items` - 添加商品到購物車
+- `GET /api/cart` - 獲取當前使用者購物車
+- `POST /api/cart/items` - 新增商品到購物車
 - `PUT /api/cart/items/{item_id}` - 更新購物車項目數量
 - `DELETE /api/cart/items/{item_id}` - 從購物車移除商品
 - `DELETE /api/cart` - 清空購物車
 
 ### 訂單 (`/api/orders`)
-- `GET /api/orders` - 獲取當前用戶訂單列表
+- `GET /api/orders` - 獲取當前使用者訂單列表
 - `GET /api/orders/{id}` - 獲取訂單詳情
-- `POST /api/orders` - 創建訂單（結帳）
+- `POST /api/orders` - 建立訂單（結帳）
 
 ### 內容
 - `GET /api/ads` - 獲取首頁 Banner
@@ -124,7 +124,7 @@ FastAPI 後端系統，提供購物車、訂單、產品管理等完整功能。
 
 系統包含以下資料表：
 
-1. **users** - 用戶表
+1. **users** - 使用者表
 2. **ads** - 首頁 Banner
 3. **product_categories** - 產品分類
 4. **products** - 產品
@@ -157,7 +157,7 @@ backend/
 
 ## 注意事項
 
-- 預設資料庫用戶名為 `root`，密碼為空
+- 預設資料庫使用者名稱為 `root`，密碼為空
 - 生產環境請務必修改 `.env` 中的 `SECRET_KEY` 和 `SESSION_SECRET_KEY`
 - CORS 已設定允許 `localhost:5173` 和 `localhost:3000`，如需修改請編輯 `app/main.py`
 
