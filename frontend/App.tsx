@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams, Navigate } from 'react-router-dom';
 import { AppView, CartItem, Product, User, NewsItem } from './types';
 import { Auth } from './components/Auth';
 import { ProductList } from './components/ProductList';
@@ -83,14 +84,21 @@ const NEWS_ITEMS: NewsItem[] = [
 
 const ITEMS_PER_PAGE = 9;
 
+// Main App Component with Router
 const App: React.FC = () => {
-  const [view, setView] = useState<AppView>(AppView.HOME);
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
+};
+
+// App Content Component (needs to be inside Router)
+const AppContent: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
-  
-  // Pagination & Filtering State
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -114,19 +122,18 @@ const App: React.FC = () => {
 
   const handleLogin = (userData: User) => {
     setUser(userData);
-    setView(AppView.HOME);
+    navigate('/');
   };
 
   const handleLogout = () => {
     setUser(null);
     setCart([]);
-    setSelectedProduct(null);
-    setView(AppView.LOGIN);
+    navigate('/sign');
   };
 
   const addToCart = (product: Product) => {
     if (!user) {
-        setView(AppView.LOGIN);
+        navigate('/sign');
         return;
     }
     setCart(prev => {
@@ -150,49 +157,57 @@ const App: React.FC = () => {
   };
 
   const handleProductClick = (product: Product) => {
-    setSelectedProduct(product);
-    setView(AppView.PRODUCT_DETAIL);
+    navigate(`/product/${product.id}`);
   };
 
   const handleNewsClick = (newsItem: NewsItem) => {
-    setSelectedNews(newsItem);
-    setView(AppView.NEWS_DETAIL);
+    navigate(`/news/${newsItem.id}`);
   };
 
   const handleCategorySelect = (category: string | null) => {
       setSelectedCategory(category);
       setCurrentPage(1);
-      setView(AppView.PRODUCT_LIST);
+      navigate('/shop');
       setMobileMenuOpen(false);
   };
 
   const handleCheckoutSubmit = () => {
     setCart([]);
-    setView(AppView.ORDER_SUCCESS);
+    navigate('/shop-finish');
   };
 
   // Helper to determine AI context string
   const getAiContext = () => {
-    switch (view) {
-      case AppView.PRODUCT_DETAIL:
-        return selectedProduct ? `Viewing Product: ${selectedProduct.title} - Price: $${selectedProduct.price}` : 'Viewing a Product';
-      case AppView.CART:
-        return `Viewing Cart with ${cart.length} items`;
-      case AppView.CHECKOUT:
-        return 'During Checkout';
-      case AppView.PRODUCT_LIST:
-        return `Browsing Shop - Category: ${selectedCategory || 'All'}`;
-      case AppView.HOME:
-        return 'Home Page';
-      case AppView.ABOUT:
-        return 'About Us Page';
-      case AppView.NEWS:
-        return 'Reading News List';
-      case AppView.NEWS_DETAIL:
-        return selectedNews ? `Reading Article: ${selectedNews.title}` : 'Reading News';
-      default:
-        return 'General Shopping';
+    const path = location.pathname;
+    if (path.startsWith('/product/')) {
+      const productId = path.split('/')[2];
+      const product = PRODUCTS.find(p => p.id === parseInt(productId));
+      return product ? `Viewing Product: ${product.title} - Price: $${product.price}` : 'Viewing a Product';
     }
+    if (path === '/cart') {
+      return `Viewing Cart with ${cart.length} items`;
+    }
+    if (path === '/checkout') {
+      return 'During Checkout';
+    }
+    if (path === '/shop') {
+      return `Browsing Shop - Category: ${selectedCategory || 'All'}`;
+    }
+    if (path === '/') {
+      return 'Home Page';
+    }
+    if (path === '/about') {
+      return 'About Us Page';
+    }
+    if (path === '/news') {
+      return 'Reading News List';
+    }
+    if (path.startsWith('/news/')) {
+      const newsId = path.split('/')[2];
+      const news = NEWS_ITEMS.find(n => n.id === parseInt(newsId));
+      return news ? `Reading Article: ${news.title}` : 'Reading News';
+    }
+    return 'General Shopping';
   };
 
   const OrderSuccess = () => (
@@ -205,7 +220,7 @@ const App: React.FC = () => {
               Thank you for your purchase. We've sent a confirmation email to your inbox. Your order will be shipped shortly.
           </p>
           <button 
-              onClick={() => setView(AppView.HOME)}
+              onClick={() => navigate('/')}
               className="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition-colors shadow-lg"
           >
               Continue Shopping
@@ -214,94 +229,98 @@ const App: React.FC = () => {
   );
 
   // Render Navbar
-  const Navbar = () => (
-    <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200 transition-all h-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo */}
-          <div className="flex items-center cursor-pointer group" onClick={() => setView(AppView.HOME)}>
-            <div className="bg-indigo-600 p-2 rounded-xl mr-3 group-hover:bg-indigo-700 transition-colors shadow-sm">
-                <ShoppingBag className="text-white" size={22}/>
+  const Navbar = () => {
+    const isActive = (path: string) => location.pathname === path || (path === '/shop' && location.pathname.startsWith('/product/'));
+    
+    return (
+      <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200 transition-all h-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            {/* Logo */}
+            <div className="flex items-center cursor-pointer group" onClick={() => navigate('/')}>
+              <div className="bg-indigo-600 p-2 rounded-xl mr-3 group-hover:bg-indigo-700 transition-colors shadow-sm">
+                  <ShoppingBag className="text-white" size={22}/>
+              </div>
+              <span className="font-bold text-2xl tracking-tight text-gray-900 group-hover:text-indigo-600 transition-colors">Shopping</span>
             </div>
-            <span className="font-bold text-2xl tracking-tight text-gray-900 group-hover:text-indigo-600 transition-colors">Shopping</span>
-          </div>
-          
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center space-x-8">
-            <button onClick={() => setView(AppView.HOME)} className={`text-sm font-medium transition-colors ${view === AppView.HOME ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600'}`}>Home</button>
-            <button 
-              onClick={() => { handleCategorySelect(null); setView(AppView.PRODUCT_LIST); }}
-              className={`text-sm font-medium transition-colors ${view === AppView.PRODUCT_LIST ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600'}`}
-            >
-              Shop
-            </button>
-            <button onClick={() => setView(AppView.NEWS)} className={`text-sm font-medium transition-colors ${view === AppView.NEWS ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600'}`}>News</button>
-            <button onClick={() => setView(AppView.ABOUT)} className={`text-sm font-medium transition-colors ${view === AppView.ABOUT ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600'}`}>About</button>
-          </div>
-
-          {/* Right Side Icons */}
-          <div className="flex items-center space-x-4">
-            <button 
-                className="p-2 text-gray-400 hover:text-indigo-600 transition-colors relative"
-                onClick={() => setView(AppView.CART)}
-            >
-                <ShoppingCart size={22} />
-                {cartCount > 0 && (
-                    <span className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
-                        {cartCount}
-                    </span>
-                )}
-            </button>
             
-            {user ? (
-                <div className="hidden md:flex items-center gap-3 pl-4 border-l border-gray-200">
-                    <div className="text-right">
-                        <p className="text-xs text-gray-500">Welcome,</p>
-                        <p className="text-sm font-bold text-gray-900 leading-none">{user.name}</p>
-                    </div>
-                    <button onClick={handleLogout} className="p-2 bg-gray-100 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors" title="Logout">
-                        <LogOut size={18} />
-                    </button>
-                </div>
-            ) : (
-                <button 
-                    onClick={() => setView(AppView.LOGIN)}
-                    className="hidden md:flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-indigo-600 transition-colors shadow-md"
-                >
-                    <LogIn size={16} /> Sign In
-                </button>
-            )}
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center space-x-8">
+              <button onClick={() => navigate('/')} className={`text-sm font-medium transition-colors ${isActive('/') ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600'}`}>Home</button>
+              <button 
+                onClick={() => { handleCategorySelect(null); navigate('/shop'); }}
+                className={`text-sm font-medium transition-colors ${isActive('/shop') ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600'}`}
+              >
+                Shop
+              </button>
+              <button onClick={() => navigate('/news')} className={`text-sm font-medium transition-colors ${isActive('/news') ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600'}`}>News</button>
+              <button onClick={() => navigate('/about')} className={`text-sm font-medium transition-colors ${isActive('/about') ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600'}`}>About</button>
+            </div>
 
-            {/* Mobile Menu Button */}
-            <button 
-                className="md:hidden p-2 text-gray-600"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            {/* Right Side Icons */}
+            <div className="flex items-center space-x-4">
+              <button 
+                  className="p-2 text-gray-400 hover:text-indigo-600 transition-colors relative"
+                  onClick={() => navigate('/cart')}
+              >
+                  <ShoppingCart size={22} />
+                  {cartCount > 0 && (
+                      <span className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                          {cartCount}
+                      </span>
+                  )}
+              </button>
+              
+              {user ? (
+                  <div className="hidden md:flex items-center gap-3 pl-4 border-l border-gray-200">
+                      <div className="text-right">
+                          <p className="text-xs text-gray-500">Welcome,</p>
+                          <p className="text-sm font-bold text-gray-900 leading-none">{user.name}</p>
+                      </div>
+                      <button onClick={handleLogout} className="p-2 bg-gray-100 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors" title="Logout">
+                          <LogOut size={18} />
+                      </button>
+                  </div>
+              ) : (
+                  <button 
+                      onClick={() => navigate('/sign')}
+                      className="hidden md:flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-indigo-600 transition-colors shadow-md"
+                  >
+                      <LogIn size={16} /> Sign In
+                  </button>
+              )}
+
+              {/* Mobile Menu Button */}
+              <button 
+                  className="md:hidden p-2 text-gray-600"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                  {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-xl animate-in slide-in-from-top-2 z-50">
-              <div className="p-4 space-y-3">
-                <button onClick={() => { setView(AppView.HOME); setMobileMenuOpen(false); }} className="block w-full text-left p-2 font-medium text-gray-900 hover:bg-gray-50 rounded-lg">Home</button>
-                <button onClick={() => { setView(AppView.PRODUCT_LIST); setMobileMenuOpen(false); }} className="block w-full text-left p-2 font-medium text-gray-900 hover:bg-gray-50 rounded-lg">Shop All</button>
-                <button onClick={() => { setView(AppView.NEWS); setMobileMenuOpen(false); }} className="block w-full text-left p-2 font-medium text-gray-900 hover:bg-gray-50 rounded-lg">News</button>
-                <button onClick={() => { setView(AppView.CART); setMobileMenuOpen(false); }} className="block w-full text-left p-2 font-medium text-gray-900 hover:bg-gray-50 rounded-lg">Cart ({cartCount})</button>
-                
-                {user ? (
-                    <button onClick={handleLogout} className="block w-full text-left p-2 font-medium text-red-600 hover:bg-red-50 rounded-lg">Logout ({user.name})</button>
-                ) : (
-                    <button onClick={() => { setView(AppView.LOGIN); setMobileMenuOpen(false); }} className="block w-full text-left p-2 font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg">Sign In / Register</button>
-                )}
-              </div>
-          </div>
-      )}
-    </nav>
-  );
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+            <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-xl animate-in slide-in-from-top-2 z-50">
+                <div className="p-4 space-y-3">
+                  <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="block w-full text-left p-2 font-medium text-gray-900 hover:bg-gray-50 rounded-lg">Home</button>
+                  <button onClick={() => { navigate('/shop'); setMobileMenuOpen(false); }} className="block w-full text-left p-2 font-medium text-gray-900 hover:bg-gray-50 rounded-lg">Shop All</button>
+                  <button onClick={() => { navigate('/news'); setMobileMenuOpen(false); }} className="block w-full text-left p-2 font-medium text-gray-900 hover:bg-gray-50 rounded-lg">News</button>
+                  <button onClick={() => { navigate('/cart'); setMobileMenuOpen(false); }} className="block w-full text-left p-2 font-medium text-gray-900 hover:bg-gray-50 rounded-lg">Cart ({cartCount})</button>
+                  
+                  {user ? (
+                      <button onClick={handleLogout} className="block w-full text-left p-2 font-medium text-red-600 hover:bg-red-50 rounded-lg">Logout ({user.name})</button>
+                  ) : (
+                      <button onClick={() => { navigate('/sign'); setMobileMenuOpen(false); }} className="block w-full text-left p-2 font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg">Sign In / Register</button>
+                  )}
+                </div>
+            </div>
+        )}
+      </nav>
+    );
+  };
 
   const Footer = () => (
     <footer className="bg-white border-t border-gray-200 pt-16 pb-8">
@@ -327,7 +346,7 @@ const App: React.FC = () => {
                 <div>
                     <h3 className="font-bold text-gray-900 mb-4">Shop</h3>
                     <ul className="space-y-3 text-sm text-gray-500">
-                        <li className="hover:text-indigo-600 cursor-pointer" onClick={() => { handleCategorySelect(null); setView(AppView.PRODUCT_LIST); }}>All Products</li>
+                        <li className="hover:text-indigo-600 cursor-pointer" onClick={() => { handleCategorySelect(null); navigate('/shop'); }}>All Products</li>
                         <li className="hover:text-indigo-600 cursor-pointer" onClick={() => handleCategorySelect('Audio')}>Audio</li>
                         <li className="hover:text-indigo-600 cursor-pointer" onClick={() => handleCategorySelect('Wearables')}>Wearables</li>
                         <li className="hover:text-indigo-600 cursor-pointer" onClick={() => handleCategorySelect('Decor')}>Home Decor</li>
@@ -337,9 +356,9 @@ const App: React.FC = () => {
                 <div>
                     <h3 className="font-bold text-gray-900 mb-4">Company</h3>
                     <ul className="space-y-3 text-sm text-gray-500">
-                        <li className="hover:text-indigo-600 cursor-pointer" onClick={() => setView(AppView.ABOUT)}>About Us</li>
+                        <li className="hover:text-indigo-600 cursor-pointer" onClick={() => navigate('/about')}>About Us</li>
                         <li className="hover:text-indigo-600 cursor-pointer">Careers</li>
-                        <li className="hover:text-indigo-600 cursor-pointer" onClick={() => setView(AppView.NEWS)}>News</li>
+                        <li className="hover:text-indigo-600 cursor-pointer" onClick={() => navigate('/news')}>News</li>
                         <li className="hover:text-indigo-600 cursor-pointer">Press</li>
                     </ul>
                 </div>
@@ -361,133 +380,178 @@ const App: React.FC = () => {
     </footer>
   );
 
+  // Route Components
+  const HomePage = () => (
+    <>
+      {(location.pathname === '/' || location.pathname === '/shop') && (
+        <CategoryNav 
+          onCategoryClick={handleCategorySelect}
+          onViewAllClick={() => {
+            handleCategorySelect(null);
+            navigate('/shop');
+          }}
+        />
+      )}
+      <Home 
+        featuredProducts={filteredProducts.slice(0, 3)} 
+        newsItems={NEWS_ITEMS}
+        onShopNow={() => {
+          handleCategorySelect(null);
+          navigate('/shop');
+        }}
+        onProductClick={handleProductClick}
+        onCategoryClick={handleCategorySelect}
+        onNewsClick={handleNewsClick}
+      />
+    </>
+  );
+
+  const ShopPage = () => (
+    <>
+      <CategoryNav 
+        onCategoryClick={handleCategorySelect}
+        onViewAllClick={() => {
+          handleCategorySelect(null);
+          navigate('/shop');
+        }}
+      />
+      <ProductList 
+        products={currentProducts} 
+        addToCart={addToCart} 
+        onProductClick={handleProductClick}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+    </>
+  );
+
+  const ProductDetailPage = () => {
+    const { id } = useParams<{ id: string }>();
+    const product = PRODUCTS.find(p => p.id === parseInt(id || '0'));
+    
+    if (!product) {
+      return <Navigate to="/shop" replace />;
+    }
+    
+    return (
+      <ProductDetail 
+        product={product} 
+        onBack={() => navigate('/shop')}
+        addToCart={addToCart}
+      />
+    );
+  };
+
+  const NewsPage = () => (
+    <div className="max-w-7xl mx-auto py-12 px-4">
+        <h1 className="text-3xl font-bold mb-8 text-gray-900">Latest News</h1>
+        <div className="grid gap-8 md:grid-cols-3">
+            {NEWS_ITEMS.map(item => (
+                <div 
+                   key={item.id} 
+                   className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+                   onClick={() => handleNewsClick(item)}
+                >
+                    <div className="h-48 overflow-hidden relative">
+                       <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={item.title}/>
+                       <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold text-gray-800 flex items-center gap-1">
+                           <Clock size={12} /> {item.date}
+                       </div>
+                    </div>
+                    <div className="p-6 flex flex-col h-[220px]">
+                        <h3 className="font-bold text-xl mb-3 group-hover:text-indigo-600 transition-colors leading-snug">{item.title}</h3>
+                        <p className="text-gray-600 text-sm mb-4 flex-1 leading-relaxed line-clamp-3">{item.excerpt}</p>
+                        <button 
+                           className="text-indigo-600 font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto"
+                           onClick={(e) => {
+                               e.stopPropagation();
+                               handleNewsClick(item);
+                           }}
+                        >
+                            Read Article <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </div>
+  );
+
+  const NewsDetailPage = () => {
+    const { id } = useParams<{ id: string }>();
+    const newsItem = NEWS_ITEMS.find(n => n.id === parseInt(id || '0'));
+    
+    if (!newsItem) {
+      return <Navigate to="/news" replace />;
+    }
+    
+    return (
+      <NewsDetail
+        newsItem={newsItem}
+        onBack={() => navigate('/news')}
+      />
+    );
+  };
+
+  const AboutPage = () => (
+    <div className="max-w-3xl mx-auto py-20 px-6 text-center">
+        <h1 className="text-4xl font-bold text-gray-900 mb-6">About Lumina</h1>
+        <p className="text-xl text-gray-600 leading-relaxed">
+            We are dedicated to bringing you the best products with an AI-powered shopping experience.
+        </p>
+        <button onClick={() => navigate('/')} className="mt-8 text-indigo-600 font-medium hover:underline">Back to Home</button>
+    </div>
+  );
+
+  const CartPage = () => (
+    <Cart 
+      items={cart} 
+      updateQuantity={updateQuantity} 
+      removeFromCart={removeFromCart} 
+      onCheckout={() => navigate(user ? '/checkout' : '/sign')}
+      onContinueShopping={() => navigate('/shop')}
+    />
+  );
+
+  const CheckoutPage = () => (
+    <Checkout 
+      onBack={() => navigate('/cart')}
+      onSubmit={handleCheckoutSubmit}
+      total={cart.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+    />
+  );
+
+  const SignPage = () => {
+    const [authView, setAuthView] = useState<AppView>(AppView.LOGIN);
+    
+    return (
+      <Auth 
+        currentView={authView} 
+        setView={setAuthView} 
+        onLogin={handleLogin}
+      />
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
       <Navbar />
 
-      {/* Render Category Navigation for Home and Product List views */}
-      {(view === AppView.HOME || view === AppView.PRODUCT_LIST) && (
-          <CategoryNav 
-            onCategoryClick={handleCategorySelect}
-            onViewAllClick={() => {
-                handleCategorySelect(null);
-                setView(AppView.PRODUCT_LIST);
-            }}
-          />
-      )}
-
       <main className="flex-grow">
-        {view === AppView.HOME && (
-            <Home 
-                featuredProducts={filteredProducts.slice(0, 3)} 
-                newsItems={NEWS_ITEMS}
-                onShopNow={() => {
-                    handleCategorySelect(null);
-                    setView(AppView.PRODUCT_LIST);
-                }}
-                onProductClick={handleProductClick}
-                onCategoryClick={handleCategorySelect}
-                onNewsClick={handleNewsClick}
-            />
-        )}
-        
-        {(view === AppView.PRODUCT_LIST || view === AppView.NEWS || view === AppView.ABOUT) && (
-             view === AppView.PRODUCT_LIST ? (
-                <ProductList 
-                    products={currentProducts} 
-                    addToCart={addToCart} 
-                    onProductClick={handleProductClick}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                />
-             ) : view === AppView.NEWS ? (
-                 <div className="max-w-7xl mx-auto py-12 px-4">
-                     <h1 className="text-3xl font-bold mb-8 text-gray-900">Latest News</h1>
-                     <div className="grid gap-8 md:grid-cols-3">
-                         {NEWS_ITEMS.map(item => (
-                             <div 
-                                key={item.id} 
-                                className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
-                                onClick={() => handleNewsClick(item)}
-                             >
-                                 <div className="h-48 overflow-hidden relative">
-                                    <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={item.title}/>
-                                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold text-gray-800 flex items-center gap-1">
-                                        <Clock size={12} /> {item.date}
-                                    </div>
-                                 </div>
-                                 <div className="p-6 flex flex-col h-[220px]">
-                                     <h3 className="font-bold text-xl mb-3 group-hover:text-indigo-600 transition-colors leading-snug">{item.title}</h3>
-                                     <p className="text-gray-600 text-sm mb-4 flex-1 leading-relaxed line-clamp-3">{item.excerpt}</p>
-                                     <button 
-                                        className="text-indigo-600 font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleNewsClick(item);
-                                        }}
-                                     >
-                                        Read Article <ChevronRight size={16} />
-                                     </button>
-                                 </div>
-                             </div>
-                         ))}
-                     </div>
-                 </div>
-             ) : (
-                 // About View
-                 <div className="max-w-3xl mx-auto py-20 px-6 text-center">
-                     <h1 className="text-4xl font-bold text-gray-900 mb-6">About Lumina</h1>
-                     <p className="text-xl text-gray-600 leading-relaxed">
-                         We are dedicated to bringing you the best products with an AI-powered shopping experience.
-                     </p>
-                     <button onClick={() => setView(AppView.HOME)} className="mt-8 text-indigo-600 font-medium hover:underline">Back to Home</button>
-                 </div>
-             )
-        )}
-
-        {view === AppView.PRODUCT_DETAIL && selectedProduct && (
-            <ProductDetail 
-                product={selectedProduct} 
-                onBack={() => setView(AppView.PRODUCT_LIST)}
-                addToCart={addToCart}
-            />
-        )}
-
-        {view === AppView.NEWS_DETAIL && selectedNews && (
-            <NewsDetail
-                newsItem={selectedNews}
-                onBack={() => setView(AppView.NEWS)}
-            />
-        )}
-
-        {view === AppView.CART && (
-            <Cart 
-                items={cart} 
-                updateQuantity={updateQuantity} 
-                removeFromCart={removeFromCart} 
-                onCheckout={() => setView(user ? AppView.CHECKOUT : AppView.LOGIN)}
-                onContinueShopping={() => setView(AppView.PRODUCT_LIST)}
-            />
-        )}
-
-        {view === AppView.CHECKOUT && (
-            <Checkout 
-                onBack={() => setView(AppView.CART)}
-                onSubmit={handleCheckoutSubmit}
-                total={cart.reduce((sum, item) => sum + item.price * item.quantity, 0)}
-            />
-        )}
-
-        {(view === AppView.LOGIN || view === AppView.REGISTER || view === AppView.FORGOT_PASSWORD) && (
-            <Auth 
-                currentView={view} 
-                setView={setView} 
-                onLogin={handleLogin}
-            />
-        )}
-
-        {view === AppView.ORDER_SUCCESS && <OrderSuccess />}
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/product/:id" element={<ProductDetailPage />} />
+          <Route path="/news" element={<NewsPage />} />
+          <Route path="/news/:id" element={<NewsDetailPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/sign" element={<SignPage />} />
+          <Route path="/shop-finish" element={<OrderSuccess />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       <Footer />
