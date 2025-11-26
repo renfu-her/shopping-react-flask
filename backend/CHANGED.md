@@ -1,5 +1,54 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-26 08:20:18] - 修復載入動畫被替換導致購物車圖標閃現的問題
+
+### 修改內容
+
+#### 修復載入動畫在 body 替換時被移除的問題
+- **時間**: 2025-11-26 08:20:18
+- **問題**: 當 `admin-common.js` 替換 body 內容時，原本的 `#loading` div 被移除，導致 base.html 中的購物車圖標在載入動畫消失前就顯示出來
+- **修改檔案**:
+  - `app/static/js/admin-common.js`
+- **變更詳情**:
+  - 在替換 body 內容之前，先保存原有的 `#loading` div
+  - 替換 body 內容後，將保存的 `#loading` div 重新添加到 body 最前面
+  - 確保載入動畫始終在最上層，覆蓋 base.html 的內容
+- **功能特點**:
+  - **防止閃現**: 確保載入動畫在頁面內容載入完成前始終顯示
+  - **正確順序**: 載入動畫在 base.html 內容之上，避免購物車圖標等內容提前顯示
+  - **向後兼容**: 不影響其他功能
+
+### 技術細節
+
+#### 修復邏輯
+```javascript
+// 保存当前的 loading div（如果存在）
+const existingLoading = document.getElementById('loading');
+const loadingParent = existingLoading ? existingLoading.parentNode : null;
+const loadingNextSibling = existingLoading ? existingLoading.nextSibling : null;
+
+// 替换整个 body 内容
+document.body.innerHTML = baseBody.innerHTML;
+
+// 如果有保存的 loading div，将其重新添加到 body 最前面（覆盖 base.html 的内容）
+if (existingLoading && loadingParent) {
+    document.body.insertBefore(existingLoading, document.body.firstChild);
+}
+```
+
+### 影響範圍
+
+- **前端頁面**: 所有使用 `admin-common.js` 的 admin 子頁面
+- **功能**: 修復載入動畫被替換的問題，避免購物車圖標閃現
+- **性能**: 無影響
+
+### 注意事項
+
+1. **載入順序**: 載入動畫現在會正確保留在頁面最上層
+2. **視覺效果**: 用戶不會再看到購物車圖標在載入時閃現
+
+---
+
 ## [2025-11-26 08:16:43] - 移除 admin 目錄下所有 Font Awesome 引用
 
 ### 修改內容

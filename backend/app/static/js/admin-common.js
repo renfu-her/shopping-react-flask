@@ -97,9 +97,19 @@ async function loadBaseAndInit(initPageFunction) {
                 }
             });
             
+            // 保存当前的 loading div（如果存在）
+            const existingLoading = document.getElementById('loading');
+            const loadingParent = existingLoading ? existingLoading.parentNode : null;
+            const loadingNextSibling = existingLoading ? existingLoading.nextSibling : null;
+            
             // 替换整个 body 内容
             document.body.innerHTML = baseBody.innerHTML;
             console.log('body 内容已替换');
+            
+            // 如果有保存的 loading div，将其重新添加到 body 最前面（覆盖 base.html 的内容）
+            if (existingLoading && loadingParent) {
+                document.body.insertBefore(existingLoading, document.body.firstChild);
+            }
             
             // 加载 head 中的 script 标签（按顺序）
             const loadScripts = async () => {
