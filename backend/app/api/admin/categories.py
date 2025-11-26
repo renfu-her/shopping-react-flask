@@ -23,7 +23,11 @@ def get_categories(
 ):
     """獲取分類列表"""
     try:
-        categories = db.query(ProductCategory).order_by(ProductCategory.parent_id.asc(), ProductCategory.created_at.asc()).all()
+        categories = db.query(ProductCategory).order_by(
+            ProductCategory.parent_id.asc(), 
+            ProductCategory.sort_order.asc(),
+            ProductCategory.created_at.asc()
+        ).all()
         return CategoryListResponseAdmin(
             categories=[CategoryResponseAdmin.model_validate(c) for c in categories],
             total=len(categories)
@@ -76,7 +80,8 @@ def create_category(
             name=category_data.name.strip(),
             parent_id=parent_id_value,
             image=image_value,
-            description=category_data.description.strip() if category_data.description else None
+            description=category_data.description.strip() if category_data.description else None,
+            sort_order=category_data.sort_order if category_data.sort_order is not None else 0
         )
         db.add(new_category)
         db.commit()
@@ -159,6 +164,8 @@ def update_category(
                 category.image = category_data.image
         if category_data.description is not None:
             category.description = category_data.description
+        if category_data.sort_order is not None:
+            category.sort_order = category_data.sort_order
         
         db.commit()
         db.refresh(category)

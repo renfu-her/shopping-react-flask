@@ -141,6 +141,7 @@ class CategoryCreateAdmin(BaseModel):
     parent_id: int = 0
     image: Optional[str] = None
     description: Optional[str] = None
+    sort_order: int = 0  # 排序欄位
 
 
 class CategoryUpdateAdmin(BaseModel):
@@ -148,6 +149,7 @@ class CategoryUpdateAdmin(BaseModel):
     parent_id: Optional[int] = None
     image: Optional[str] = None
     description: Optional[str] = None
+    sort_order: Optional[int] = None  # 排序欄位
 
 
 class CategoryResponseAdmin(BaseModel):
@@ -156,6 +158,7 @@ class CategoryResponseAdmin(BaseModel):
     parent_id: Optional[int]  # None 表示根分類
     image: Optional[str]
     description: Optional[str]
+    sort_order: int  # 排序欄位
     created_at: datetime
 
     class Config:

@@ -1,5 +1,246 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-26 08:32:57] - 添加分類排序字段的數據庫遷移腳本
+
+### 修改內容
+
+#### 添加數據庫遷移腳本以支援分類排序功能
+- **時間**: 2025-11-26 08:32:57
+- **功能**: 創建數據庫遷移腳本，自動為 `product_categories` 表添加 `sort_order` 字段
+- **修改檔案**:
+  - `app/database_migration.py` - 添加 `add_category_sort_order_column` 函數
+  - `app/main.py` - 在應用啟動時自動執行遷移
+- **變更詳情**:
+  - **遷移函數**: 創建 `add_category_sort_order_column()` 函數
+    - 檢查 `product_categories` 表是否存在
+    - 檢查 `sort_order` 字段是否已存在
+    - 如果不存在，添加 `sort_order` 字段（INTEGER，NOT NULL，DEFAULT 0）
+    - 創建 `ix_product_categories_sort_order` 索引
+  - **自動執行**: 在 `main.py` 中導入並調用遷移函數
+    - 應用啟動時自動執行遷移
+    - 如果遷移失敗，記錄警告但繼續運行
+- **功能特點**:
+  - **自動遷移**: 應用啟動時自動檢查並添加缺失的字段
+  - **安全檢查**: 檢查字段是否已存在，避免重複添加
+  - **索引優化**: 自動創建索引以提升查詢性能
+  - **錯誤處理**: 遷移失敗不會阻止應用啟動
+
+### 技術細節
+
+#### 遷移腳本執行流程
+1. 連接到數據庫
+2. 檢查 `product_categories` 表是否存在
+3. 檢查 `sort_order` 字段是否已存在
+4. 如果不存在，執行 `ALTER TABLE` 添加字段
+5. 創建索引以優化排序查詢
+6. 記錄日誌信息
+
+#### SQL 語句
+```sql
+ALTER TABLE product_categories 
+ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0
+AFTER description;
+
+CREATE INDEX ix_product_categories_sort_order ON product_categories(sort_order);
+```
+
+### 使用方式
+
+#### 方式 1: 自動遷移（推薦）
+- 直接啟動應用，遷移會自動執行
+- 無需手動操作
+
+#### 方式 2: 手動執行遷移腳本
+```bash
+cd backend
+python -m app.database_migration
+```
+
+### 影響範圍
+
+- **數據庫**: 為 `product_categories` 表添加 `sort_order` 字段和索引
+- **應用啟動**: 應用啟動時自動執行遷移
+- **向後兼容**: 現有數據的 `sort_order` 值為 0
+
+### 注意事項
+
+1. **自動執行**: 遷移會在應用啟動時自動執行，無需手動操作
+2. **現有數據**: 現有分類的 `sort_order` 值會自動設為 0
+3. **重複執行**: 遷移腳本會檢查字段是否已存在，可以安全地重複執行
+4. **錯誤處理**: 如果遷移失敗，應用會記錄警告但繼續運行
+
+---
+
+## [2025-11-26 08:30:41] - 為分類管理添加排序功能
+
+### 修改內容
+
+#### 在數據庫和前端添加排序欄位
+- **時間**: 2025-11-26 08:30:41
+- **功能**: 為分類管理添加排序功能，包括數據庫欄位、API 支援和前端顯示/編輯
+- **修改檔案**:
+  - `app/models/product_category.py` - 添加 `sort_order` 欄位
+  - `app/schemas/admin.py` - 在 schemas 中添加 `sort_order` 欄位
+  - `app/api/admin/categories.py` - 修改 API 以支援排序欄位的保存和查詢
+  - `app/static/admin/categories/index.html` - 添加排序欄位顯示和編輯功能
+  - `app/static/admin/categories/add-edit.html` - 添加排序欄位輸入框
+- **變更詳情**:
+  - **數據庫模型**:
+    - 在 `ProductCategory` 模型中添加 `sort_order` 欄位（Integer，默認值 0，有索引）
+  - **Schemas**:
+    - 在 `CategoryCreateAdmin` 中添加 `sort_order` 欄位（默認值 0）
+    - 在 `CategoryUpdateAdmin` 中添加 `sort_order` 欄位（可選）
+    - 在 `CategoryResponseAdmin` 中添加 `sort_order` 欄位
+  - **API**:
+    - 修改 `get_categories` 查詢，按 `sort_order` 排序（然後按 `created_at`）
+    - 在 `create_category` 中保存 `sort_order` 值
+    - 在 `update_category` 中支援更新 `sort_order` 值
+  - **前端列表頁面**:
+    - 在表格中添加"排序"列
+    - 每個分類顯示一個數字輸入框，可以直接編輯排序值
+    - 添加 `updateSortOrder` 函數，當排序值改變時自動更新
+    - 修改排序邏輯，先按 `sort_order` 排序，相同時按名稱排序
+  - **前端新增/編輯頁面**:
+    - 添加排序輸入框，可以設置分類的排序值
+    - 在載入分類數據時，顯示現有的排序值
+    - 在提交表單時，包含排序值
+- **功能特點**:
+  - **即時更新**: 在列表頁面可以直接修改排序值，無需進入編輯頁面
+  - **自動排序**: 分類按排序值自動排序，相同排序值時按名稱排序
+  - **階層排序**: 根分類和子分類分別按各自的排序值排序
+  - **數據驗證**: 排序值必須是非負整數
+
+### 技術細節
+
+#### 數據庫遷移
+需要在數據庫中執行以下 SQL（或使用 Alembic 遷移）：
+```sql
+ALTER TABLE product_categories ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;
+CREATE INDEX ix_product_categories_sort_order ON product_categories(sort_order);
+```
+
+#### 排序邏輯
+1. 根分類按 `sort_order` 升序排序，相同時按名稱排序
+2. 子分類按 `sort_order` 升序排序，相同時按名稱排序
+3. 排序值越小越靠前
+
+### 影響範圍
+
+- **數據庫**: 需要添加 `sort_order` 欄位
+- **API**: 所有分類相關的 API 都支援排序欄位
+- **前端**: 列表頁面和新增/編輯頁面都支援排序功能
+
+### 注意事項
+
+1. **數據庫遷移**: 需要執行數據庫遷移以添加 `sort_order` 欄位
+2. **默認值**: 現有分類的 `sort_order` 值為 0，會按創建時間和名稱排序
+3. **排序更新**: 在列表頁面修改排序值後，會立即更新並重新渲染表格
+
+---
+
+## [2025-11-26 08:27:51] - 修改分類管理頁面為階層式顯示
+
+### 修改內容
+
+#### 將分類管理頁面改為按階層結構顯示
+- **時間**: 2025-11-26 08:27:51
+- **功能**: 修改分類管理頁面的顯示方式，按照根分類和子分類的階層結構顯示
+- **修改檔案**:
+  - `app/static/admin/categories/index.html`
+- **變更詳情**:
+  - **移除分頁功能**: 移除分頁選擇器和分頁顯示，改為一次載入所有分類
+  - **階層式顯示**: 
+    - 先顯示所有根分類（parent_id 為 null 或 0）
+    - 每個根分類下方顯示其子分類，使用縮進和 `└─` 符號表示階層關係
+    - 子分類使用 `pl-8` 類別進行左側縮進
+  - **排序**: 根分類和子分類都按名稱排序顯示
+  - **顯示格式**: 
+    - 根分類：正常顯示（如 "Electronic", "Lifestyle"）
+    - 子分類：縮進顯示，前面有 `└─` 符號（如 "  └─ Audio", "  └─ Fitness"）
+- **功能特點**:
+  - **階層清晰**: 可以清楚看到分類的父子關係
+  - **易於管理**: 根分類和子分類的關係一目了然
+  - **無分頁**: 所有分類一次顯示，方便查看完整的分類結構
+
+### 技術細節
+
+#### 顯示邏輯
+1. 將分類分為根分類和子分類兩組
+2. 對根分類按名稱排序
+3. 對每個根分類，找出其子分類並按名稱排序
+4. 使用縮進和符號表示階層關係
+
+#### 顯示格式示例
+```
+Electronic
+  └─ Audio
+Lifestyle
+  └─ Fitness
+```
+
+### 影響範圍
+
+- **前端頁面**: 分類管理列表頁面（index.html）
+- **功能**: 分類顯示改為階層式，更清晰展示分類關係
+- **性能**: 移除分頁，一次載入所有分類（最多 1000 筆）
+
+### 注意事項
+
+1. **載入數量**: 設定最多載入 1000 筆分類，如果分類數量超過此限制，可能需要調整
+2. **階層顯示**: 子分類使用縮進和符號表示，視覺上更清晰
+3. **排序**: 根分類和子分類都按名稱排序
+
+---
+
+## [2025-11-26 08:22:16] - 為分類管理頁面添加 Font Awesome 6 CDN
+
+### 修改內容
+
+#### 在分類管理頁面添加 Font Awesome 6 CDN 和相關功能
+- **時間**: 2025-11-26 08:22:16
+- **功能**: 為分類管理頁面（index.html 和 add-edit.html）添加 Font Awesome 6 CDN，用於顯示分類圖標
+- **修改檔案**:
+  - `app/static/admin/categories/index.html`
+  - `app/static/admin/categories/add-edit.html`
+- **變更詳情**:
+  - **Font Awesome 6 CDN**: 添加 Font Awesome 6.5.1 CSS CDN 連結
+  - **圖標隱藏/顯示 CSS**: 添加防止圖標在 CSS 載入前顯示為大文本的樣式
+  - **載入檢測腳本**: 添加等待 Font Awesome CSS 載入完成並添加 `fontawesome-loaded` 類別的腳本
+  - **僅分類管理使用**: 只有分類管理頁面使用 Font Awesome，其他頁面不使用
+- **功能特點**:
+  - **Font Awesome 6**: 使用最新版本的 Font Awesome 6.5.1
+  - **防止閃現**: 圖標在 CSS 載入前會被隱藏，避免顯示為大文本
+  - **載入檢測**: 使用多種方法檢測 Font Awesome 是否已載入完成
+  - **僅分類管理**: 只有分類管理頁面載入 Font Awesome，其他頁面不受影響
+
+### 技術細節
+
+#### Font Awesome 6 CDN
+```html
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
+      crossorigin="anonymous" 
+      referrerpolicy="no-referrer" />
+```
+
+#### 圖標隱藏/顯示邏輯
+- 初始狀態：所有 Font Awesome 圖標類別設為 `visibility: hidden` 和 `font-size: 0`
+- 載入完成後：當 `html` 元素有 `fontawesome-loaded` 類別時，圖標正常顯示
+
+### 影響範圍
+
+- **前端頁面**: 分類管理頁面（index.html 和 add-edit.html）
+- **功能**: 分類圖標可以正常顯示（使用 Font Awesome 圖標類別）
+- **性能**: 僅分類管理頁面載入 Font Awesome，其他頁面不受影響
+
+### 注意事項
+
+1. **僅分類管理**: 只有分類管理頁面使用 Font Awesome，其他頁面不使用
+2. **圖標顯示**: 分類圖標使用 Font Awesome 圖標類別（如 `fas fa-box`）可以正常顯示
+3. **載入檢測**: 使用多種方法確保 Font Awesome 正確載入
+
+---
+
 ## [2025-11-26 08:20:18] - 修復載入動畫被替換導致購物車圖標閃現的問題
 
 ### 修改內容

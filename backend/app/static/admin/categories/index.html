@@ -101,11 +101,6 @@
                     </div>
                     <div class="flex gap-4 mb-6">
                         <input type="text" id="search" placeholder="搜尋分類名稱..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
-                        <select id="page-size" class="px-4 py-2 border border-gray-300 rounded-lg">
-                            <option value="10">10 筆/頁</option>
-                            <option value="20">20 筆/頁</option>
-                            <option value="50">50 筆/頁</option>
-                        </select>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full">
@@ -115,117 +110,139 @@
                                     <th class="px-4 py-3 text-left text-sm font-semibold">圖標</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">分類名稱</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">父分類</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">排序</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="table-body" class="bg-white divide-y divide-gray-200"></tbody>
                         </table>
                     </div>
-                    <div class="mt-4 flex justify-between items-center">
-                        <span id="pagination-info" class="text-sm text-gray-600"></span>
-                        <div id="pagination" class="flex gap-2"></div>
-                    </div>
                 </div>
             `;
 
-            document.getElementById('search').addEventListener('input', () => loadData(1));
-            document.getElementById('page-size').addEventListener('change', () => loadData(1));
-            loadData(1);
+            document.getElementById('search').addEventListener('input', () => loadData());
+            loadData();
         }
 
-        let currentPage = 1;
         let categories = [];
 
-        async function loadData(page = 1) {
+        async function loadData() {
             const search = document.getElementById('search').value;
-            const pageSize = document.getElementById('page-size').value;
 
-            const params = new URLSearchParams({ page, page_size: pageSize });
+            const params = new URLSearchParams();
             if (search) params.append('search', search);
+            // 获取所有分类，不分页
+            params.append('page_size', '1000');
 
             try {
                 const res = await apiRequest(`${API_BASE}/categories?${params}`);
                 if (!res) return;
                 const data = await res.json();
                 categories = data.categories || [];
-                renderTable(data);
-                renderPagination(data);
-                currentPage = page;
+                renderTable();
             } catch (error) {
                 console.error('載入失敗:', error);
             }
         }
 
-        function renderTable(data) {
+        function renderTable() {
             const tbody = document.getElementById('table-body');
-            tbody.innerHTML = data.categories.map(cat => {
-                const parent = categories.find(c => c.id === cat.parent_id);
+            
+            // 组织层级结构：先找出根分类（parent_id 为 null 或 0）
+            const rootCategories = categories.filter(cat => !cat.parent_id || cat.parent_id === 0);
+            const childCategories = categories.filter(cat => cat.parent_id && cat.parent_id !== 0);
+            
+            // 按排序字段排序，如果排序相同则按名称排序
+            rootCategories.sort((a, b) => {
+                const sortDiff = (a.sort_order || 0) - (b.sort_order || 0);
+                return sortDiff !== 0 ? sortDiff : a.name.localeCompare(b.name);
+            });
+            
+            let html = '';
+            
+            // 渲染每个根分类及其子分类
+            rootCategories.forEach(rootCat => {
+                // 渲染根分类
+                html += renderCategoryRow(rootCat, false);
                 
-                // 渲染图标：优先作为 Font Awesome 图标类名处理
-                let imageHtml = '-';
-                if (cat.image) {
-                    const imageValue = cat.image.trim();
-                    
-                    // 如果是完整的 URL（http:// 或 https://），显示为图片
-                    if (imageValue.startsWith('http://') || imageValue.startsWith('https://')) {
-                        imageHtml = `<img src="${imageValue}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`;
-                    } else if (imageValue.startsWith('/static/') || imageValue.startsWith('/uploads/')) {
-                        // 如果是相对路径的图片，显示为图片
-                        imageHtml = `<img src="${imageValue}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`;
-                    } else {
-                        // 其他情况都视为 Font Awesome 图标类名（如：fa-solid fa-microchip）
-                        // 清理并规范化类名
-                        const iconClasses = imageValue.split(/\s+/).filter(c => c && c.length > 0).join(' ');
-                        imageHtml = `<i class="${iconClasses} text-2xl text-blue-600"></i>`;
-                    }
+                // 找出该根分类的子分类
+                const children = childCategories
+                    .filter(cat => cat.parent_id === rootCat.id)
+                    .sort((a, b) => {
+                        const sortDiff = (a.sort_order || 0) - (b.sort_order || 0);
+                        return sortDiff !== 0 ? sortDiff : a.name.localeCompare(b.name);
+                    });
+                
+                // 渲染子分类（缩进显示）
+                children.forEach(childCat => {
+                    html += renderCategoryRow(childCat, true);
+                });
+            });
+            
+            // 如果有未分类的子分类（父分类不存在），也显示出来
+            const orphanCategories = childCategories.filter(cat => {
+                return !categories.find(c => c.id === cat.parent_id);
+            });
+            if (orphanCategories.length > 0) {
+                orphanCategories.sort((a, b) => {
+                    const sortDiff = (a.sort_order || 0) - (b.sort_order || 0);
+                    return sortDiff !== 0 ? sortDiff : a.name.localeCompare(b.name);
+                });
+                orphanCategories.forEach(cat => {
+                    html += renderCategoryRow(cat, true);
+                });
+            }
+            
+            tbody.innerHTML = html;
+        }
+
+        function renderCategoryRow(cat, isChild = false) {
+            const parent = categories.find(c => c.id === cat.parent_id);
+            
+            // 渲染图标：优先作为 Font Awesome 图标类名处理
+            let imageHtml = '-';
+            if (cat.image) {
+                const imageValue = cat.image.trim();
+                
+                // 如果是完整的 URL（http:// 或 https://），显示为图片
+                if (imageValue.startsWith('http://') || imageValue.startsWith('https://')) {
+                    imageHtml = `<img src="${imageValue}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`;
+                } else if (imageValue.startsWith('/static/') || imageValue.startsWith('/uploads/')) {
+                    // 如果是相对路径的图片，显示为图片
+                    imageHtml = `<img src="${imageValue}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`;
+                } else {
+                    // 其他情况都视为 Font Awesome 图标类名（如：fa-solid fa-microchip）
+                    // 清理并规范化类名
+                    const iconClasses = imageValue.split(/\s+/).filter(c => c && c.length > 0).join(' ');
+                    imageHtml = `<i class="${iconClasses} text-2xl text-blue-600"></i>`;
                 }
-                
-                return `
+            }
+            
+            // 子分类缩进显示
+            const indentClass = isChild ? 'pl-8' : '';
+            const indentIcon = isChild ? '<span class="text-gray-400 mr-2">└─</span>' : '';
+            
+            return `
                 <tr>
                     <td class="px-4 py-3">${cat.id}</td>
                     <td class="px-4 py-3">${imageHtml}</td>
-                    <td class="px-4 py-3">${cat.name}</td>
+                    <td class="px-4 py-3 ${indentClass}">
+                        ${indentIcon}${cat.name}
+                    </td>
                     <td class="px-4 py-3">${parent ? parent.name : '根分類'}</td>
+                    <td class="px-4 py-3">
+                        <input type="number" 
+                               value="${cat.sort_order || 0}" 
+                               class="w-20 px-2 py-1 border border-gray-300 rounded text-center"
+                               onchange="updateSortOrder(${cat.id}, this.value)"
+                               min="0">
+                    </td>
                     <td class="px-4 py-3">
                         <a href="/backend/categories/edit?id=${cat.id}" class="text-blue-600 hover:text-blue-800 mr-2">編輯</a>
                         <button onclick="deleteItem(${cat.id})" class="text-red-600 hover:text-red-800">刪除</button>
                     </td>
                 </tr>
             `;
-            }).join('');
-        }
-
-        function renderPagination(data) {
-            const page = parseInt(data.page) || 1;
-            const pageSize = parseInt(data.page_size) || 10;
-            const total = parseInt(data.total) || 0;
-            const totalPages = parseInt(data.total_pages) || 0;
-            
-            const start = total > 0 ? (page - 1) * pageSize + 1 : 0;
-            const end = total > 0 ? Math.min(page * pageSize, total) : 0;
-            
-            const paginationInfo = document.getElementById('pagination-info');
-            if (paginationInfo) {
-                if (total > 0) {
-                    paginationInfo.textContent = `顯示 ${start}-${end} / 共 ${total} 筆`;
-                } else {
-                    paginationInfo.textContent = `共 0 筆`;
-                }
-            }
-            
-            const pagination = document.getElementById('pagination');
-            if (!pagination) return;
-            
-            pagination.innerHTML = '';
-            if (totalPages > 0) {
-                for (let i = 1; i <= totalPages; i++) {
-                    const btn = document.createElement('button');
-                    btn.textContent = i;
-                    btn.className = `px-4 py-2 border rounded-lg ${i === page ? 'bg-blue-600 text-white' : 'border-gray-300 hover:bg-gray-50'}`;
-                    btn.onclick = () => loadData(i);
-                    pagination.appendChild(btn);
-                }
-            }
         }
 
         async function deleteItem(id) {
@@ -236,14 +253,49 @@
                 });
                 if (!res) return;
                 if (res.ok) {
-                    loadData(currentPage);
+                    loadData();
                 }
             } catch (error) {
                 alert('刪除失敗: ' + error.message);
             }
         }
 
+        async function updateSortOrder(id, sortOrder) {
+            const sortOrderValue = parseInt(sortOrder) || 0;
+            try {
+                const res = await apiRequest(`${API_BASE}/categories/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sort_order: sortOrderValue
+                    })
+                });
+                if (!res) return;
+                if (res.ok) {
+                    // 更新本地数据
+                    const category = categories.find(c => c.id === id);
+                    if (category) {
+                        category.sort_order = sortOrderValue;
+                    }
+                    // 重新渲染表格以反映新的排序
+                    renderTable();
+                } else {
+                    const errorData = await res.json();
+                    alert('更新排序失敗: ' + (errorData.detail || '未知錯誤'));
+                    // 重新加载数据以恢复原值
+                    loadData();
+                }
+            } catch (error) {
+                alert('更新排序失敗: ' + error.message);
+                // 重新加载数据以恢复原值
+                loadData();
+            }
+        }
+
         window.deleteItem = deleteItem;
+        window.updateSortOrder = updateSortOrder;
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {

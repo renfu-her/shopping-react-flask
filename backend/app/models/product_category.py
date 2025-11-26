@@ -12,6 +12,7 @@ class ProductCategory(Base):
     parent_id = Column(Integer, ForeignKey("product_categories.id"), nullable=True, default=None)
     image = Column(String(500), nullable=True)  # Only for parent_id = NULL
     description = Column(Text, nullable=True)
+    sort_order = Column(Integer, nullable=False, default=0, index=True)  # 排序欄位
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
