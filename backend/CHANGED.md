@@ -1,5 +1,256 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-26 22:27:23] - 修復圖片上傳時 addToLocalList is not defined 錯誤
+
+### 修改內容
+
+#### 修復圖片上傳時 addToLocalList is not defined 錯誤
+- **時間**: 2025-11-26 22:27:23
+- **問題**: 圖片成功上傳後，會跳出 "addToLocalList is not defined" 錯誤
+- **修改檔案**:
+  - `app/static/admin/products/add-edit.html` - 修復函數參數名不匹配問題
+
+### 變更詳情
+
+#### 問題原因
+- 在 `addImageToProduct` 函數中，參數名定義為 `updateLocalList`
+- 但在函數內部卻使用了 `addToLocalList`（未定義的變數）
+- 導致圖片上傳成功後，嘗試更新本地列表時出現錯誤
+
+#### 修復方案
+- 將函數內部的 `addToLocalList` 改為正確的參數名 `updateLocalList`
+- 同時添加重複檢查邏輯，避免重複添加圖片到本地列表
+
+#### 修改的函數
+- **addImageToProduct**:
+  - 修復參數名不匹配問題（`addToLocalList` → `updateLocalList`）
+  - 添加重複檢查，避免重複添加圖片
+
+### 技術細節
+
+#### 修復前
+```javascript
+if (addToLocalList) {  // ❌ 錯誤：變數未定義
+    productImages.push(imageData);
+    renderImages();
+}
+```
+
+#### 修復後
+```javascript
+if (updateLocalList) {  // ✅ 正確：使用正確的參數名
+    // 检查是否已存在，避免重复
+    const exists = productImages.some(img => img.id === imageData.id || img.image_url === imageUrl);
+    if (!exists) {
+        productImages.push(imageData);
+        renderImages();
+    }
+}
+```
+
+### 影響範圍
+- **前端**: 產品新增/編輯頁面的圖片上傳功能
+- **行為**: 圖片上傳成功後不再出現錯誤，可以正常添加到本地列表
+
+---
+
+## [2025-11-26 22:20:19] - 產品管理頁面加入 Font Awesome 6
+
+### 修改內容
+
+#### 產品管理頁面加入 Font Awesome 6
+- **時間**: 2025-11-26 22:20:19
+- **目的**: 為產品管理頁面添加 Font Awesome 6 圖標庫支持
+- **修改檔案**:
+  - `app/static/admin/products/index.html` - 產品列表頁面
+  - `app/static/admin/products/add-edit.html` - 產品新增/編輯頁面
+
+### 變更詳情
+
+#### 添加的內容
+1. **Font Awesome 6 CDN 連結**:
+   - 使用 CDN 方式引入 Font Awesome 6.5.1
+   - 包含 integrity 和 crossorigin 屬性確保安全性
+
+2. **CSS 樣式**:
+   - 添加防止圖標在 CSS 加載前顯示為大文本的樣式
+   - 當 Font Awesome 加載完成後，圖標會正常顯示
+
+3. **加載檢測腳本**:
+   - 添加檢測 Font Awesome CSS 是否已加載的腳本
+   - 設置超時機制，避免無限等待
+   - 加載完成後添加 `fontawesome-loaded` class
+
+#### 修改的檔案
+
+##### `app/static/admin/products/index.html`
+- 在 `<head>` 中添加 Font Awesome 6 CDN 連結
+- 添加 Font Awesome 相關 CSS 樣式
+- 添加 Font Awesome 加載檢測腳本
+
+##### `app/static/admin/products/add-edit.html`
+- 在 `<head>` 中添加 Font Awesome 6 CDN 連結
+- 添加 Font Awesome 相關 CSS 樣式
+- 添加 Font Awesome 加載檢測腳本
+
+### 技術細節
+
+#### Font Awesome 6 CDN
+```html
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
+      crossorigin="anonymous" 
+      referrerpolicy="no-referrer" />
+```
+
+#### 使用方式
+現在可以在產品管理頁面中使用 Font Awesome 6 圖標：
+- `<i class="fas fa-box"></i>` - Solid 樣式
+- `<i class="far fa-box"></i>` - Regular 樣式
+- `<i class="fab fa-font-awesome"></i>` - Brands 樣式
+- `<i class="fa-solid fa-box"></i>` - 新語法（Solid）
+- `<i class="fa-regular fa-box"></i>` - 新語法（Regular）
+
+### 影響範圍
+- **前端**: 產品管理列表頁面和新增/編輯頁面
+- **功能**: 現在可以在這些頁面中使用 Font Awesome 6 圖標
+- **兼容性**: 與分類管理頁面的實現保持一致
+
+---
+
+## [2025-11-26 22:13:46] - 修復只有一張圖片時保存會自動新增的問題
+
+### 修改內容
+
+#### 修復只有一張圖片時保存會自動新增的問題
+- **時間**: 2025-11-26 22:13:46
+- **問題**: 當產品只有一張圖片時，按下儲存會自動新增重複的圖片
+- **修改檔案**:
+  - `app/api/admin/product_images.py` - 在添加圖片時檢查是否已存在
+  - `app/static/admin/products/add-edit.html` - 在保存時檢查圖片URL是否已存在
+
+### 變更詳情
+
+#### 問題原因
+- 當產品只有一張圖片時，這張圖片已經存在於數據庫中
+- 保存時，如果圖片URL與數據庫中的圖片URL相同，但沒有檢查重複，會導致重複添加
+- 後端 API 沒有檢查圖片URL是否已存在
+
+#### 修復方案
+1. **後端 API 檢查** (`add_product_image`):
+   - 在添加圖片前，檢查該產品的圖片列表中是否已存在相同的 `image_url`
+   - 如果已存在，直接返回現有圖片，不重複添加
+
+2. **前端保存邏輯檢查**:
+   - 在添加新上傳的圖片前，獲取數據庫中已有的圖片URL列表
+   - 只添加不在數據庫中的圖片URL
+
+#### 修改的函數
+- **add_product_image** (POST /api/admin/products/{product_id}/images):
+  - 添加重複檢查邏輯
+  - 如果圖片URL已存在，返回現有圖片而不是創建新記錄
+
+- **handleSubmit** (編輯模式):
+  - 在添加新圖片前，檢查圖片URL是否已存在於數據庫中
+  - 只添加真正新的圖片
+
+### 技術細節
+
+#### 後端重複檢查
+```python
+# 檢查圖片是否已存在（避免重複添加）
+existing_image = db.query(ProductImage).filter(
+    ProductImage.product_id == product_id,
+    ProductImage.image_url == image_data.image_url
+).first()
+
+if existing_image:
+    # 如果圖片已存在，直接返回現有圖片
+    return existing_image
+```
+
+#### 前端重複檢查
+```javascript
+// 獲取數據庫中已有的圖片URL，避免重複添加
+const existingImageUrls = (currentData.images || []).map(img => img.image_url);
+
+for (const img of productImages) {
+    if (img.id > 1000000000000) {
+        // 檢查圖片URL是否已存在於數據庫中
+        if (!existingImageUrls.includes(img.image_url)) {
+            await addImageToProduct(productId, img.image_url);
+        }
+    }
+}
+```
+
+### 影響範圍
+- **後端 API**: `/api/admin/products/{product_id}/images` 端點（POST）
+- **前端**: 產品編輯頁面的圖片保存邏輯
+- **行為**: 只有一張圖片時保存不會再自動新增重複圖片
+
+---
+
+## [2025-11-26 22:09:24] - 修復產品編輯時圖片重複增加的問題
+
+### 修改內容
+
+#### 修復產品編輯時圖片重複增加的問題
+- **時間**: 2025-11-26 22:09:24
+- **問題**: 在產品編輯模式下，每次保存都會重複添加圖片，導致圖片不斷累積
+- **修改檔案**:
+  - `app/static/admin/products/add-edit.html` - 修復圖片處理邏輯
+
+### 變更詳情
+
+#### 問題原因
+1. **編輯模式下上傳圖片**: 上傳時立即添加到數據庫，但同時也添加到本地列表
+2. **保存時處理不當**: 編輯模式下只更新順序，沒有處理新增和刪除的圖片
+3. **重複添加**: 每次保存都會基於當前列表重新處理，導致圖片重複
+
+#### 修復方案
+1. **統一圖片處理流程**:
+   - 無論新增還是編輯模式，上傳圖片時都先添加到本地列表
+   - 只有在保存時才真正同步到數據庫
+
+2. **編輯模式圖片同步**:
+   - 獲取當前數據庫中的圖片列表
+   - 刪除不在當前列表中的圖片（用戶已刪除的）
+   - 添加新上傳的圖片（臨時ID的）
+   - 更新圖片順序
+
+3. **防止重複添加**:
+   - 在 `addImageToLocalList` 中檢查圖片URL是否已存在
+   - 使用臨時ID（> 1000000000000）區分新上傳和已保存的圖片
+   - 在保存時只處理臨時ID的圖片
+
+#### 修改的函數
+- **uploadAndAddImage**: 統一處理流程，不再在編輯模式下立即添加到數據庫
+- **addImageToLocalList**: 添加重複檢查，防止相同URL重複添加
+- **handleSubmit**: 改進編輯模式的圖片同步邏輯
+- **updateImageOrder**: 過濾臨時ID，只處理真實ID的圖片
+
+### 技術細節
+
+#### 圖片ID區分
+- **真實ID** (≤ 1000000000000): 已保存到數據庫的圖片
+- **臨時ID** (> 1000000000000): 新上傳但尚未保存的圖片
+
+#### 編輯模式同步流程
+```javascript
+1. 獲取數據庫中的圖片列表
+2. 比較當前列表和數據庫列表
+3. 刪除不在當前列表中的圖片
+4. 添加新上傳的圖片（臨時ID）
+5. 更新圖片順序
+```
+
+### 影響範圍
+- **前端**: 產品編輯頁面的圖片管理功能
+- **行為**: 編輯產品時圖片不再重複增加，可以正確刪除和添加圖片
+
+---
+
 ## [2025-11-26 22:04:53] - 修復創建產品 API 缺少 is_hot 欄位的問題
 
 ### 修改內容

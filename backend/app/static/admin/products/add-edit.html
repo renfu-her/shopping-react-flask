@@ -4,7 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>產品管理 - 購物車管理 Admin</title>
+    <link rel="stylesheet" href="/static/css/admin-common.css">
+    <!-- Font Awesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        /* 防止 Font Awesome 图标在 CSS 加载前显示为大文本 */
+        .fa, .fas, .far, .fab, .fal, .fad, .fa-solid, .fa-regular, .fa-brands, .fa-light, .fa-duotone,
+        [class*="fa-"] {
+            visibility: hidden;
+            font-size: 0;
+        }
+
+        /* 当 Font Awesome 加载完成后，图标会正常显示 */
+        html.fontawesome-loaded .fa,
+        html.fontawesome-loaded .fas,
+        html.fontawesome-loaded .far,
+        html.fontawesome-loaded .fab,
+        html.fontawesome-loaded .fal,
+        html.fontawesome-loaded .fad,
+        html.fontawesome-loaded .fa-solid,
+        html.fontawesome-loaded .fa-regular,
+        html.fontawesome-loaded .fa-brands,
+        html.fontawesome-loaded .fa-light,
+        html.fontawesome-loaded .fa-duotone,
+        html.fontawesome-loaded [class*="fa-"] {
+            visibility: visible;
+            font-size: inherit;
+        }
         #loading {
             position: fixed;
             top: 0;
@@ -46,6 +72,44 @@
             <p style="margin-top: 20px; text-align: center;">載入中...</p>
         </div>
     </div>
+    <script>
+        // 等待 Font Awesome CSS 加载完成
+        (function() {
+            const fontAwesomeLink = document.querySelector('link[href*="font-awesome"]');
+            if (fontAwesomeLink) {
+                const checkLoaded = () => {
+                    // 检查 Font Awesome 是否已加载（通过检查样式是否应用）
+                    if (fontAwesomeLink.sheet || fontAwesomeLink.styleSheet) {
+                        document.documentElement.classList.add('fontawesome-loaded');
+                    } else {
+                        setTimeout(checkLoaded, 50);
+                    }
+                };
+                
+                fontAwesomeLink.onload = () => {
+                    document.documentElement.classList.add('fontawesome-loaded');
+                };
+                fontAwesomeLink.onerror = () => {
+                    // 即使加载失败也标记，避免一直隐藏
+                    document.documentElement.classList.add('fontawesome-loaded');
+                };
+                // 设置超时，避免无限等待
+                setTimeout(() => {
+                    document.documentElement.classList.add('fontawesome-loaded');
+                }, 5000);
+                
+                // 如果已经加载完成
+                if (fontAwesomeLink.sheet || fontAwesomeLink.styleSheet) {
+                    document.documentElement.classList.add('fontawesome-loaded');
+                } else {
+                    checkLoaded();
+                }
+            } else {
+                // 如果没有找到 Font Awesome link，直接标记为已加载
+                document.documentElement.classList.add('fontawesome-loaded');
+            }
+        })();
+    </script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
@@ -189,13 +253,9 @@
                 const data = await res.json();
                 const imageUrl = data.url;
                 
-                // 如果是编辑模式且产品已存在，直接添加到数据库
-                if (isEdit && id) {
-                    await addImageToProduct(id, imageUrl);
-                } else {
-                    // 新增模式，先添加到本地列表
-                    addImageToLocalList(imageUrl);
-                }
+                // 无论是新增还是编辑模式，都先添加到本地列表
+                // 只有在保存时才真正添加到数据库
+                addImageToLocalList(imageUrl);
             } catch (error) {
                 console.error('上傳圖片失敗:', error);
                 alert('上傳失敗: ' + error.message);
@@ -204,35 +264,54 @@
 
         /**
          * 添加图片到产品（API）
+         * @param {number} productId - 产品ID
+         * @param {string} imageUrl - 图片URL
+         * @param {boolean} updateLocalList - 是否更新本地列表（默认false，避免在保存时重复添加）
          */
-        async function addImageToProduct(productId, imageUrl) {
+        async function addImageToProduct(productId, imageUrl, updateLocalList = false) {
             try {
                 const res = await apiRequest(`${API_BASE}/products/${productId}/images`, {
                     method: 'POST',
                     body: JSON.stringify({ image_url: imageUrl })
                 });
                 
-                if (!res) return;
+                if (!res) return null;
                 
                 if (res.ok) {
                     const imageData = await res.json();
-                    productImages.push(imageData);
-                    renderImages();
+                    // 只在明确需要时才更新本地列表（例如：编辑模式下立即上传时）
+                    if (updateLocalList) {
+                        // 检查是否已存在，避免重复
+                        const exists = productImages.some(img => img.id === imageData.id || img.image_url === imageUrl);
+                        if (!exists) {
+                            productImages.push(imageData);
+                            renderImages();
+                        }
+                    }
+                    return imageData;
                 } else {
                     const error = await res.json();
                     alert('添加圖片失敗: ' + (error.detail || '未知錯誤'));
+                    return null;
                 }
             } catch (error) {
                 console.error('添加圖片失敗:', error);
                 alert('添加圖片失敗: ' + error.message);
+                return null;
             }
         }
 
         /**
-         * 添加图片到本地列表（新增模式）
+         * 添加图片到本地列表（新增和编辑模式都使用）
          */
         function addImageToLocalList(imageUrl) {
-            const tempId = Date.now(); // 临时 ID
+            // 检查是否已存在相同的图片URL，避免重复添加
+            const exists = productImages.some(img => img.image_url === imageUrl);
+            if (exists) {
+                return; // 如果已存在，不重复添加
+            }
+            
+            const tempId = Date.now() + Math.random(); // 临时 ID，添加随机数确保唯一
             productImages.push({
                 id: tempId,
                 image_url: imageUrl,
@@ -366,7 +445,12 @@
             if (!imagesList) return;
             
             const items = imagesList.querySelectorAll('.image-item');
-            const imageIds = Array.from(items).map(item => parseInt(item.dataset.imageId));
+            // 只获取真实ID的图片（已保存到数据库的），过滤掉临时ID
+            const imageIds = Array.from(items)
+                .map(item => parseInt(item.dataset.imageId))
+                .filter(id => id <= 1000000000000); // 只处理真实ID
+            
+            if (imageIds.length === 0) return;
             
             try {
                 const res = await apiRequest(`${API_BASE}/products/${id}/images/reorder`, {
@@ -537,11 +621,55 @@
                     
                     // 如果是新增模式，需要将本地图片添加到数据库
                     if (!formId) {
-                        for (const img of productImages) {
-                            await addImageToProduct(productId, img.image_url);
+                        // 获取所有临时ID的图片
+                        const tempImages = productImages.filter(img => img.id > 1000000000000);
+                        
+                        // 添加所有临时图片到数据库
+                        for (const img of tempImages) {
+                            await addImageToProduct(productId, img.image_url, false);
                         }
                     } else {
-                        // 编辑模式，更新图片顺序
+                        // 编辑模式：需要同步图片列表
+                        // 1. 获取当前数据库中的图片
+                        const currentRes = await apiRequest(`${API_BASE}/products/${productId}/images`);
+                        if (currentRes && currentRes.ok) {
+                            const currentData = await currentRes.json();
+                            const currentImageIds = (currentData.images || []).map(img => img.id);
+                            
+                            // 2. 找出需要删除的图片（在数据库中但不在当前列表中的）
+                            const currentProductImageIds = productImages
+                                .filter(img => img.id <= 1000000000000) // 只处理已保存的图片（真实ID）
+                                .map(img => img.id);
+                            
+                            // 删除不在当前列表中的图片
+                            for (const dbImageId of currentImageIds) {
+                                if (!currentProductImageIds.includes(dbImageId)) {
+                                    try {
+                                        await apiRequest(`${API_BASE}/products/${productId}/images/${dbImageId}`, {
+                                            method: 'DELETE'
+                                        });
+                                    } catch (error) {
+                                        console.error('刪除圖片失敗:', error);
+                                    }
+                                }
+                            }
+                            
+                            // 3. 添加新上传的图片（临时ID的）
+                            // 获取数据库中已有的图片URL，避免重复添加
+                            const existingImageUrls = (currentData.images || []).map(img => img.image_url);
+                            
+                            // 获取所有临时ID的图片
+                            const tempImages = productImages.filter(img => img.id > 1000000000000);
+                            
+                            for (const img of tempImages) {
+                                // 检查图片URL是否已存在于数据库中
+                                if (!existingImageUrls.includes(img.image_url)) {
+                                    await addImageToProduct(productId, img.image_url, false);
+                                }
+                            }
+                        }
+                        
+                        // 4. 更新图片顺序
                         await updateImageOrder();
                     }
                     

@@ -79,6 +79,21 @@ def add_product_image(
         if not product:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
         
+        # 檢查圖片是否已存在（避免重複添加）
+        existing_image = db.query(ProductImage).filter(
+            ProductImage.product_id == product_id,
+            ProductImage.image_url == image_data.image_url
+        ).first()
+        
+        if existing_image:
+            # 如果圖片已存在，直接返回現有圖片
+            return {
+                "id": existing_image.id,
+                "product_id": existing_image.product_id,
+                "image_url": existing_image.image_url,
+                "order_index": existing_image.order_index
+            }
+        
         # 獲取當前最大的 order_index
         max_order = db.query(ProductImage.order_index).filter(
             ProductImage.product_id == product_id
