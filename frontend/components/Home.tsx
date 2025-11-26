@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, ShieldCheck, Truck, Clock, Newspaper, ChevronRight } from 'lucide-react';
 import { Product, NewsItem } from '../types';
+import { fetchAds, Ad } from '../services/api';
 
 interface HomeProps {
   featuredProducts: Product[];
@@ -12,32 +13,112 @@ interface HomeProps {
 }
 
 export const Home: React.FC<HomeProps> = ({ featuredProducts, newsItems, onShopNow, onProductClick, onNewsClick }) => {
+  const [ads, setAds] = useState<Ad[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadAds = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchAds();
+        setAds(data);
+      } catch (err) {
+        setError('Failed to load banner');
+        console.error('Error loading ads:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAds();
+  }, []);
+
+  // Get the first ad (or ad with lowest order_index, which should be first after API sorting)
+  const heroAd = ads.length > 0 ? ads[0] : null;
+
+  const handleShopNowClick = () => {
+    if (heroAd?.link_url) {
+      window.location.href = heroAd.link_url;
+    } else {
+      onShopNow();
+    }
+  };
+
   return (
     <div className="animate-in fade-in duration-700 flex flex-col">
       
       {/* HERO BANNER */}
       <div className="relative bg-indigo-900 text-white overflow-hidden h-[500px] md:h-[600px]">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1950&q=80')] bg-cover bg-center opacity-30"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-center items-center text-center">
-          <span className="bg-indigo-500/30 text-indigo-200 px-4 py-1 rounded-full text-sm font-medium mb-6 backdrop-blur-sm border border-indigo-400/30">New Collection 2025</span>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
-            Style Meets <br />
-            <span className="text-indigo-400">Innovation</span>
-          </h1>
-          <p className="text-lg md:text-xl text-indigo-100 max-w-2xl mb-10 leading-relaxed">
-            Discover our curated collection of premium electronics, fashion, and home goods. 
-            Designed for those who appreciate quality.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button 
-                onClick={onShopNow}
-                className="bg-white text-indigo-900 px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all hover:scale-105 shadow-xl"
-            >
-                Shop Now
-                <ArrowRight size={20} />
-            </button>
-          </div>
-        </div>
+        {heroAd ? (
+          <>
+            <div 
+              className="absolute inset-0 bg-cover bg-center opacity-30"
+              style={{ backgroundImage: `url(${heroAd.image_url})` }}
+            ></div>
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-center items-center text-center">
+              <span className="bg-indigo-500/30 text-indigo-200 px-4 py-1 rounded-full text-sm font-medium mb-6 backdrop-blur-sm border border-indigo-400/30">New Collection 2025</span>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
+                {(() => {
+                  const words = heroAd.title.split(' ');
+                  if (words.length <= 2) {
+                    return (
+                      <>
+                        {heroAd.title} <br />
+                        <span className="text-indigo-400">Innovation</span>
+                      </>
+                    );
+                  }
+                  const midPoint = Math.ceil(words.length / 2);
+                  return (
+                    <>
+                      {words.slice(0, midPoint).join(' ')} <br />
+                      <span className="text-indigo-400">{words.slice(midPoint).join(' ')}</span>
+                    </>
+                  );
+                })()}
+              </h1>
+              <p className="text-lg md:text-xl text-indigo-100 max-w-2xl mb-10 leading-relaxed">
+                Discover our curated collection of premium electronics, fashion, and home goods. 
+                Designed for those who appreciate quality.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                    onClick={handleShopNowClick}
+                    className="bg-white text-indigo-900 px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all hover:scale-105 shadow-xl"
+                >
+                    Shop Now
+                    <ArrowRight size={20} />
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          // Fallback to default banner when no ads available
+          <>
+            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1950&q=80')] bg-cover bg-center opacity-30"></div>
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-center items-center text-center">
+              <span className="bg-indigo-500/30 text-indigo-200 px-4 py-1 rounded-full text-sm font-medium mb-6 backdrop-blur-sm border border-indigo-400/30">New Collection 2025</span>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
+                Style Meets <br />
+                <span className="text-indigo-400">Innovation</span>
+              </h1>
+              <p className="text-lg md:text-xl text-indigo-100 max-w-2xl mb-10 leading-relaxed">
+                Discover our curated collection of premium electronics, fashion, and home goods. 
+                Designed for those who appreciate quality.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                    onClick={onShopNow}
+                    className="bg-white text-indigo-900 px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all hover:scale-105 shadow-xl"
+                >
+                    Shop Now
+                    <ArrowRight size={20} />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Hot Products (Popular) */}

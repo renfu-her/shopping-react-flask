@@ -47,3 +47,24 @@ export interface NewsItem {
   image: string;
   content: string;
 }
+
+export interface Category {
+  id: number;
+  name: string;
+  parent_id: number | null;
+  image: string | null;
+  description: string | null;
+  sort_order: number;
+  created_at: string;
+  children: Category[];
+}
+
+export interface Ad {
+  id: number;
+  title: string;
+  image_url: string;
+  link_url: string | null;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+}
