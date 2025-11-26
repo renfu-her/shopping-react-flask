@@ -1,5 +1,69 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-26 08:57:25] - 徹底修復 /api/categories API 重複問題
+
+### 修改內容
+
+#### 徹底修復分類 API 的重複問題
+- **時間**: 2025-11-26 08:57:25
+- **問題**: `/api/categories` API 仍然返回重複的分類（即使之前已修復）
+- **根本原因**: SQLAlchemy 的 relationship 可能自動填充了 children，導致重複
+- **修改檔案**:
+  - `app/api/categories.py` - 重寫樹狀結構構建邏輯
+- **變更詳情**:
+  - **明確初始化 children**:
+    - 在創建 `CategoryTreeResponse` 後，明確設置 `children = []`
+    - 避免 SQLAlchemy relationship 自動填充導致的重複
+  - **使用 ID 追蹤**:
+    - 使用 `children_ids_by_parent` 字典追蹤每個父分類已添加的子分類 ID
+    - 在添加子分類前，檢查該 ID 是否已存在
+    - 確保每個子分類只被添加一次
+  - **最終去重**:
+    - 在返回前，對每個根分類的 children 進行最終去重
+    - 使用 `seen_ids` 集合確保沒有重複
+  - **排序優化**:
+    - 在去重後進行排序，確保順序正確
+- **功能特點**:
+  - **徹底去重**: 多層防護確保不會有重複
+  - **性能優化**: 使用 ID 集合檢查，比對象比較更高效
+  - **正確排序**: 按 `sort_order` 和 `created_at` 排序
+
+### 技術細節
+
+#### 修復邏輯
+```python
+# 1. 明確設置 children 為空列表
+category_node.children = []
+
+# 2. 使用 ID 追蹤已添加的子分類
+children_ids_by_parent = {}
+if cat.id not in children_ids_by_parent[cat.parent_id]:
+    category_dict[cat.parent_id].children.append(category_node)
+    children_ids_by_parent[cat.parent_id].add(cat.id)
+
+# 3. 最終去重
+seen_ids = set()
+unique_children = []
+for child in root_cat.children:
+    if child.id not in seen_ids:
+        seen_ids.add(child.id)
+        unique_children.append(child)
+```
+
+### 影響範圍
+
+- **API**: `/api/categories` 端點
+- **前端**: 使用此 API 的前端頁面會收到無重複且正確排序的數據
+- **性能**: 使用 ID 集合檢查，性能更好
+
+### 注意事項
+
+1. **多層防護**: 三層防護確保不會有重複（初始化、ID 追蹤、最終去重）
+2. **SQLAlchemy**: 明確設置 children 為空列表，避免 relationship 自動填充
+3. **排序**: 在去重後進行排序，確保順序正確
+
+---
+
 ## [2025-11-26 08:52:06] - 修復 /api/categories API 重複問題並添加排序功能
 
 ### 修改內容
