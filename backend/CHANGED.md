@@ -1,5 +1,66 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-26 08:52:06] - 修復 /api/categories API 重複問題並添加排序功能
+
+### 修改內容
+
+#### 修復分類 API 的重複問題並添加排序功能
+- **時間**: 2025-11-26 08:52:06
+- **問題**: `/api/categories` API 返回的數據有重複的分類，且沒有按 `sort_order` 排序
+- **修改檔案**:
+  - `app/api/categories.py` - 修復重複問題並添加排序
+  - `app/schemas/category.py` - 在 CategoryResponse 中添加 `sort_order` 字段
+- **變更詳情**:
+  - **修復重複問題**:
+    - 添加 `added_to_children` 集合來追蹤已經添加到 children 的分類
+    - 在添加子分類到父分類的 children 之前，檢查是否已經添加過
+    - 避免同一個分類被重複添加到 children 中
+  - **添加排序功能**:
+    - 在數據庫查詢時按 `sort_order` 升序排序，相同時按 `created_at` 排序
+    - 在構建樹狀結構後，對根分類和子分類都進行排序
+    - 確保返回的數據按照排序順序排列
+  - **Schema 更新**:
+    - 在 `CategoryResponse` 中添加 `sort_order` 字段
+    - 確保 API 返回的數據包含排序信息
+- **功能特點**:
+  - **無重複**: 每個分類只會出現一次
+  - **正確排序**: 按 `sort_order` 排序，相同時按創建時間排序
+  - **樹狀結構**: 保持原有的樹狀結構，但已排序且無重複
+
+### 技術細節
+
+#### 修復邏輯
+```python
+added_to_children = set()  # 追蹤已經添加到 children 的分類
+
+for cat in all_categories:
+    if cat.parent_id is None:
+        root_categories.append(category_node)
+    else:
+        if cat.id not in added_to_children:  # 檢查是否已添加
+            category_dict[cat.parent_id].children.append(category_node)
+            added_to_children.add(cat.id)  # 標記為已添加
+```
+
+#### 排序邏輯
+1. 數據庫查詢時按 `sort_order` 和 `created_at` 排序
+2. 構建樹狀結構後，對根分類和子分類分別排序
+3. 排序鍵：`(sort_order, created_at)`
+
+### 影響範圍
+
+- **API**: `/api/categories` 端點
+- **前端**: 使用此 API 的前端頁面會收到正確排序且無重複的數據
+- **向後兼容**: 不影響其他功能
+
+### 注意事項
+
+1. **排序**: 分類按 `sort_order` 排序，值越小越靠前
+2. **無重複**: 每個分類在樹狀結構中只會出現一次
+3. **Schema**: API 返回的數據現在包含 `sort_order` 字段
+
+---
+
 ## [2025-11-26 08:32:57] - 添加分類排序字段的數據庫遷移腳本
 
 ### 修改內容
