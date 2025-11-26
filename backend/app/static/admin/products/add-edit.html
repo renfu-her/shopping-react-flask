@@ -112,6 +112,12 @@
                                 <span>啟用</span>
                             </label>
                         </div>
+                        <div class="mb-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="is_hot" class="mr-2">
+                                <span>熱門商品</span>
+                            </label>
+                        </div>
                         <div class="flex gap-2 mt-6">
                             <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">儲存</button>
                             <a href="/backend/products" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 text-center">取消</a>
@@ -466,6 +472,7 @@
                 document.getElementById('category_id').value = product.category_id;
                 document.getElementById('stock').value = product.stock;
                 document.getElementById('is_active').checked = product.is_active;
+                document.getElementById('is_hot').checked = product.is_hot || false;
                 
                 // 加载产品图片
                 await loadProductImages(id);
@@ -511,7 +518,8 @@
                 image: firstImage, // 使用第一张图片作为主图
                 category_id: parseInt(document.getElementById('category_id').value),
                 stock: parseInt(document.getElementById('stock').value),
-                is_active: document.getElementById('is_active').checked
+                is_active: document.getElementById('is_active').checked,
+                is_hot: document.getElementById('is_hot').checked
             };
 
             try {

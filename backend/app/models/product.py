@@ -15,6 +15,7 @@ class Product(Base):
     category_id = Column(Integer, ForeignKey("product_categories.id"), nullable=False, index=True)
     stock = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
+    is_hot = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

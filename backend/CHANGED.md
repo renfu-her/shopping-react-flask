@@ -1,5 +1,123 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-26 20:56:50] - 修復產品 API 缺少 is_hot 欄位的問題
+
+### 修改內容
+
+#### 修復產品詳情和更新 API 缺少 is_hot 欄位
+- **時間**: 2025-11-26 20:56:50
+- **問題**: `GET /api/admin/products/{product_id}` 和 `PUT /api/admin/products/{product_id}` 返回的響應中缺少 `is_hot` 欄位，導致 JSON 解析錯誤
+- **修改檔案**:
+  - `app/api/admin/products.py` - 在 `get_product` 和 `update_product` 函數中添加 `is_hot` 欄位
+
+### 變更詳情
+
+#### 修復的函數
+- **get_product** (GET /api/admin/products/{product_id}):
+  - 在返回的 `product_dict` 中添加 `"is_hot": product.is_hot`
+- **update_product** (PUT /api/admin/products/{product_id}):
+  - 在返回的 `product_dict` 中添加 `"is_hot": product.is_hot`
+
+### 技術細節
+
+#### 問題原因
+- `ProductResponseAdmin` schema 要求 `is_hot` 欄位
+- 但 API 返回的字典中缺少此欄位
+- 導致 FastAPI 驗證失敗，返回 "Internal Server Error" 而非 JSON
+
+#### 修復方法
+- 在所有返回 `ProductResponseAdmin` 的地方都添加 `is_hot` 欄位
+- 確保響應數據與 schema 定義一致
+
+### 影響範圍
+- **API**: `/api/admin/products/{product_id}` 端點（GET 和 PUT）
+- **前端**: 產品編輯頁面現在可以正常載入和更新
+
+---
+
+## [2025-11-26 20:50:36] - 為產品管理添加 is_hot 欄位
+
+### 修改內容
+
+#### 添加產品熱門標記功能
+- **時間**: 2025-11-26 20:50:36
+- **功能**: 在 admin 產品管理中新增 `is_hot` 欄位，用於標記熱門商品
+- **修改檔案**:
+  - `app/models/product.py` - 添加 `is_hot` 欄位到 Product 模型
+  - `app/schemas/admin.py` - 在 ProductCreateAdmin, ProductUpdateAdmin, ProductResponseAdmin 中添加 `is_hot`
+  - `app/api/admin/products.py` - 在創建、更新、獲取產品時處理 `is_hot` 欄位
+  - `app/static/admin/products/index.html` - 在產品列表中添加「熱門」列顯示
+  - `app/static/admin/products/add-edit.html` - 在產品編輯表單中添加「熱門商品」複選框
+  - `app/database_migration.py` - 添加 `add_product_is_hot_column()` 遷移函數
+  - `app/main.py` - 在應用啟動時執行 `is_hot` 欄位遷移
+
+### 變更詳情
+
+#### 數據庫模型
+- **Product 模型**:
+  - 添加 `is_hot = Column(Boolean, default=False)` 欄位
+  - 位置：在 `is_active` 欄位之後
+
+#### API Schema
+- **ProductCreateAdmin**:
+  - 添加 `is_hot: bool = False` 欄位（可選，默認為 False）
+- **ProductUpdateAdmin**:
+  - 添加 `is_hot: Optional[bool] = None` 欄位（可選更新）
+- **ProductResponseAdmin**:
+  - 添加 `is_hot: bool` 欄位（響應中包含）
+
+#### API 端點
+- **GET /api/admin/products**:
+  - 返回的產品列表中包含 `is_hot` 欄位
+- **POST /api/admin/products**:
+  - 創建產品時支持設置 `is_hot` 欄位
+- **GET /api/admin/products/{product_id}**:
+  - 返回的產品詳情中包含 `is_hot` 欄位
+- **PUT /api/admin/products/{product_id}**:
+  - 更新產品時支持修改 `is_hot` 欄位
+
+#### 前端界面
+- **產品列表頁面** (`index.html`):
+  - 在表格中添加「熱門」列
+  - 顯示熱門狀態：是（紅色標籤）/ 否（灰色標籤）
+- **產品編輯頁面** (`add-edit.html`):
+  - 添加「熱門商品」複選框
+  - 在載入產品數據時自動填充 `is_hot` 值
+  - 在提交表單時包含 `is_hot` 欄位
+
+#### 數據庫遷移
+- **遷移函數**: `add_product_is_hot_column()`
+  - 檢查 `products` 表是否存在
+  - 檢查 `is_hot` 欄位是否已存在
+  - 如果不存在，添加 `is_hot BOOLEAN NOT NULL DEFAULT FALSE` 欄位
+  - 位置：在 `is_active` 欄位之後
+- **自動執行**: 在應用啟動時自動執行遷移
+
+### 技術細節
+
+#### 欄位定義
+```python
+is_hot = Column(Boolean, default=False)
+```
+
+#### 前端顯示
+- 熱門商品顯示為紅色標籤（`bg-red-100 text-red-800`）
+- 非熱門商品顯示為灰色標籤（`bg-gray-100 text-gray-800`）
+
+#### 數據庫遷移 SQL
+```sql
+ALTER TABLE products 
+ADD COLUMN is_hot BOOLEAN NOT NULL DEFAULT FALSE
+AFTER is_active
+```
+
+### 影響範圍
+- **後端 API**: 所有產品相關的 admin API 端點
+- **前端界面**: 產品列表和產品編輯頁面
+- **數據庫**: `products` 表結構變更
+
+---
+
 ## [2025-11-26 08:57:25] - 徹底修復 /api/categories API 重複問題
 
 ### 修改內容

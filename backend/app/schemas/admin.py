@@ -98,6 +98,7 @@ class ProductCreateAdmin(BaseModel):
     category_id: int
     stock: int = 0
     is_active: bool = True
+    is_hot: bool = False
 
 
 class ProductUpdateAdmin(BaseModel):
@@ -108,6 +109,7 @@ class ProductUpdateAdmin(BaseModel):
     category_id: Optional[int] = None
     stock: Optional[int] = None
     is_active: Optional[bool] = None
+    is_hot: Optional[bool] = None
 
 
 class ProductResponseAdmin(BaseModel):
@@ -120,6 +122,7 @@ class ProductResponseAdmin(BaseModel):
     category_name: Optional[str] = None
     stock: int
     is_active: bool
+    is_hot: bool
     created_at: datetime
 
     class Config:

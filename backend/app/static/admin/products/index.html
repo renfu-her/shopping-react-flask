@@ -92,6 +92,7 @@
                                     <th class="px-4 py-3 text-left text-sm font-semibold">庫存</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">分類</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">狀態</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">熱門</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">操作</th>
                                 </tr>
                             </thead>
@@ -172,6 +173,11 @@
                     <td class="px-4 py-3">
                         <span class="px-2 py-1 rounded-full text-xs ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
                             ${product.is_active ? '啟用' : '停用'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs ${product.is_hot ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}">
+                            ${product.is_hot ? '是' : '否'}
                         </span>
                     </td>
                     <td class="px-4 py-3">

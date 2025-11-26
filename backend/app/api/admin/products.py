@@ -53,6 +53,7 @@ def get_products(
             "category_name": p.category.name if p.category else None,
             "stock": p.stock,
             "is_active": p.is_active,
+            "is_hot": p.is_hot,
             "created_at": p.created_at
         }
         product_responses.append(ProductResponseAdmin(**product_dict))
@@ -85,7 +86,8 @@ def create_product(
         image=product_data.image,
         category_id=product_data.category_id,
         stock=product_data.stock,
-        is_active=product_data.is_active
+        is_active=product_data.is_active,
+        is_hot=product_data.is_hot
     )
     db.add(new_product)
     db.commit()
@@ -130,6 +132,7 @@ def get_product(
         "category_name": product.category.name if product.category else None,
         "stock": product.stock,
         "is_active": product.is_active,
+        "is_hot": product.is_hot,
         "created_at": product.created_at
     }
     return ProductResponseAdmin(**product_dict)
@@ -164,6 +167,8 @@ def update_product(
         product.stock = product_data.stock
     if product_data.is_active is not None:
         product.is_active = product_data.is_active
+    if product_data.is_hot is not None:
+        product.is_hot = product_data.is_hot
     
     db.commit()
     db.refresh(product, ["category"])
@@ -178,6 +183,7 @@ def update_product(
         "category_name": product.category.name if product.category else None,
         "stock": product.stock,
         "is_active": product.is_active,
+        "is_hot": product.is_hot,
         "created_at": product.created_at
     }
     return ProductResponseAdmin(**product_dict)

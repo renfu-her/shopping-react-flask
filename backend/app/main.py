@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from app.api import auth, products, cart, categories, orders, news, ads, about_us, faq, home, admin
 from app.database import engine, Base
-from app.database_migration import add_user_role_status_columns, add_category_sort_order_column
+from app.database_migration import add_user_role_status_columns, add_category_sort_order_column, add_product_is_hot_column
 from app.init_admin import init_admin_user
 from app.config import settings
 import logging
@@ -27,6 +27,12 @@ try:
     add_category_sort_order_column()
 except Exception as e:
     logger.warning(f"分类排序字段迁移失败，但继续运行: {e}")
+
+# 执行产品 is_hot 字段迁移
+try:
+    add_product_is_hot_column()
+except Exception as e:
+    logger.warning(f"产品 is_hot 字段迁移失败，但继续运行: {e}")
 
 # 初始化默认管理员账户
 try:
