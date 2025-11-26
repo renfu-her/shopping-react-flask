@@ -9,6 +9,7 @@ class CategoryResponse(BaseModel):
     parent_id: Optional[int]  # None 表示根分類
     image: Optional[str]
     description: Optional[str]
+    sort_order: int  # 排序欄位
     created_at: datetime
 
     class Config:

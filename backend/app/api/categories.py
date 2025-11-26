@@ -13,22 +13,37 @@ router = APIRouter(prefix="/api/categories", tags=["categories"])
 @router.get("", response_model=List[CategoryTreeResponse])
 def get_categories(db: Session = Depends(get_db)):
     """獲取所有分類（樹狀結構）"""
-    all_categories = db.query(ProductCategory).all()
+    # 按 sort_order 排序，相同時按 created_at 排序
+    all_categories = db.query(ProductCategory).order_by(
+        ProductCategory.sort_order.asc(),
+        ProductCategory.created_at.asc()
+    ).all()
     
     # 建立分類字典
     category_dict = {cat.id: CategoryTreeResponse.model_validate(cat) for cat in all_categories}
     
     # 建立樹狀結構
     root_categories = []
+    added_to_children = set()  # 追蹤已經添加到 children 的分類，避免重複
+    
     for cat in all_categories:
         category_node = category_dict[cat.id]
         if cat.parent_id is None:  # 根分類的 parent_id 為 None
             root_categories.append(category_node)
         else:
             if cat.parent_id in category_dict:
-                if not category_dict[cat.parent_id].children:
-                    category_dict[cat.parent_id].children = []
-                category_dict[cat.parent_id].children.append(category_node)
+                # 檢查是否已經添加過，避免重複
+                if cat.id not in added_to_children:
+                    if not category_dict[cat.parent_id].children:
+                        category_dict[cat.parent_id].children = []
+                    category_dict[cat.parent_id].children.append(category_node)
+                    added_to_children.add(cat.id)
+    
+    # 對根分類和子分類進行排序
+    root_categories.sort(key=lambda x: (x.sort_order, x.created_at))
+    for root_cat in root_categories:
+        if root_cat.children:
+            root_cat.children.sort(key=lambda x: (x.sort_order, x.created_at))
     
     return root_categories
 
