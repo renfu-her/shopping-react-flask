@@ -1,5 +1,30 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-26 16:25:00] - 修正 Ads 圖片 URL 處理
+
+### 說明
+
+修正廣告圖片 URL 處理邏輯，將後端返回的相對路徑轉換為完整 URL。
+
+### 修改內容
+
+- **更新 Home 組件** (`frontend/components/Home.tsx`)
+  - 新增 `getImageUrl()` 輔助函數
+  - 自動將相對路徑（如 `/static/uploads/...`）轉換為完整 URL（`http://localhost:8000/static/uploads/...`）
+  - 如果已經是完整 URL（以 `http://` 或 `https://` 開頭），則直接使用
+
+### 影響的檔案
+
+- `frontend/components/Home.tsx`
+
+### 技術細節
+
+- 檢查 URL 是否為相對路徑
+- 相對路徑自動加上 `http://localhost:8000` 前綴
+- 支援絕對 URL 和相對路徑兩種格式
+
+---
+
 ## [2025-11-26 16:21:57] - 整合 Categories 和 Ads API
 
 ### 說明

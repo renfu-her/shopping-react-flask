@@ -37,6 +37,16 @@ export const Home: React.FC<HomeProps> = ({ featuredProducts, newsItems, onShopN
   // Get the first ad (or ad with lowest order_index, which should be first after API sorting)
   const heroAd = ads.length > 0 ? ads[0] : null;
 
+  // Convert relative image URL to absolute URL
+  const getImageUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    // If it's a relative path, prepend the backend base URL
+    return `http://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
+  };
+
   const handleShopNowClick = () => {
     if (heroAd?.link_url) {
       window.location.href = heroAd.link_url;
@@ -54,7 +64,7 @@ export const Home: React.FC<HomeProps> = ({ featuredProducts, newsItems, onShopN
           <>
             <div 
               className="absolute inset-0 bg-cover bg-center opacity-30"
-              style={{ backgroundImage: `url(${heroAd.image_url})` }}
+              style={{ backgroundImage: `url(${getImageUrl(heroAd.image_url)})` }}
             ></div>
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-center items-center text-center">
               <span className="bg-indigo-500/30 text-indigo-200 px-4 py-1 rounded-full text-sm font-medium mb-6 backdrop-blur-sm border border-indigo-400/30">New Collection 2025</span>
