@@ -1,5 +1,114 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-26 21:23:35] - 重構 App.tsx 拆分成多個模組
+
+### 修改內容
+
+#### 將大型 App.tsx 文件拆分成多個模組
+- **時間**: 2025-11-26 21:23:35
+- **目的**: 提高代碼可維護性和可讀性，將 565 行的 App.tsx 拆分成多個專責模組
+- **修改檔案**:
+  - `data/mockData.ts` - 存放模擬數據（PRODUCTS, NEWS_ITEMS）
+  - `context/AppContext.tsx` - 應用狀態管理（用戶、購物車、分類等）
+  - `components/layout/Navbar.tsx` - 導航欄組件
+  - `components/layout/Footer.tsx` - 頁腳組件
+  - `pages/HomePage.tsx` - 首頁
+  - `pages/ShopPage.tsx` - 商店頁
+  - `pages/ProductDetailPage.tsx` - 產品詳情頁
+  - `pages/NewsPage.tsx` - 新聞列表頁
+  - `pages/NewsDetailPage.tsx` - 新聞詳情頁
+  - `pages/AboutPage.tsx` - 關於我們頁
+  - `pages/CartPage.tsx` - 購物車頁
+  - `pages/CheckoutPage.tsx` - 結帳頁
+  - `pages/SignPage.tsx` - 登錄/註冊頁
+  - `pages/OrderSuccessPage.tsx` - 訂單成功頁
+  - `hooks/useAiContext.ts` - AI 上下文 Hook
+  - `App.tsx` - 主應用組件（僅包含路由配置）
+
+### 變更詳情
+
+#### 目錄結構
+```
+frontend/
+├── data/
+│   └── mockData.ts          # 模擬數據
+├── context/
+│   └── AppContext.tsx       # 應用狀態管理
+├── components/
+│   └── layout/
+│       ├── Navbar.tsx        # 導航欄
+│       └── Footer.tsx        # 頁腳
+├── pages/
+│   ├── HomePage.tsx         # 首頁
+│   ├── ShopPage.tsx         # 商店頁
+│   ├── ProductDetailPage.tsx # 產品詳情
+│   ├── NewsPage.tsx         # 新聞列表
+│   ├── NewsDetailPage.tsx   # 新聞詳情
+│   ├── AboutPage.tsx        # 關於我們
+│   ├── CartPage.tsx         # 購物車
+│   ├── CheckoutPage.tsx     # 結帳
+│   ├── SignPage.tsx         # 登錄/註冊
+│   └── OrderSuccessPage.tsx # 訂單成功
+├── hooks/
+│   └── useAiContext.ts      # AI 上下文 Hook
+└── App.tsx                   # 主應用（路由配置）
+```
+
+#### 狀態管理
+- **AppContext**: 使用 React Context API 管理全局狀態
+  - 用戶狀態（user）
+  - 購物車（cart）
+  - 分類選擇（selectedCategory）
+  - 分頁（currentPage）
+  - 購物車操作方法（addToCart, updateQuantity, removeFromCart）
+  - 用戶操作方法（handleLogin, handleLogout）
+
+#### 組件分離
+- **Layout 組件**: Navbar 和 Footer 獨立成組件
+- **Page 組件**: 每個路由對應一個獨立的頁面組件
+- **Hook**: AI 上下文邏輯提取為自定義 Hook
+
+#### 數據管理
+- **mockData.ts**: 集中管理所有模擬數據
+  - PRODUCTS 數組
+  - NEWS_ITEMS 數組
+  - ITEMS_PER_PAGE 常量
+
+### 技術細節
+
+#### Context API 使用
+```typescript
+// 提供全局狀態
+<AppProvider>
+  <AppContent />
+</AppProvider>
+
+// 在組件中使用
+const { user, cart, addToCart } = useApp();
+```
+
+#### 路由配置
+```typescript
+<Routes>
+  <Route path="/" element={<HomePage />} />
+  <Route path="/shop" element={<ShopPage />} />
+  // ... 其他路由
+</Routes>
+```
+
+### 優勢
+- **可維護性**: 每個文件職責單一，易於理解和修改
+- **可重用性**: 組件和 Hook 可以在其他地方重用
+- **可測試性**: 獨立的組件更容易進行單元測試
+- **可擴展性**: 添加新頁面或功能更加容易
+
+### 影響範圍
+- **代碼組織**: 大幅改善代碼結構
+- **開發體驗**: 更容易找到和修改特定功能
+- **性能**: 無影響，僅為代碼重構
+
+---
+
 ## [2025-11-26 21:17:49] - 實現基於 React Router 的路由系統
 
 ### 修改內容
