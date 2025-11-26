@@ -1,5 +1,336 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-26 08:16:43] - 移除 admin 目錄下所有 Font Awesome 引用
+
+### 修改內容
+
+#### 移除分類管理頁面中的 Font Awesome CDN 和相關代碼
+- **時間**: 2025-11-26 08:16:43
+- **功能**: 移除所有 admin 目錄下頁面中的 Font Awesome CDN link、CSS 樣式和載入檢測腳本
+- **修改檔案**:
+  - `app/static/admin/categories/index.html`
+  - `app/static/admin/categories/add-edit.html`
+- **變更詳情**:
+  - **categories/index.html**:
+    - 移除 Font Awesome CDN link (`<link rel="stylesheet" href="...font-awesome...">`)
+    - 移除 Font Awesome 圖標隱藏/顯示 CSS 樣式
+    - 移除 Font Awesome CSS 載入檢測腳本
+  - **categories/add-edit.html**:
+    - 移除 Font Awesome CDN link
+    - 移除 Font Awesome 圖標隱藏/顯示 CSS 樣式
+    - 移除 Font Awesome CSS 載入檢測腳本
+- **功能特點**:
+  - **完全移除**: 所有 Font Awesome 的外部引用都已移除
+  - **簡化代碼**: 移除了不必要的載入檢測邏輯
+  - **注意**: 代碼中仍有使用 Font Awesome 圖標的功能（如 `createFontAwesomeIconSelector`），但不再載入 Font Awesome CSS
+
+### 技術細節
+
+#### 移除的內容
+1. **CDN Link**: Font Awesome 6.5.1 CSS CDN 引用
+2. **CSS 樣式**: 防止圖標在載入前顯示為大文本的樣式
+3. **載入檢測**: 等待 Font Awesome CSS 載入完成並添加 `fontawesome-loaded` 類別的腳本
+
+### 影響範圍
+
+- **前端頁面**: 分類管理頁面（index.html 和 add-edit.html）
+- **功能**: Font Awesome 圖標將不再顯示（因為 CSS 未載入）
+- **代碼**: 代碼中仍有使用 Font Awesome 的邏輯，但圖標不會正常顯示
+
+### 注意事項
+
+1. **圖標顯示**: 移除 Font Awesome 後，使用 Font Awesome 圖標的地方將無法正常顯示
+2. **後續處理**: 可能需要將圖標功能改為使用其他圖標庫或圖片
+3. **代碼保留**: 相關的圖標選擇器代碼仍保留在文件中，但功能無法正常使用
+
+---
+
+## [2025-11-25 23:07:31] - 移除 admin-common.js 中的 Font Awesome 處理，改用 CDN 直接載入
+
+### 修改內容
+
+#### 從 admin-common.js 移除 Font Awesome 相關邏輯
+- **時間**: 2025-11-25 23:07:31
+- **功能**: 移除 `admin-common.js` 中所有 Font Awesome 相關的載入邏輯，改為在分類管理頁面直接使用 CDN
+- **修改檔案**:
+  - `app/static/js/admin-common.js`
+  - `app/static/admin/categories/index.html`
+  - `app/static/admin/categories/add-edit.html`
+- **變更詳情**:
+  - **admin-common.js**:
+    - 移除 `needsFontAwesome` 檢查邏輯
+    - 移除 Font Awesome CSS 載入等待邏輯
+    - 移除 `fontawesome-loaded` 類別標記邏輯
+    - 在載入 `base.html` 的 link 標籤時，跳過 Font Awesome（因為分類管理頁面會直接使用 CDN）
+  - **categories/index.html 和 categories/add-edit.html**:
+    - 在 `<head>` 中直接添加 Font Awesome CDN link
+    - 在 `<body>` 開始處添加腳本，等待 Font Awesome CSS 載入完成後添加 `fontawesome-loaded` 類別
+    - 保留原有的 Font Awesome 圖標隱藏/顯示 CSS 樣式
+- **功能特點**:
+  - **簡化邏輯**: `admin-common.js` 不再需要處理 Font Awesome 的特殊邏輯
+  - **直接載入**: 分類管理頁面直接使用 CDN，載入更快
+  - **向後兼容**: 所有功能保持不變，只是改變了載入方式
+  - **性能優化**: 其他頁面不再載入 Font Awesome，減少不必要的資源載入
+
+### 技術細節
+
+#### Font Awesome CDN
+```html
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
+      crossorigin="anonymous" 
+      referrerpolicy="no-referrer" />
+```
+
+#### Font Awesome 載入檢測
+- 使用 `link.onload` 事件監聽載入完成
+- 使用 `link.sheet` 或 `link.styleSheet` 檢查樣式是否已應用
+- 設置 5 秒超時，避免無限等待
+- 載入完成後添加 `fontawesome-loaded` 類別，觸發 CSS 顯示圖標
+
+### 影響範圍
+
+- **前端頁面**: 分類管理頁面（index.html 和 add-edit.html）
+- **功能**: 所有功能保持不變，Font Awesome 圖標正常顯示
+- **性能**: 其他頁面不再載入 Font Awesome，減少資源載入
+
+### 注意事項
+
+1. **CDN 載入**: 分類管理頁面現在直接使用 CDN 載入 Font Awesome
+2. **載入檢測**: 使用多種方法檢測 Font Awesome 是否已載入完成
+3. **向後兼容**: 所有功能保持不變
+
+---
+
+## [2025-11-25 23:05:14] - 調整 admin-common.js 載入順序：移至 body 末尾
+
+### 修改內容
+
+#### 將 admin-common.js 移到所有其他腳本之後載入
+- **時間**: 2025-11-25 23:05:14
+- **功能**: 將所有 admin 頁面中的 `admin-common.js` 從 `<head>` 移到 `<body>` 末尾，確保在所有其他腳本載入完成後才載入
+- **修改檔案**:
+  - 所有 `app/static/admin/**/*.html` 文件（15 個文件）
+- **變更詳情**:
+  - 從所有頁面的 `<head>` 中移除 `<script src="/static/js/admin-common.js"></script>`
+  - 將 `admin-common.js` 移到 `<body>` 末尾，在所有內聯腳本和其他外部腳本之後
+  - 確保載入順序：其他腳本（如 `admin-upload.js`, `admin-simplemde.js`, `admin-pagination.js`）→ 內聯腳本 → `admin-common.js`
+- **功能特點**:
+  - **正確的載入順序**: `admin-common.js` 在所有依賴載入完成後才執行
+  - **避免依賴問題**: 確保所有必要的函數和變數都已定義
+  - **性能優化**: 不阻塞其他資源的載入
+  - **向後兼容**: 所有功能保持不變
+
+### 技術細節
+
+#### 載入順序
+```
+<head>
+  <style>...</style>
+  <script src="/static/js/admin-upload.js"></script>  <!-- 其他腳本 -->
+  <script src="/static/js/admin-simplemde.js"></script>
+</head>
+<body>
+  ...
+  <script>
+    // 內聯腳本（使用 admin-common.js 中的函數）
+    loadBaseAndInit(initPage);
+  </script>
+  <script src="/static/js/admin-common.js"></script>  <!-- 最後載入 -->
+</body>
+```
+
+### 影響範圍
+
+- **前端頁面**: 所有 15 個 admin 子頁面
+- **功能**: 所有功能保持不變，只是改變了載入順序
+- **性能**: 無影響，可能略有改善（不阻塞其他資源）
+
+### 注意事項
+
+1. **載入順序**: `admin-common.js` 現在在所有其他腳本之後載入
+2. **依賴關係**: 確保所有依賴 `admin-common.js` 的腳本在它之前載入
+3. **向後兼容**: 所有功能保持不變
+
+---
+
+## [2025-11-25 23:01:29] - 移除非分類管理頁面的 admin-common.css 引用
+
+### 修改內容
+
+#### 從非分類管理頁面移除 admin-common.css 引用
+- **時間**: 2025-11-25 23:01:29
+- **功能**: 從所有非分類管理的 admin 頁面中移除 `admin-common.css` 引用，改為內聯載入動畫樣式
+- **修改檔案**:
+  - 所有 `app/static/admin/**/*.html` 文件（13 個非分類管理頁面）
+- **變更詳情**:
+  - 從 13 個非分類管理頁面中移除 `<link rel="stylesheet" href="/static/css/admin-common.css">`
+  - 在這些頁面中添加內聯的載入動畫樣式（`#loading` 和 `.spinner`）
+  - 保留所有頁面的 `<script src="/static/js/admin-common.js"></script>` 引用
+  - 分類管理頁面（`categories/index.html` 和 `categories/add-edit.html`）保留 `admin-common.css` 引用
+- **功能特點**:
+  - **精確控制**: 只有分類管理頁面使用 `admin-common.css`
+  - **避免閃爍**: 其他頁面不再受 Font Awesome 樣式影響
+  - **保持功能**: 所有頁面保留載入動畫功能（通過內聯樣式）
+  - **代碼分離**: 通用樣式和特定功能樣式分離
+
+### 技術細節
+
+#### 內聯樣式內容
+```css
+#loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+}
+#loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+```
+
+### 影響範圍
+
+- **前端頁面**: 13 個非分類管理頁面
+- **分類管理**: 保留 `admin-common.css` 引用
+- **功能**: 所有功能保持不變，載入動畫正常工作
+- **性能**: 無影響
+
+### 注意事項
+
+1. **樣式位置**: 載入動畫樣式現在內聯在每個頁面中
+2. **分類管理**: 分類管理頁面仍使用 `admin-common.css`（包含 Font Awesome 樣式）
+3. **向後兼容**: 所有功能保持不變
+
+---
+
+## [2025-11-25 22:55:13] - 移除 admin-common.css 中的 Font Awesome 樣式，僅在分類管理頁面使用
+
+### 修改內容
+
+#### 將 Font Awesome 樣式從通用 CSS 中移除
+- **時間**: 2025-11-25 22:55:13
+- **問題**: 其他頁面載入 `admin-common.css` 時會出現很大的 icon 閃一下，因為 CSS 中有隱藏 Font Awesome 圖標的樣式
+- **原因**: `admin-common.css` 中包含 Font Awesome 相關樣式，但只有分類管理需要 Font Awesome
+- **修改檔案**:
+  - `app/static/css/admin-common.css` - 移除 Font Awesome 相關樣式
+  - `app/static/admin/categories/index.html` - 添加 Font Awesome 樣式（內聯）
+  - `app/static/admin/categories/add-edit.html` - 添加 Font Awesome 樣式（內聯）
+- **變更詳情**:
+  - 從 `admin-common.css` 中移除所有 Font Awesome 相關樣式
+  - 在分類管理的兩個頁面（`index.html` 和 `add-edit.html`）中添加內聯樣式
+  - 保持 `admin-common.css` 只包含載入動畫等通用樣式
+  - 其他頁面不再受 Font Awesome 樣式影響
+- **功能特點**:
+  - **精確控制**: Font Awesome 樣式只在分類管理頁面生效
+  - **避免閃爍**: 其他頁面不會再出現大圖標閃爍問題
+  - **代碼分離**: 通用樣式和特定功能樣式分離，更易維護
+
+### 技術細節
+
+#### 移除的樣式（從 admin-common.css）
+```css
+/* 防止 Font Awesome 图标在 CSS 加载前显示为大文本 */
+.fa, .fas, .far, .fab, .fal, .fad, .fa-solid, .fa-regular, .fa-brands, .fa-light, .fa-duotone,
+[class*="fa-"] {
+    visibility: hidden;
+    font-size: 0;
+}
+
+/* 当 Font Awesome 加载完成后，图标会正常显示 */
+html.fontawesome-loaded .fa,
+/* ... 其他類別 ... */
+```
+
+#### 添加的樣式（分類管理頁面）
+在 `categories/index.html` 和 `categories/add-edit.html` 中添加相同的內聯樣式。
+
+### 影響範圍
+
+- **前端頁面**: 所有 admin 頁面
+- **分類管理**: 保持 Font Awesome 圖標正常顯示
+- **其他頁面**: 不再出現大圖標閃爍問題
+- **功能**: 所有功能保持不變
+
+### 注意事項
+
+1. **樣式位置**: Font Awesome 樣式現在只在分類管理頁面中
+2. **維護性**: 如果未來其他頁面需要 Font Awesome，可以考慮創建單獨的 CSS 文件
+3. **向後兼容**: 所有功能保持不變
+
+---
+
+## [2025-11-25 22:49:18] - 優化 Font Awesome 載入邏輯：僅在分類管理頁面等待載入
+
+### 修改內容
+
+#### 優化 Font Awesome CSS 載入邏輯
+- **時間**: 2025-11-25 22:49:18
+- **功能**: 只在分類管理頁面等待 Font Awesome CSS 載入完成，其他頁面不需要等待，提升載入速度
+- **修改檔案**:
+  - `app/static/js/admin-common.js`
+- **變更詳情**:
+  - 檢查當前頁面路徑，判斷是否為分類管理頁面（`/categories`）
+  - 只在分類管理頁面等待 Font Awesome CSS 載入完成
+  - 其他頁面不等待 Font Awesome CSS 載入，立即標記為已載入，避免延遲
+  - 非分類管理頁面立即添加 `fontawesome-loaded` class，確保圖標正常顯示（如果有的話）
+- **功能特點**:
+  - **性能優化**: 非分類管理頁面不需要等待 Font Awesome CSS 載入，載入速度更快
+  - **精確控制**: 只在真正需要 Font Awesome 的頁面等待載入
+  - **向後兼容**: 所有功能保持不變
+
+### 技術細節
+
+#### 判斷邏輯
+```javascript
+// 检查当前页面是否需要 Font Awesome（只有分类管理需要）
+const currentPath = window.location.pathname;
+const needsFontAwesome = currentPath.includes('/categories');
+
+// 对于 Font Awesome CSS，只在分类管理页面等待加载完成
+if (href.includes('font-awesome') && needsFontAwesome) {
+    // 等待加载完成
+} else if (href.includes('font-awesome') && !needsFontAwesome) {
+    // 非分类管理页面，直接标记为已加载，不等待
+    document.documentElement.classList.add('fontawesome-loaded');
+}
+```
+
+### 影響範圍
+
+- **前端頁面**: 所有 admin 頁面
+- **性能**: 非分類管理頁面載入速度更快
+- **功能**: 所有功能保持不變
+
+### 注意事項
+
+1. **頁面判斷**: 使用路徑包含 `/categories` 來判斷是否為分類管理頁面
+2. **載入順序**: 分類管理頁面仍會等待 Font Awesome CSS 載入完成
+3. **其他頁面**: 非分類管理頁面不等待，立即顯示內容
+
+---
+
 ## [2025-11-25 22:46:02] - 修復 Admin 頁面 Font Awesome 圖標閃爍問題
 
 ### 修改內容
