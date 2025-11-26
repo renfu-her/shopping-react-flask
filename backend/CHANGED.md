@@ -1,5 +1,67 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-26 21:00:53] - 添加首頁熱門產品 API 端點
+
+### 修改內容
+
+#### 添加首頁熱門產品 API
+- **時間**: 2025-11-26 21:00:53
+- **功能**: 在首頁 API 中添加 `/api/home/hot` 端點，用於獲取熱門產品（is_hot=True）
+- **修改檔案**:
+  - `app/api/home.py` - 添加 `get_hot_products` 函數和 `/api/home/hot` 端點
+  - `frontend/services/api.ts` - 添加 `fetchHotProducts` 函數和 `Product` 接口定義
+
+### 變更詳情
+
+#### 後端 API
+- **新增端點**: `GET /api/home/hot`
+  - 返回所有 `is_hot=True` 且 `is_active=True` 的產品
+  - 按創建時間降序排序
+  - 包含完整的產品信息：分類名稱、產品圖片列表等
+
+#### 前端 API 服務
+- **新增函數**: `fetchHotProducts()`
+  - 調用 `/api/home/hot` 端點
+  - 返回 `Product[]` 類型的產品列表
+- **新增接口**: `Product`
+  - 定義產品數據結構
+  - 包含所有產品字段和產品圖片列表
+
+#### 改進的推薦產品端點
+- **優化**: `GET /api/home/featured`
+  - 現在也包含完整的產品信息（分類名稱、產品圖片列表）
+  - 使用 `joinedload` 優化數據庫查詢
+
+### 技術細節
+
+#### API 端點實現
+```python
+@router.get("/hot", response_model=List[ProductResponse])
+def get_hot_products(db: Session = Depends(get_db)):
+    """獲取熱門產品（is_hot=True 的啟用產品）"""
+    products = db.query(Product).options(
+        joinedload(Product.category),
+        joinedload(Product.images)
+    ).filter(
+        Product.is_active == True,
+        Product.is_hot == True
+    ).order_by(Product.created_at.desc()).all()
+```
+
+#### 數據結構
+- 返回的產品包含：
+  - 基本信息（id, title, price, description, image）
+  - 分類信息（category_id, category_name）
+  - 庫存和狀態（stock, is_active）
+  - 產品圖片列表（product_images）
+
+### 影響範圍
+- **後端 API**: 新增 `/api/home/hot` 端點
+- **前端服務**: 新增 `fetchHotProducts` 函數
+- **使用場景**: 首頁可以顯示熱門產品列表
+
+---
+
 ## [2025-11-26 20:56:50] - 修復產品 API 缺少 is_hot 欄位的問題
 
 ### 修改內容

@@ -49,3 +49,35 @@ export async function fetchAds(): Promise<Ad[]> {
   }
 }
 
+export interface Product {
+  id: number;
+  title: string;
+  price: number;
+  description: string | null;
+  image: string;
+  category_id: number;
+  category_name: string | null;
+  stock: number;
+  is_active: boolean;
+  created_at: string;
+  product_images: Array<{
+    id: number;
+    image_url: string;
+    order_index: number;
+  }>;
+}
+
+export async function fetchHotProducts(): Promise<Product[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/home/hot`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch hot products: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching hot products:', error);
+    throw error;
+  }
+}
+

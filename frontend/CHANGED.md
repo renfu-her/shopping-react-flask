@@ -1,5 +1,41 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-26 21:00:53] - 添加首頁熱門產品 API 服務
+
+### 修改內容
+
+#### 添加熱門產品 API 服務
+- **時間**: 2025-11-26 21:00:53
+- **功能**: 在 API 服務中添加獲取熱門產品的函數
+- **修改檔案**:
+  - `services/api.ts` - 添加 `fetchHotProducts` 函數和 `Product` 接口定義
+
+### 變更詳情
+
+#### API 服務
+- **新增函數**: `fetchHotProducts()`
+  - 調用後端 `/api/home/hot` 端點
+  - 返回熱門產品列表（`Product[]`）
+  - 包含錯誤處理
+
+#### 類型定義
+- **新增接口**: `Product`
+  - 定義完整的產品數據結構
+  - 包含基本字段、分類信息、產品圖片列表等
+
+### 使用方式
+```typescript
+import { fetchHotProducts } from './services/api';
+
+const hotProducts = await fetchHotProducts();
+```
+
+### 影響範圍
+- **API 服務**: 新增熱門產品獲取功能
+- **準備工作**: 為首頁顯示熱門產品提供數據支持
+
+---
+
 ## [2025-11-26 16:25:00] - 修正 Ads 圖片 URL 處理
 
 ### 說明
