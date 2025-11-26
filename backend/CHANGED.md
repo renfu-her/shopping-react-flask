@@ -1,5 +1,39 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-26 22:04:53] - 修復創建產品 API 缺少 is_hot 欄位的問題
+
+### 修改內容
+
+#### 修復創建產品 API 響應缺少 is_hot 欄位
+- **時間**: 2025-11-26 22:04:53
+- **問題**: `POST /api/admin/products` 創建產品時，返回的響應中缺少 `is_hot` 欄位，導致 JSON 解析錯誤
+- **修改檔案**:
+  - `app/api/admin/products.py` - 在 `create_product` 函數的返回響應中添加 `is_hot` 欄位
+
+### 變更詳情
+
+#### 修復的函數
+- **create_product** (POST /api/admin/products):
+  - 在返回的 `product_dict` 中添加 `"is_hot": new_product.is_hot`
+  - 確保響應數據與 `ProductResponseAdmin` schema 定義一致
+
+### 技術細節
+
+#### 問題原因
+- 雖然在創建產品時設置了 `is_hot=product_data.is_hot`
+- 但在構建返回響應時忘記包含 `is_hot` 欄位
+- 導致 FastAPI 驗證失敗，返回 "Internal Server Error" 而非 JSON
+
+#### 修復方法
+- 在 `create_product` 函數的 `product_dict` 中添加 `"is_hot": new_product.is_hot`
+- 與 `get_product` 和 `update_product` 保持一致
+
+### 影響範圍
+- **API**: `/api/admin/products` 端點（POST）
+- **前端**: 產品新增頁面現在可以正常保存
+
+---
+
 ## [2025-11-26 21:00:53] - 添加首頁熱門產品 API 端點
 
 ### 修改內容

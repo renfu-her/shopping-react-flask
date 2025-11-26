@@ -106,6 +106,7 @@ def create_product(
         "category_name": new_product.category.name if new_product.category else None,
         "stock": new_product.stock,
         "is_active": new_product.is_active,
+        "is_hot": new_product.is_hot,
         "created_at": new_product.created_at
     }
     return ProductResponseAdmin(**product_dict)
