@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>分類管理 - 購物車管理 Admin</title>
     <link rel="stylesheet" href="/static/css/admin-common.css">
+    <!-- Font Awesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* 防止 Font Awesome 图标在 CSS 加载前显示为大文本 */
+        .fa, .fas, .far, .fab, .fal, .fad, .fa-solid, .fa-regular, .fa-brands, .fa-light, .fa-duotone,
+        [class*="fa-"] {
+            visibility: hidden;
+            font-size: 0;
+        }
+
+        /* 当 Font Awesome 加载完成后，图标会正常显示 */
+        html.fontawesome-loaded .fa,
+        html.fontawesome-loaded .fas,
+        html.fontawesome-loaded .far,
+        html.fontawesome-loaded .fab,
+        html.fontawesome-loaded .fal,
+        html.fontawesome-loaded .fad,
+        html.fontawesome-loaded .fa-solid,
+        html.fontawesome-loaded .fa-regular,
+        html.fontawesome-loaded .fa-brands,
+        html.fontawesome-loaded .fa-light,
+        html.fontawesome-loaded .fa-duotone,
+        html.fontawesome-loaded [class*="fa-"] {
+            visibility: visible;
+            font-size: inherit;
+        }
+    </style>
     <script src="/static/js/admin-simplemde.js"></script>
     <script src="/static/js/admin-upload.js"></script>
 </head>
@@ -15,6 +42,44 @@
             <p style="margin-top: 20px; text-align: center;">載入中...</p>
         </div>
     </div>
+    <script>
+        // 等待 Font Awesome CSS 加载完成
+        (function() {
+            const fontAwesomeLink = document.querySelector('link[href*="font-awesome"]');
+            if (fontAwesomeLink) {
+                const checkLoaded = () => {
+                    // 检查 Font Awesome 是否已加载（通过检查样式是否应用）
+                    if (fontAwesomeLink.sheet || fontAwesomeLink.styleSheet) {
+                        document.documentElement.classList.add('fontawesome-loaded');
+                    } else {
+                        setTimeout(checkLoaded, 50);
+                    }
+                };
+                
+                fontAwesomeLink.onload = () => {
+                    document.documentElement.classList.add('fontawesome-loaded');
+                };
+                fontAwesomeLink.onerror = () => {
+                    // 即使加载失败也标记，避免一直隐藏
+                    document.documentElement.classList.add('fontawesome-loaded');
+                };
+                // 设置超时，避免无限等待
+                setTimeout(() => {
+                    document.documentElement.classList.add('fontawesome-loaded');
+                }, 5000);
+                
+                // 如果已经加载完成
+                if (fontAwesomeLink.sheet || fontAwesomeLink.styleSheet) {
+                    document.documentElement.classList.add('fontawesome-loaded');
+                } else {
+                    checkLoaded();
+                }
+            } else {
+                // 如果没有找到 Font Awesome link，直接标记为已加载
+                document.documentElement.classList.add('fontawesome-loaded');
+            }
+        })();
+    </script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
