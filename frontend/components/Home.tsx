@@ -145,23 +145,35 @@ export const Home: React.FC<HomeProps> = ({ featuredProducts, newsItems, onShopN
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {featuredProducts.map((product) => (
-              <div key={product.id} className="group cursor-pointer" onClick={() => onProductClick(product)}>
-                <div className="bg-gray-100 rounded-2xl overflow-hidden relative aspect-[4/3] mb-4">
-                    <img 
-                        src={product.image} 
-                        alt={product.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-gray-900">
-                        HOT
-                    </div>
+            {featuredProducts.map((product) => {
+              // 获取第一张图片（order_index 为 0 的图片，或 product_images 的第一张）
+              const firstImage = product.product_images && product.product_images.length > 0
+                ? product.product_images[0].image_url
+                : product.image;
+              
+              // 转换相对路径为绝对路径
+              const imageUrl = firstImage?.startsWith('http') 
+                ? firstImage 
+                : `http://localhost:8000${firstImage?.startsWith('/') ? firstImage : '/' + firstImage}`;
+              
+              return (
+                <div key={product.id} className="group cursor-pointer" onClick={() => onProductClick(product)}>
+                  <div className="bg-gray-100 rounded-2xl overflow-hidden relative aspect-[4/3] mb-4">
+                      <img 
+                          src={imageUrl} 
+                          alt={product.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-gray-900">
+                          HOT
+                      </div>
+                  </div>
+                  <h3 className="font-bold text-lg text-gray-900 group-hover:text-indigo-600 transition-colors">{product.title}</h3>
+                  <p className="text-gray-500 text-sm mb-2">{product.category_name || 'Uncategorized'}</p>
+                  <p className="font-bold text-indigo-600">${product.price}</p>
                 </div>
-                <h3 className="font-bold text-lg text-gray-900 group-hover:text-indigo-600 transition-colors">{product.title}</h3>
-                <p className="text-gray-500 text-sm mb-2">{product.category}</p>
-                <p className="font-bold text-indigo-600">${product.price}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

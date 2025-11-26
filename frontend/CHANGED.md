@@ -1,5 +1,110 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-26 22:32:56] - 修復 Popular This Week 顯示第一張產品圖片
+
+### 修改內容
+
+#### 修復 Popular This Week 顯示第一張產品圖片
+- **時間**: 2025-11-26 22:32:56
+- **目的**: 使用 `product_images` 數組中的第一張圖片（order_index 為 0）來顯示產品
+- **修改檔案**:
+  - `components/Home.tsx` - 修改圖片顯示邏輯
+
+### 變更詳情
+
+#### 問題
+- 之前使用 `product.image` 作為圖片源
+- 但 API 返回的數據中，產品有多張圖片在 `product_images` 數組中
+- 應該顯示 `product_images` 數組中的第一張圖片
+
+#### 修復方案
+- 優先使用 `product_images[0].image_url` 作為圖片源
+- 如果 `product_images` 為空或不存在，則回退到 `product.image`
+- 處理相對路徑轉換為絕對路徑（添加 `http://localhost:8000` 前綴）
+
+#### 修改的邏輯
+```typescript
+// 获取第一张图片（order_index 为 0 的图片，或 product_images 的第一张）
+const firstImage = product.product_images && product.product_images.length > 0
+  ? product.product_images[0].image_url
+  : product.image;
+
+// 转换相对路径为绝对路径
+const imageUrl = firstImage?.startsWith('http') 
+  ? firstImage 
+  : `http://localhost:8000${firstImage?.startsWith('/') ? firstImage : '/' + firstImage}`;
+```
+
+### 技術細節
+
+#### 圖片選擇邏輯
+1. 優先使用 `product_images[0].image_url`（第一張圖片）
+2. 如果 `product_images` 為空，使用 `product.image` 作為備用
+3. 處理相對路徑，轉換為完整的 URL
+
+#### 路徑處理
+- 如果圖片 URL 已經是完整 URL（以 `http` 開頭），直接使用
+- 如果是相對路徑，添加 `http://localhost:8000` 前綴
+
+### 影響範圍
+- **前端**: 首頁 "Popular This Week" 部分的產品圖片顯示
+- **行為**: 現在會正確顯示 `product_images` 數組中的第一張圖片
+
+---
+
+## [2025-11-26 22:30:41] - 首頁 Popular This Week 使用 /api/home/featured API
+
+### 修改內容
+
+#### 首頁 Popular This Week 使用 /api/home/featured API
+- **時間**: 2025-11-26 22:30:41
+- **目的**: 將首頁的 "Popular This Week" 部分改為使用後端 API 獲取推薦產品
+- **修改檔案**:
+  - `services/api.ts` - 添加 `fetchFeaturedProducts` 函數
+  - `pages/HomePage.tsx` - 使用 API 獲取 featured products
+  - `components/Home.tsx` - 修復 category 顯示問題
+
+### 變更詳情
+
+#### 添加的 API 函數
+- **fetchFeaturedProducts**: 調用 `/api/home/featured` 端點獲取推薦產品
+
+#### 修改的頁面
+- **HomePage.tsx**:
+  - 移除對 mock data `PRODUCTS` 的依賴
+  - 添加 `useState` 和 `useEffect` 來獲取 featured products
+  - 從 API 動態加載推薦產品數據
+
+#### 修復的問題
+- **Home.tsx**: 將 `product.category` 改為 `product.category_name`，因為 API 返回的是 `category_name` 字段
+
+### 技術細節
+
+#### API 調用
+```typescript
+export async function fetchFeaturedProducts(): Promise<Product[]> {
+  const response = await fetch(`${API_BASE_URL}/home/featured`);
+  const data = await response.json();
+  return data;
+}
+```
+
+#### 數據加載
+- 使用 `useEffect` 在組件掛載時加載數據
+- 添加 loading 狀態管理
+- 錯誤處理：API 失敗時使用空數組
+
+#### 數據結構
+- API 返回的 Product 包含 `category_name` 字段（不是 `category`）
+- 需要調整顯示邏輯以匹配 API 響應
+
+### 影響範圍
+- **前端**: 首頁的 "Popular This Week" 部分
+- **數據來源**: 從 mock data 改為後端 API
+- **行為**: 現在顯示的是後端推薦的產品（前3個啟用的產品）
+
+---
+
 ## [2025-11-26 21:23:35] - 重構 App.tsx 拆分成多個模組
 
 ### 修改內容

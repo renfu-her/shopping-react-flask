@@ -81,3 +81,17 @@ export async function fetchHotProducts(): Promise<Product[]> {
   }
 }
 
+export async function fetchFeaturedProducts(): Promise<Product[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/home/featured`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch featured products: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching featured products:', error);
+    throw error;
+  }
+}
+
