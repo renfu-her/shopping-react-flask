@@ -14,7 +14,7 @@ FastAPI 後端系統，提供購物車、訂單、產品管理等完整功能。
 
 ### 前置需求
 
-- Python 3.12.12（推薦，已在 `.python-version` 中指定）
+- Python 3.12.3（推薦，已在 `.python-version` 中指定）
 - MySQL 資料庫
 - uv (套件管理工具)
 

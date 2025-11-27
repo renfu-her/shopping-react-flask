@@ -24,7 +24,7 @@
 ```bash
 cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
 
-# **重要**：先使用 uv 安裝 Python 3.12.3
+# **步驟 1: 安裝 Python 3.12.3**
 # uv 會下載並安裝完整的 Python 3.12.3（包含 C 擴展模組）
 uv python install 3.12.3
 
@@ -32,13 +32,30 @@ uv python install 3.12.3
 uv python list
 # 應該顯示 3.12.3
 
-# **重要**：刪除舊的虛擬環境（如果存在）
+# **步驟 2: 確保 .python-version 檔案正確**
+echo "3.12.3" > .python-version
+cat .python-version
+# 應該顯示：3.12.3
+
+# **步驟 3: 刪除舊的虛擬環境（如果存在）**
 rm -rf .venv
 
-# 使用 uv sync 安裝依賴（會自動建立虛擬環境並安裝所有依賴）
-# uv 會根據 .python-version 檔案（3.12.3）使用正確的 Python 版本
-# 確保已安裝 uv: curl -LsSf https://astral.sh/uv/install.sh | sh
+# **步驟 4: 使用 uv venv 明確指定 Python 3.12.3（推薦）**
+uv venv --python 3.12.3
+
+# 驗證虛擬環境使用正確的 Python
+source .venv/bin/activate
+python --version
+# 應該顯示：Python 3.12.3
+
+python -c "import sys; print('Python 路徑:', sys.executable)"
+# 應該顯示：/home/.../backend/.venv/bin/python
+
+# **步驟 5: 使用 uv sync 安裝依賴（會使用當前激活的虛擬環境）**
 uv sync
+
+# **如果 uv venv 不工作，可以嘗試：**
+# uv sync --python 3.12.3
 
 # uv sync 會：
 # - 根據 .python-version 檔案使用 Python 3.12.3
