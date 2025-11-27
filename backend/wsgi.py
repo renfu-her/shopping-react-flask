@@ -27,9 +27,9 @@ if __name__ == "__main__":
     print("按 Ctrl+C 停止服務器")
     print("=" * 60)
     
-    # 使用 uvicorn 運行
+    # 使用 uvicorn 運行（使用導入字符串以支持 reload）
     uvicorn.run(
-        app,
+        "app.main:app",  # 使用導入字符串而不是應用對象
         host="0.0.0.0",
         port=8000,
         reload=True,  # 開發模式：自動重載
