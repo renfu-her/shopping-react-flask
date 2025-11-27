@@ -80,10 +80,101 @@ python -c "import _contextvars; import _decimal; print('✅ C 擴展模組正常
 # 檔案已建立在 backend/wsgi.py
 ```
 
-### 2. 配置後端服務器（使用 uWSGI）
+### 2. 配置後端服務器
 
-**⚠️ 重要**：如果使用 `uv` 管理的 Python，uWSGI 會出現 `_contextvars` 和 `_decimal` 錯誤。
-**必須使用系統 Python 3.12 重新創建虛擬環境**。
+有兩種方式可以運行 FastAPI 後端：
+
+#### 方式 1: 使用 Uvicorn（推薦，原生 ASGI 支持）
+
+**優點**：
+- ✅ 原生支持 ASGI，無需適配器
+- ✅ 更簡單的配置
+- ✅ 更好的異步性能
+- ✅ 可以使用 `uv` 管理的 Python，無需系統 Python
+
+**配置步驟**：
+
+```bash
+cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
+
+# 1. 複製 systemd 服務檔案
+sudo cp deployment/uvicorn.service /etc/systemd/system/shopping-react-uvicorn.service
+
+# 2. 建立日誌目錄
+sudo mkdir -p /var/log/uvicorn
+sudo chown ai-tracks-shopping-react:ai-tracks-shopping-react /var/log/uvicorn
+
+# 3. 複製日誌配置文件（可選）
+sudo cp deployment/uvicorn-logging.conf /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend/deployment/
+
+# 4. 編輯服務檔案以調整配置（可選）
+sudo nano /etc/systemd/system/shopping-react-uvicorn.service
+# 可以調整：
+#   --workers 8        # 工作進程數（建議設置為 CPU 核心數）
+#   --port 8096        # 監聽端口（匹配 Nginx proxy_pass）
+
+# 5. 重新載入 systemd
+sudo systemctl daemon-reload
+
+# 6. 啟動服務
+sudo systemctl start shopping-react-uvicorn
+sudo systemctl enable shopping-react-uvicorn
+
+# 7. 檢查狀態
+sudo systemctl status shopping-react-uvicorn
+
+# 8. 查看日誌
+sudo tail -f /var/log/uvicorn/shopping-react-backend.log
+```
+
+**配置參數說明**：
+- `--workers 8`: 工作進程數（建議設置為 CPU 核心數，或 CPU 核心數 * 2）
+- `--host 127.0.0.1`: 監聽地址（只允許本地連接）
+- `--port 8096`: 監聽端口（匹配 Nginx proxy_pass）
+- `--log-level info`: 日誌級別（debug, info, warning, error）
+- `--access-log`: 啟用訪問日誌
+
+**或使用 Gunicorn + Uvicorn Workers（更好的進程管理）**：
+
+```bash
+# 1. 確保已安裝 gunicorn
+uv add gunicorn
+
+# 2. 複製 systemd 服務檔案
+sudo cp deployment/uvicorn-gunicorn.service /etc/systemd/system/shopping-react-uvicorn.service
+
+# 3. 建立日誌目錄
+sudo mkdir -p /var/log/uvicorn
+sudo chown ai-tracks-shopping-react:ai-tracks-shopping-react /var/log/uvicorn
+
+# 4. 編輯服務檔案以調整配置（可選）
+sudo nano /etc/systemd/system/shopping-react-uvicorn.service
+# 可以調整：
+#   -w 8                    # workers（工作進程數）
+#   --threads 4             # 每個 worker 的線程數
+#   --worker-connections 1000  # 每個 worker 的最大連接數
+#   --timeout 120           # worker 超時時間（秒）
+
+# 5. 重新載入 systemd
+sudo systemctl daemon-reload
+
+# 6. 啟動服務
+sudo systemctl start shopping-react-uvicorn
+sudo systemctl enable shopping-react-uvicorn
+```
+
+**Gunicorn + Uvicorn 配置參數說明**：
+- `-w 8`: workers（工作進程數，建議設置為 CPU 核心數 * 2）
+- `-k uvicorn.workers.UvicornWorker`: 使用 uvicorn workers（支持 ASGI）
+- `--threads 4`: 每個 worker 的線程數（可選，uvicorn workers 默認使用異步）
+- `--worker-connections 1000`: 每個 worker 的最大連接數
+- `--timeout 120`: worker 超時時間（秒）
+- `--graceful-timeout 30`: 優雅關閉超時時間（秒）
+
+#### 方式 2: 使用 uWSGI（如果必須使用）
+
+**⚠️ 注意**：如果使用 `uv` 管理的 Python，uWSGI 可能會出現 `_contextvars` 和 `_decimal` 錯誤。
+**建議使用方式 1（Uvicorn）**，如果必須使用 uWSGI，請使用系統 Python 3.12 重新創建虛擬環境。
 
 #### 步驟 1: 安裝系統 Python 3.12
 

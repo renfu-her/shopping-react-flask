@@ -1,0 +1,43 @@
+[Unit]
+Description=Uvicorn instance to serve shopping-react backend (FastAPI)
+After=network.target
+
+[Service]
+User=ai-tracks-shopping-react
+Group=ai-tracks-shopping-react
+WorkingDirectory=/home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
+Environment="PATH=/home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+
+# 使用 uvicorn 運行 FastAPI（ASGI 模式）
+# --workers: 工作進程數（建議設置為 CPU 核心數）
+# --host: 監聽地址
+# --port: 監聽端口（匹配 Nginx proxy_pass）
+# --log-level: 日誌級別
+ExecStart=/home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend/.venv/bin/uvicorn \
+    app.main:app \
+    --workers 8 \
+    --host 127.0.0.1 \
+    --port 8096 \
+    --log-level info \
+    --access-log \
+    --log-config /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend/deployment/uvicorn-logging.conf
+
+# 或使用 gunicorn + uvicorn workers（更好的進程管理）
+# ExecStart=/home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend/.venv/bin/gunicorn \
+#     app.main:app \
+#     -w 8 \
+#     -k uvicorn.workers.UvicornWorker \
+#     -b 127.0.0.1:8096 \
+#     --access-logfile /var/log/uvicorn/shopping-react-access.log \
+#     --error-logfile /var/log/uvicorn/shopping-react-error.log \
+#     --log-level info
+
+Restart=always
+RestartSec=3
+KillSignal=SIGTERM
+Type=notify
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target
+
