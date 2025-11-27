@@ -1,5 +1,63 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-26 22:47:45] - 修復 News add-edit 頁面隱藏 textarea 的 required 驗證錯誤
+
+### 修改內容
+
+#### 修復 News add-edit 頁面隱藏 textarea 的 required 驗證錯誤
+- **時間**: 2025-11-26 22:47:45
+- **問題**: 當 SimpleMDE 編輯器初始化後，原始的 textarea 被隱藏但仍保留 `required` 屬性，導致瀏覽器無法驗證隱藏的 required 字段，出現 "An invalid form control with name='' is not focusable" 錯誤
+- **修改檔案**:
+  - `app/static/admin/news/add-edit.html` - 修復 SimpleMDE 初始化後的 required 驗證問題
+
+### 變更詳情
+
+#### 問題原因
+- SimpleMDE 編輯器初始化後，會隱藏原始的 textarea 元素（設置 `display: none`）
+- 但原始的 textarea 仍然保留 `required` 屬性
+- 當表單提交時，瀏覽器會嘗試驗證這個隱藏的 required 字段
+- 由於字段是隱藏的，無法聚焦，導致驗證失敗並拋出錯誤
+
+#### 修復方案
+1. **移除 required 屬性**: 在 SimpleMDE 初始化後，移除原始 textarea 的 `required` 屬性
+2. **手動驗證**: 在表單提交時，手動驗證內容是否為空（因為無法使用 HTML5 驗證）
+
+#### 修改的函數
+- **initNewsFormPage**: 在 SimpleMDE 初始化後，移除 textarea 的 `required` 屬性
+- **handleSubmit**: 添加手動內容驗證，確保內容不為空
+
+### 技術細節
+
+#### 修復前
+```html
+<textarea id="content" rows="8" required ...></textarea>
+```
+SimpleMDE 初始化後，textarea 被隱藏但保留 `required`，導致驗證錯誤。
+
+#### 修復後
+```javascript
+// SimpleMDE 初始化後，移除原始 textarea 的 required 屬性
+if (contentEditor) {
+    const contentTextarea = document.getElementById('content');
+    if (contentTextarea) {
+        contentTextarea.removeAttribute('required');
+    }
+}
+
+// 在表單提交時手動驗證
+const content = contentEditor ? getSimpleMDEValue(contentEditor) : document.getElementById('content').value;
+if (!content || content.trim() === '') {
+    alert('請輸入新聞內容');
+    return;
+}
+```
+
+### 影響範圍
+- **前端**: News 新增/編輯頁面的表單驗證
+- **行為**: 現在可以正常提交表單，不會再出現隱藏字段驗證錯誤
+
+---
+
 ## [2025-11-26 22:27:23] - 修復圖片上傳時 addToLocalList is not defined 錯誤
 
 ### 修改內容

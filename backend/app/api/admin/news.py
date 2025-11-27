@@ -32,8 +32,22 @@ def get_news(
     total_pages = ceil(total / page_size) if total > 0 else 0
     news_items = query.order_by(News.date.desc(), News.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
     
+    # 構建包含所有必要字段的新聞響應
+    news_responses = []
+    for n in news_items:
+        news_dict = {
+            "id": n.id,
+            "title": n.title,
+            "excerpt": n.excerpt,
+            "content": n.content,
+            "image": n.image,
+            "date": n.date.strftime("%Y-%m-%d") if n.date else "",
+            "created_at": n.created_at
+        }
+        news_responses.append(NewsResponseAdmin(**news_dict))
+    
     return NewsListResponseAdmin(
-        news=[NewsResponseAdmin.model_validate(n) for n in news_items],
+        news=news_responses,
         total=total,
         page=page,
         page_size=page_size,

@@ -22,6 +22,10 @@ function initSimpleMDE(textareaId, options = {}) {
         return null;
     }
     
+    // 移除 required 属性，因为 SimpleMDE 会隐藏原始 textarea
+    // 隐藏的 required 字段会导致浏览器验证错误
+    textarea.removeAttribute('required');
+    
     // 默认配置
     const defaultOptions = {
         element: textarea,
@@ -51,6 +55,11 @@ function initSimpleMDE(textareaId, options = {}) {
     
     // 创建 SimpleMDE 实例
     const simplemde = new SimpleMDE(config);
+    
+    // 初始化后再次确保移除 required 属性（SimpleMDE 可能会重新添加）
+    setTimeout(() => {
+        textarea.removeAttribute('required');
+    }, 100);
     
     return simplemde;
 }

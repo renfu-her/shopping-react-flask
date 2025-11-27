@@ -67,7 +67,7 @@
             content.innerHTML = `
                 <div class="bg-white rounded-lg shadow-sm p-6 w-full h-full">
                     <h2 class="text-xl font-bold mb-6">${isEdit ? '編輯新聞' : '新增新聞'}</h2>
-                    <form id="form" onsubmit="handleSubmit(event)">
+                    <form id="form" onsubmit="handleSubmit(event)" novalidate>
                         <input type="hidden" id="id" value="${id || ''}">
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-2">標題 <span class="text-red-500">*</span></label>
@@ -79,7 +79,7 @@
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-2">內容 <span class="text-red-500">*</span></label>
-                            <textarea id="content" rows="8" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                            <textarea id="content" rows="8" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
                         </div>
                         <div class="mb-4">
                             ${createImageUploadHTML('image-upload', 'image-preview', isEdit ? '' : '')}
@@ -97,10 +97,31 @@
             `;
 
             // 初始化 SimpleMDE 编辑器
+            // 注意：textarea 的 required 属性已在 HTML 中移除，因为 SimpleMDE 会隐藏原始 textarea
+            // 我们会在表单提交时手动验证内容
             setTimeout(() => {
+                const contentTextarea = document.getElementById('content');
+                // 确保在初始化前移除 required 属性
+                if (contentTextarea) {
+                    contentTextarea.removeAttribute('required');
+                }
+                
                 contentEditor = initSimpleMDE('content', {
                     placeholder: '輸入新聞內容（支援 Markdown 格式）...'
                 });
+                
+                // 初始化后多次确保移除 required 属性（SimpleMDE 可能会重新添加）
+                if (contentTextarea) {
+                    // 立即移除
+                    contentTextarea.removeAttribute('required');
+                    // 延迟再次移除，确保 SimpleMDE 完全初始化后
+                    setTimeout(() => {
+                        contentTextarea.removeAttribute('required');
+                    }, 200);
+                    setTimeout(() => {
+                        contentTextarea.removeAttribute('required');
+                    }, 500);
+                }
             }, 100);
             
             if (isEdit) {
@@ -141,11 +162,50 @@
 
         async function handleSubmit(e) {
             e.preventDefault();
+            
+            // 在提交前，移除所有隐藏字段的 required 属性，避免浏览器验证错误
+            const contentTextarea = document.getElementById('content');
+            if (contentTextarea) {
+                contentTextarea.removeAttribute('required');
+                // 如果 textarea 被隐藏，确保它不会被验证
+                if (contentTextarea.style.display === 'none' || 
+                    contentTextarea.offsetParent === null) {
+                    contentTextarea.removeAttribute('required');
+                }
+            }
+            
+            // 手动验证所有必填字段（因为表单使用了 novalidate）
+            const title = document.getElementById('title').value.trim();
+            if (!title) {
+                alert('請輸入標題');
+                document.getElementById('title').focus();
+                return;
+            }
+            
+            // 验证内容是否为空（因为 SimpleMDE 隐藏了原始 textarea，无法使用 HTML5 验证）
+            const content = contentEditor ? getSimpleMDEValue(contentEditor) : (contentTextarea ? contentTextarea.value : '');
+            if (!content || content.trim() === '') {
+                alert('請輸入新聞內容');
+                if (contentEditor) {
+                    contentEditor.codemirror.focus();
+                } else if (contentTextarea) {
+                    contentTextarea.focus();
+                }
+                return;
+            }
+            
+            const date = document.getElementById('date').value;
+            if (!date) {
+                alert('請選擇日期');
+                document.getElementById('date').focus();
+                return;
+            }
+            
             const formId = document.getElementById('id').value;
             const data = {
                 title: document.getElementById('title').value,
                 excerpt: document.getElementById('excerpt').value,
-                content: contentEditor ? getSimpleMDEValue(contentEditor) : document.getElementById('content').value,
+                content: content,
                 image: document.getElementById('image-upload-url').value,
                 date: document.getElementById('date').value
             };
