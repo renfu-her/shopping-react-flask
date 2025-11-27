@@ -1,5 +1,116 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 10:05:37] - Product Detail 頁面支援 Markdown 渲染
+
+### 修改內容
+
+#### Product Detail 頁面支援 Markdown 渲染
+- **時間**: 2025-11-27 10:05:37
+- **目的**: 將商品詳情頁面的描述內容從純文字顯示改為支援 Markdown 格式渲染為 HTML
+- **修改檔案**:
+  - `components/ProductDetail.tsx` - 使用 react-markdown 渲染商品描述內容
+
+### 變更詳情
+
+#### 修改的組件
+- **ProductDetail.tsx**:
+  - 導入 `ReactMarkdown` 組件
+  - 移除原本的純文字顯示方式
+  - 使用 `ReactMarkdown` 組件渲染 `product.description`
+  - 添加自定義組件映射（`markdownComponents`）以美化 Markdown 元素樣式
+
+#### 自定義 Markdown 組件樣式
+- **圖片 (img)**: 
+  - 自動處理相對路徑轉換為絕對 URL
+  - 添加圓角、間距和響應式樣式
+  - 確保圖片正確顯示
+
+- **標題 (h1, h2, h3)**: 
+  - 不同層級的標題有不同的字體大小和間距
+  - 使用灰色文字顏色
+  - 字體大小適配產品詳情頁面（比新聞頁面稍小）
+
+- **段落 (p)**: 
+  - 添加底部間距和行高
+  - 使用灰色文字顏色
+
+- **列表 (ul, ol, li)**: 
+  - 有序和無序列表都有適當的樣式
+  - 列表項有適當的縮進和間距
+  - 使用灰色文字顏色
+
+- **引用 (blockquote)**: 
+  - 左側邊框和斜體樣式
+  - 使用 indigo 顏色主題
+
+- **代碼 (code, pre)**: 
+  - 行內代碼和代碼塊有不同的樣式
+  - 代碼塊有背景色和滾動條
+  - 使用等寬字體
+
+- **連結 (a)**: 
+  - 使用 indigo 顏色
+  - 添加 hover 效果
+  - 外部連結自動添加 `target="_blank"` 和 `rel="noopener noreferrer"`
+
+- **強調 (strong, em)**: 
+  - 粗體和斜體樣式
+
+### 技術細節
+
+#### Markdown 渲染
+```typescript
+{product.description ? (
+  <ReactMarkdown components={markdownComponents}>
+    {product.description}
+  </ReactMarkdown>
+) : (
+  <p>No description available.</p>
+)}
+```
+
+#### 圖片 URL 處理
+- Markdown 中的圖片 URL 也會通過 `getImageUrl` 函數處理
+- 相對路徑自動轉換為完整 URL（添加 `http://localhost:8000` 前綴）
+- 確保所有圖片都能正確顯示
+
+#### 樣式設計
+- 使用 Tailwind CSS 類名進行樣式設計
+- 保持與整體設計風格一致（indigo 主題色）
+- 字體大小和間距適配產品詳情頁面的設計
+- 響應式設計，適配不同屏幕尺寸
+
+### 影響範圍
+- **前端**: 商品詳情頁面 (`/product/:id`) 的描述部分
+- **功能**: 現在支援完整的 Markdown 語法渲染
+  - 標題、段落、列表
+  - 圖片、連結
+  - 代碼塊、引用
+  - 粗體、斜體等格式
+- **用戶體驗**: 
+  - 內容顯示更加美觀和結構化
+  - 支援豐富的內容格式
+  - 圖片和連結自動處理
+
+### 支援的 Markdown 語法
+- 標題 (# ## ###)
+- 段落和換行
+- 有序和無序列表
+- 粗體 (**text**) 和斜體 (*text*)
+- 連結 [text](url)
+- 圖片 ![alt](url)
+- 代碼塊和行內代碼
+- 引用 (> text)
+- 水平線
+
+### 注意事項
+1. **安全性**: react-markdown 默認是安全的，不會執行危險的 HTML
+2. **圖片路徑**: Markdown 中的圖片 URL 會自動處理相對路徑
+3. **樣式**: 所有 Markdown 元素都有自定義樣式，與整體設計保持一致
+4. **空描述**: 當商品沒有描述時，顯示 "No description available."
+
+---
+
 ## [2025-11-27 09:35:52] - Product Detail 頁面使用 /api/products/{id} API 獲取商品詳情
 
 ### 修改內容
@@ -881,5 +992,5 @@ const hotProducts = await fetchHotProducts();
 
 ---
 
-**最後更新**: 2025-11-27 09:35:52
+**最後更新**: 2025-11-27 10:05:37
 

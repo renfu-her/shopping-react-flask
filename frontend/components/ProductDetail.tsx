@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Product } from '../services/api';
 import { ArrowLeft, ShoppingCart, Star, Check, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -34,6 +35,33 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, a
 
   const handleNextImage = () => {
     setCurrentImageIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+  };
+
+  // Custom components for react-markdown to handle image URLs
+  const markdownComponents = {
+    img: ({ node, ...props }: any) => {
+      const src = props.src || '';
+      const imageSrc = getImageUrl(src);
+      return <img {...props} src={imageSrc} alt={props.alt || ''} className="rounded-lg my-4 max-w-full h-auto" />;
+    },
+    h1: ({ node, ...props }: any) => <h1 {...props} className="text-2xl font-bold mt-6 mb-3 text-gray-900" />,
+    h2: ({ node, ...props }: any) => <h2 {...props} className="text-xl font-bold mt-5 mb-2 text-gray-900" />,
+    h3: ({ node, ...props }: any) => <h3 {...props} className="text-lg font-bold mt-4 mb-2 text-gray-900" />,
+    p: ({ node, ...props }: any) => <p {...props} className="mb-4 leading-relaxed text-gray-600" />,
+    ul: ({ node, ...props }: any) => <ul {...props} className="list-disc list-inside mb-4 space-y-2 text-gray-600" />,
+    ol: ({ node, ...props }: any) => <ol {...props} className="list-decimal list-inside mb-4 space-y-2 text-gray-600" />,
+    li: ({ node, ...props }: any) => <li {...props} className="ml-4" />,
+    blockquote: ({ node, ...props }: any) => <blockquote {...props} className="border-l-4 border-indigo-500 pl-4 italic my-4 text-gray-700" />,
+    code: ({ node, inline, ...props }: any) => 
+      inline ? (
+        <code {...props} className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-indigo-600" />
+      ) : (
+        <code {...props} className="block bg-gray-100 p-4 rounded-lg text-sm font-mono overflow-x-auto" />
+      ),
+    pre: ({ node, ...props }: any) => <pre {...props} className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4" />,
+    a: ({ node, ...props }: any) => <a {...props} className="text-indigo-600 hover:text-indigo-800 underline" target="_blank" rel="noopener noreferrer" />,
+    strong: ({ node, ...props }: any) => <strong {...props} className="font-bold text-gray-900" />,
+    em: ({ node, ...props }: any) => <em {...props} className="italic" />,
   };
 
   return (
@@ -112,15 +140,15 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, a
               ${product.price}
             </div>
 
-            <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-              {product.description || 'No description available.'}
-              {product.description && (
-                <>
-                  <br /><br />
-                  Engineered for performance and designed for elegance. This item uses premium materials to ensure longevity and style in your daily life.
-                </>
+            <div className="text-gray-600 text-lg mb-8 leading-relaxed">
+              {product.description ? (
+                <ReactMarkdown components={markdownComponents}>
+                  {product.description}
+                </ReactMarkdown>
+              ) : (
+                <p>No description available.</p>
               )}
-            </p>
+            </div>
 
             <div className="space-y-4 mb-8">
                 <div className="flex items-center gap-3 text-gray-700">
