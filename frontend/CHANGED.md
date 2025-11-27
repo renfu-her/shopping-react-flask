@@ -1,5 +1,72 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 15:15:59] - 從 JWT Token 認證切換到 Session 認證
+
+### 修改內容
+
+#### 從 JWT Token 認證切換到 Session 認證
+- **時間**: 2025-11-27 15:15:59
+- **目的**: 放棄 JWT Token 認證，改用 Session 認證來記住登入狀態
+- **修改檔案**:
+  - `services/api.ts` - 移除所有 JWT token 相關代碼，改用 session
+  - `context/AppContext.tsx` - 修改認證驗證邏輯，使用 session 而不是 token
+
+### 變更詳情
+
+#### API 服務修改
+- **login()**: 
+  - 移除 `access_token` 和 `token_type` 從 `LoginResponse` 接口
+  - 添加 `credentials: 'include'` 來發送 cookie (session)
+  - 移除 localStorage token 存儲邏輯
+
+- **logout()**: 
+  - 改為異步函數，調用後端 `/api/auth/logout` API
+  - 添加 `credentials: 'include'` 來發送 cookie
+
+- **getCurrentUser()**: 
+  - 移除所有 token 相關代碼
+  - 移除 `Authorization` header
+  - 添加 `credentials: 'include'` 來發送 cookie
+
+- **updateUserProfile()**: 
+  - 移除 token 檢查和 `Authorization` header
+  - 添加 `credentials: 'include'` 來發送 cookie
+
+- **updateUserPassword()**: 
+  - 移除 token 檢查和 `Authorization` header
+  - 添加 `credentials: 'include'` 來發送 cookie
+
+- **createECPayOrder()**: 
+  - 移除 token 檢查和 `Authorization` header
+  - 添加 `credentials: 'include'` 來發送 cookie
+
+- **移除 getToken() 函數**: 
+  - 不再需要從 localStorage 獲取 token
+
+#### AppContext 修改
+- **verifySession()**: 
+  - 重命名從 `verifyToken()` 到 `verifySession()`
+  - 移除所有 token 相關邏輯
+  - 直接調用 `getCurrentUser()` 來驗證 session
+  - 簡化錯誤處理
+
+- **handleLogout()**: 
+  - 改為異步函數
+  - 調用 `apiLogout()` 來清除後端 session
+
+### 技術細節
+- 所有需要認證的 API 調用都添加了 `credentials: 'include'`
+- Session 通過 cookie 自動管理，無需手動處理
+- 不再使用 localStorage 存儲 token
+
+### 影響範圍
+- **前端**: 
+  - 登入狀態現在通過 session cookie 自動管理
+  - 頁面刷新後會自動驗證 session 並恢復用戶狀態
+  - 不再需要手動管理 token 的存儲和清除
+
+---
+
 ## [2025-11-27 15:06:47] - 增強 JWT Token 驗證調試日誌
 
 ### 修改內容
