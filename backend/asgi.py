@@ -1,36 +1,25 @@
 """
-WSGI 應用入口文件（使用 asgiref 適配器）
+ASGI 應用入口文件
 
-用於 uWSGI 的 WSGI 模式（需要 asgiref 適配器）
+用於 uWSGI 的 ASGI 模式（需要 uwsgi-asgi 插件）
 或直接用於測試
 
 可以直接運行此文件進行測試：
-  python wsgi.py
+  python asgi.py
   或
-  uv run python wsgi.py
-
-注意：如果使用 uWSGI，建議使用 ASGI 模式（見 asgi.py 和 deployment/uwsgi-asgi.ini）
+  uv run python asgi.py
 """
-try:
-    # 嘗試使用 asgiref 適配器（用於 WSGI 模式）
-    from asgiref.wsgi import WsgiToAsgi
-    from app.main import app
-    
-    # 將 ASGI 應用轉換為 WSGI
-    application = WsgiToAsgi(app)
-except ImportError:
-    # 如果沒有 asgiref，直接使用（可能不工作）
-    print("警告: 未找到 asgiref，建議安裝: uv add asgiref")
-    print("或使用 ASGI 模式: 見 asgi.py 和 deployment/uwsgi-asgi.ini")
-    from app.main import app
-    application = app
+from app.main import app
+
+# 用於 uWSGI ASGI 模式
+application = app
 
 if __name__ == "__main__":
     # 直接運行模式：使用 uvicorn 運行 FastAPI（用於測試）
     import uvicorn
     
     print("=" * 60)
-    print("啟動 FastAPI 應用（開發模式）")
+    print("啟動 FastAPI 應用（ASGI 模式，開發模式）")
     print("=" * 60)
     print("訪問地址:")
     print("  - API 文檔: http://localhost:8000/docs")
@@ -48,3 +37,4 @@ if __name__ == "__main__":
         reload=True,  # 開發模式：自動重載
         log_level="info"
     )
+
