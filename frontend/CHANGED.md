@@ -1,5 +1,211 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 16:56:46] - 按照綠界官方文檔優化 ECPay 參數顯示
+
+### 修改內容
+
+#### 按照綠界官方文檔優化參數顯示
+- **時間**: 2025-11-27 16:56:46
+- **目的**: 根據綠界官方文檔 https://developers.ecpay.com.tw/?p=2864 的要求，優化參數顯示，清晰標示必填參數和選填參數
+- **參考文檔**: https://developers.ecpay.com.tw/?p=2864 (全方位金流付款)
+- **修改檔案**:
+  - `components/Checkout.tsx` - 優化 ECPay 數據顯示區域
+
+### 變更詳情
+
+#### 參數顯示優化
+- **按照官方文檔順序顯示必填參數**:
+  1. MerchantID (特店編號) *
+  2. MerchantTradeNo (特店訂單編號) *
+  3. MerchantTradeDate (特店交易時間，格式：yyyy/MM/dd HH:mm:ss) *
+  4. PaymentType (交易類型，固定為 aio) *
+  5. TotalAmount (交易金額，整數) *
+  6. TradeDesc (交易描述) *
+  7. ItemName (商品名稱，多筆用 # 分隔) *
+  8. ReturnURL (付款完成通知回傳網址) *
+  9. ChoosePayment (選擇預設付款方式) *
+  10. EncryptType (CheckMacValue加密類型，固定為 1) *
+  11. CheckMacValue (檢查碼) *
+
+- **選填參數顯示**:
+  - OrderResultURL (付款完成跳轉網址)
+  - CustomerName (客戶姓名)
+  - CustomerEmail (客戶 Email)
+
+- **顯示改進**:
+  - 每個參數都有中文說明
+  - 必填參數標示紅色星號 (*)
+  - CheckMacValue 使用黃色背景高亮顯示
+  - 添加官方文檔連結
+  - 參數分組顯示（必填、選填、完整 JSON）
+
+### 技術細節
+
+#### 必填參數驗證
+根據綠界官方文檔，所有必填參數都已正確設置：
+- ✅ MerchantID: 測試環境特店編號
+- ✅ MerchantTradeNo: 唯一訂單編號
+- ✅ MerchantTradeDate: 格式 yyyy/MM/dd HH:mm:ss
+- ✅ PaymentType: 固定為 "aio"
+- ✅ TotalAmount: 整數格式
+- ✅ TradeDesc: 交易描述
+- ✅ ItemName: 多商品用 # 分隔
+- ✅ ReturnURL: 付款結果通知 URL
+- ✅ ChoosePayment: 付款方式選擇
+- ✅ EncryptType: 固定為 "1" (SHA256)
+- ✅ CheckMacValue: 檢查碼
+
+### 影響範圍
+- **前端**: 
+  - `/checkout` 頁面現在按照官方文檔要求顯示參數
+  - 參數顯示更清晰，方便驗證
+  - 必填參數和選填參數分組顯示
+
+### 注意事項
+1. **暫時不提交到綠界**：驗證 CheckMacValue 正確後，需要取消註解相關代碼以恢復正常功能
+2. **參數格式**：所有參數格式都符合綠界官方文檔要求
+3. **官方文檔**：顯示區域包含官方文檔連結，方便查閱
+
+---
+
+## [2025-11-27 16:54:28] - 在頁面上直接顯示 ECPay 參數和 CheckMacValue
+
+### 修改內容
+
+#### 在頁面上直接顯示 ECPay 參數和 CheckMacValue
+- **時間**: 2025-11-27 16:54:28
+- **目的**: 修改 Checkout 頁面，在點擊 Pay 後直接在頁面上顯示所有 ECPay 參數和 CheckMacValue，方便驗證
+- **修改檔案**:
+  - `components/Checkout.tsx` - 添加 `ecpayData` 狀態，在頁面上顯示參數
+
+### 變更詳情
+
+#### Checkout 組件修改
+- **添加狀態管理**:
+  - 新增 `ecpayData` 狀態來存儲 ECPay 訂單數據
+  - 包含 Order ID、Merchant Trade No、Form URL、CheckMacValue 等
+
+- **頁面顯示**:
+  - 在表單上方顯示一個藍色背景的區域
+  - 顯示所有關鍵信息：
+    - Order ID
+    - Merchant Trade No
+    - Form URL
+    - **CheckMacValue**（高亮顯示）
+    - 所有參數（用於計算 CheckMacValue）
+    - 完整表單數據（包含 CheckMacValue）
+
+- **用戶體驗**:
+  - CheckMacValue 使用黃色背景高亮顯示，方便查看
+  - 參數以 JSON 格式顯示，可複製
+  - 顯示提示信息，說明訂單已創建但未提交到綠界
+
+### 技術細節
+
+#### 顯示的數據
+```typescript
+{
+  order_id: number,
+  merchant_trade_no: string,
+  form_url: string,
+  check_mac_value: string,  // 高亮顯示
+  params_for_check: object,  // 用於計算 CheckMacValue 的參數
+  all_params: object         // 完整表單數據
+}
+```
+
+#### 使用方式
+1. 在 `/checkout` 頁面填寫信息並點擊 "Pay" 按鈕
+2. 訂單會在後端創建（購物車會被清空）
+3. 頁面上會直接顯示所有參數和 CheckMacValue
+4. 可以複製 CheckMacValue 進行驗證
+5. 驗證無誤後，取消註解相關代碼以啟用綠界提交
+
+### 影響範圍
+- **前端**: 
+  - `/checkout` 頁面現在會在點擊 Pay 後顯示 ECPay 數據
+  - 不需要打開瀏覽器控制台即可查看所有參數
+  - CheckMacValue 高亮顯示，方便驗證
+
+### 注意事項
+1. **這是臨時修改**：驗證 CheckMacValue 正確後，需要取消註解相關代碼以恢復正常功能
+2. **訂單仍會創建**：雖然不提交到綠界，但訂單仍會在後端創建
+3. **購物車會被清空**：訂單創建時購物車會被清空，這是正常行為
+4. **數據顯示**：所有數據都會在頁面上顯示，包括 CheckMacValue
+
+---
+
+## [2025-11-27 16:51:39] - 暫時停用綠界提交，用於驗證 CheckMacValue
+
+### 修改內容
+
+#### 暫時停用綠界表單提交，改為顯示參數用於驗證
+- **時間**: 2025-11-27 16:51:39
+- **目的**: 暫時不提交表單到綠界，而是將所有參數和 CheckMacValue 顯示在控制台，方便驗證 CheckMacValue 計算是否正確
+- **修改檔案**:
+  - `components/Checkout.tsx` - 修改 `handleSubmit` 函數，暫時註解掉表單提交邏輯
+
+### 變更詳情
+
+#### Checkout 組件修改
+- **暫時停用綠界提交**:
+  - 註解掉創建隱藏表單並提交到綠界的代碼
+  - 改為將所有參數和 CheckMacValue 打印到瀏覽器控制台
+  - 顯示 alert 提示用戶查看控制台
+
+- **調試信息輸出**:
+  - 訂單 ID 和 Merchant Trade No
+  - Form URL
+  - 所有表單參數（包括 CheckMacValue）
+  - 用於計算 CheckMacValue 的所有參數（JSON 格式）
+
+#### 使用方式
+1. 在 `/checkout` 頁面填寫信息並點擊 "Pay" 按鈕
+2. 訂單會在後端創建（購物車會被清空）
+3. 瀏覽器控制台（F12）會顯示所有參數和 CheckMacValue
+4. 可以手動驗證 CheckMacValue 是否正確
+5. 驗證無誤後，取消註解相關代碼以啟用綠界提交
+
+### 技術細節
+
+#### 修改後的流程
+```typescript
+// 1. 調用 API 創建訂單
+const ecpayOrder = await createECPayOrder({...});
+
+// 2. 打印所有參數到控制台
+console.log('=== ECPay Order Data ===');
+console.log('CheckMacValue:', ecpayOrder.form_data.CheckMacValue);
+// ... 其他參數
+
+// 3. 顯示 alert 提示
+alert('CheckMacValue 驗證模式...');
+
+// 4. 暫時不提交到綠界（代碼已註解）
+// const form = document.createElement('form');
+// ...
+```
+
+### 影響範圍
+- **前端**: 
+  - `/checkout` 頁面暫時不會跳轉到綠界支付頁面
+  - 訂單仍會在後端創建
+  - 購物車仍會被清空
+  - 用戶需要查看瀏覽器控制台來驗證 CheckMacValue
+
+### 注意事項
+1. **這是臨時修改**：驗證 CheckMacValue 正確後，需要取消註解相關代碼以恢復正常功能
+2. **訂單仍會創建**：雖然不提交到綠界，但訂單仍會在後端創建
+3. **購物車會被清空**：訂單創建時購物車會被清空，這是正常行為
+4. **查看控制台**：按 F12 打開瀏覽器開發者工具，查看 Console 標籤頁
+
+### 後續步驟
+1. 驗證 CheckMacValue 計算是否正確
+2. 如果正確，取消註解 `Checkout.tsx` 中的表單提交代碼
+3. 恢復正常的綠界支付流程
+
+---
+
 ## [2025-11-27 16:41:23] - 移除 categories 和 products 的 loading 提示
 
 ### 修改內容
