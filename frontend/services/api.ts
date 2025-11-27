@@ -282,3 +282,47 @@ export function getToken(): string | null {
   return localStorage.getItem('access_token');
 }
 
+export interface ECPayOrderRequest {
+  shipping_name: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_zip: string;
+  payment_method?: string;
+}
+
+export interface ECPayOrderResponse {
+  order_id: number;
+  merchant_trade_no: string;
+  form_data: Record<string, string>;
+  form_url: string;
+}
+
+export async function createECPayOrder(orderData: ECPayOrderRequest): Promise<ECPayOrderResponse> {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/ecpay/create-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(orderData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new Error(errorData.detail || `Failed to create ECPay order: ${response.statusText}`);
+    }
+
+    const data: ECPayOrderResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error creating ECPay order:', error);
+    throw error;
+  }
+}
+

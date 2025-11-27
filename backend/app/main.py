@@ -4,7 +4,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
-from app.api import auth, products, cart, categories, orders, news, ads, about_us, faq, home, admin
+from app.api import auth, products, cart, categories, orders, news, ads, about_us, faq, home, admin, ecpay
 from app.database import engine, Base
 from app.database_migration import add_user_role_status_columns, add_category_sort_order_column, add_product_is_hot_column
 from app.init_admin import init_admin_user
@@ -75,6 +75,7 @@ app.include_router(ads.router)
 app.include_router(about_us.router)
 app.include_router(faq.router)
 app.include_router(home.router)
+app.include_router(ecpay.router)  # 綠界金流 API
 app.include_router(admin.router)  # 後台管理 API
 
 # 靜態文件目錄

@@ -1,5 +1,129 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 12:24:03] - Checkout 頁面整合綠界金流 (ECPay)
+
+### 修改內容
+
+#### Checkout 頁面整合綠界金流 (ECPay)
+- **時間**: 2025-11-27 12:24:03
+- **目的**: 將 `/checkout` 頁面的付款功能整合綠界科技 (ECPay) 全方位金流 API
+- **修改檔案**:
+  - `services/api.ts` - 添加 `createECPayOrder` 函數
+  - `components/Checkout.tsx` - 整合綠界金流，自動填充用戶名稱
+  - `pages/CheckoutPage.tsx` - 添加用戶驗證和購物車檢查
+
+### 變更詳情
+
+#### 新增的 API 函數
+- **createECPayOrder(orderData)**: 調用 `/api/ecpay/create-order` 端點創建綠界訂單
+  - 接收 `ECPayOrderRequest`（運送信息和支付方式）
+  - 返回 `ECPayOrderResponse`（訂單ID、表單數據、表單URL）
+  - 自動生成綠界金流表單並提交到綠界支付頁面
+
+#### 新增的類型定義
+- **ECPayOrderRequest 接口**: 定義綠界訂單請求數據
+  - `shipping_name`: string
+  - `shipping_address`: string
+  - `shipping_city`: string
+  - `shipping_zip`: string
+  - `payment_method?`: string (Credit, WebATM, ATM, CVS, BARCODE)
+
+- **ECPayOrderResponse 接口**: 定義綠界訂單響應數據
+  - `order_id`: number
+  - `merchant_trade_no`: string
+  - `form_data`: Record<string, string>
+  - `form_url`: string
+
+#### 修改的組件
+- **Checkout.tsx**:
+  - 移除 `cardNumber` 字段（不再需要）
+  - 添加 `payment_method` 選擇（信用卡、網路ATM、ATM、超商代碼、超商條碼）
+  - Full Name 自動從 `user.name` 填充
+  - 使用 `useEffect` 監聽用戶信息變化，自動填充名稱
+  - 提交時調用 `createECPayOrder` API
+  - 自動生成隱藏表單並提交到綠界支付頁面
+  - 添加 loading 和 error 狀態處理
+
+- **CheckoutPage.tsx**:
+  - 添加用戶驗證（未登入時重定向到登入頁面）
+  - 添加購物車檢查（購物車為空時重定向到購物車頁面）
+  - 更新 `handleCheckoutSubmit` 邏輯
+
+### 技術細節
+
+#### 綠界金流整合流程
+1. 用戶填寫運送信息（Full Name 自動從 user.name 填充）
+2. 選擇支付方式（信用卡、ATM、超商等）
+3. 提交表單時，前端調用 `/api/ecpay/create-order` API
+4. 後端創建訂單並生成綠界金流表單數據
+5. 前端自動生成隱藏表單並提交到綠界支付頁面
+6. 用戶在綠界頁面完成付款
+7. 綠界通過 ReturnURL 通知後端付款結果
+8. 付款完成後跳轉到 `/shop-finish` 頁面
+
+#### 支付方式
+- **Credit**: 信用卡
+- **WebATM**: 網路 ATM
+- **ATM**: ATM 自動櫃員機
+- **CVS**: 超商代碼
+- **BARCODE**: 超商條碼
+
+#### 自動填充功能
+- Full Name 字段自動從 `user.name` 填充
+- 使用 `useEffect` 監聽用戶信息變化
+- 如果用戶已登入，自動填充名稱字段
+
+#### 表單提交
+```typescript
+// 創建隱藏表單並提交到綠界
+const form = document.createElement('form');
+form.method = 'POST';
+form.action = ecpayOrder.form_url;
+
+// 添加所有表單字段
+Object.entries(ecpayOrder.form_data).forEach(([key, value]) => {
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = key;
+  input.value = value;
+  form.appendChild(input);
+});
+
+document.body.appendChild(form);
+form.submit();
+```
+
+### 影響範圍
+- **前端**: 
+  - `/checkout` 頁面
+  - 付款流程
+  - 用戶體驗
+- **後端**: 
+  - `/api/ecpay/create-order` 端點
+  - `/api/ecpay/return` 端點（處理付款結果通知）
+- **行為**: 
+  - 現在使用綠界科技的金流服務處理付款
+  - 支持多種支付方式
+  - Full Name 自動填充
+
+### 錯誤處理
+- API 調用失敗時顯示錯誤信息
+- 用戶未登入時重定向到登入頁面
+- 購物車為空時重定向到購物車頁面
+- 表單驗證確保所有必填字段已填寫
+
+### 注意事項
+1. **測試環境**: 目前使用綠界測試環境，正式上線時需要切換到正式環境
+2. **配置信息**: 綠界金流的 MerchantID、HashKey、HashIV 需要在後端配置
+3. **付款通知**: ReturnURL 需要能夠接收綠界的 POST 請求
+4. **Full Name**: 自動從用戶信息填充，用戶可以手動修改
+
+### 參考資料
+- 綠界科技全方位金流 API 技術文件: https://developers.ecpay.com.tw/?p=2856
+- 綠界科技測試介接資訊: https://developers.ecpay.com.tw/?p=2866
+
+---
+
 ## [2025-11-27 10:20:39] - Sign 頁面使用真實的登入和註冊 API
 
 ### 修改內容
@@ -1169,5 +1293,5 @@ const hotProducts = await fetchHotProducts();
 
 ---
 
-**最後更新**: 2025-11-27 10:20:39
+**最後更新**: 2025-11-27 12:24:03
 

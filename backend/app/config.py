@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
+    # Frontend URL
+    frontend_url: str = "http://localhost:3000"
+    backend_url: str = "http://localhost:8000"
+    
     def get_server_url(self) -> str:
         """獲取 MySQL 伺服器 URL（不包含資料庫名稱），用於創建資料庫"""
         if self.database_url:

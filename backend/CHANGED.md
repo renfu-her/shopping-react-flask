@@ -1,5 +1,129 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-27 12:24:35] - 整合綠界科技 (ECPay) 全方位金流 API
+
+### 修改內容
+
+#### 整合綠界科技 (ECPay) 全方位金流 API
+- **時間**: 2025-11-27 12:24:35
+- **目的**: 整合綠界科技的全方位金流 API 到結帳流程中，支持多種支付方式
+- **修改檔案**:
+  - `api/ecpay.py` - 新增綠界金流 API 端點
+  - `config.py` - 添加 frontend_url 和 backend_url 配置
+  - `main.py` - 註冊 ecpay router
+
+### 變更詳情
+
+#### 新增的 API 端點
+- **POST `/api/ecpay/create-order`**: 創建訂單並生成綠界金流表單數據
+  - 接收運送信息和支付方式
+  - 創建訂單和訂單項目
+  - 生成綠界金流所需的表單參數
+  - 生成 CheckMacValue 檢查碼
+  - 返回表單數據和表單 URL
+
+- **POST `/api/ecpay/return`**: 處理綠界金流付款結果通知
+  - 接收綠界回傳的付款結果
+  - 返回 "1|OK" 給綠界（必須格式）
+
+#### 新增的功能
+- **generate_check_value()**: 生成綠界金流檢查碼（CheckMacValue）
+  - 使用 SHA256 加密
+  - 按照綠界規定的格式生成
+
+#### 綠界金流配置
+- **測試環境配置**:
+  - MerchantID: 3002607
+  - HashKey: pwFHCqoQZGmho4w6
+  - HashIV: EkRm7iFT261dpevs
+  - API URL: https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5
+
+- **正式環境配置**（待切換）:
+  - API URL: https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5
+  - 需要從綠界後台獲取正式的 MerchantID、HashKey、HashIV
+
+#### 支持的支付方式
+- **Credit**: 信用卡
+- **WebATM**: 網路 ATM
+- **ATM**: ATM 自動櫃員機
+- **CVS**: 超商代碼
+- **BARCODE**: 超商條碼
+
+### 技術細節
+
+#### 訂單創建流程
+1. 驗證購物車不為空
+2. 計算訂單總金額
+3. 檢查商品庫存
+4. 創建訂單記錄
+5. 創建訂單項目
+6. 生成綠界訂單編號（MerchantTradeNo）
+7. 構建綠界金流參數
+8. 生成 CheckMacValue 檢查碼
+9. 返回表單數據給前端
+
+#### CheckMacValue 生成算法
+```python
+def generate_check_value(params: dict, hash_key: str, hash_iv: str) -> str:
+    # 1. 按字母順序排序參數
+    sorted_params = sorted(params.items())
+    
+    # 2. 構建查詢字符串
+    query_string = "&".join([f"{k}={v}" for k, v in sorted_params])
+    
+    # 3. 添加 HashKey 和 HashIV
+    check_string = f"HashKey={hash_key}&{query_string}&HashIV={hash_iv}"
+    
+    # 4. URL Encode 並轉小寫
+    encoded_string = urllib.parse.quote(check_string, safe="").lower()
+    
+    # 5. SHA256 加密並轉大寫
+    sha256_hash = hashlib.sha256(encoded_string.encode('utf-8')).hexdigest()
+    return sha256_hash.upper()
+```
+
+#### 綠界金流參數
+- **MerchantID**: 特店編號
+- **MerchantTradeNo**: 特店交易編號（唯一）
+- **MerchantTradeDate**: 特店交易時間
+- **PaymentType**: 交易類型（固定為 "aio"）
+- **TotalAmount**: 交易金額
+- **TradeDesc**: 交易描述
+- **ItemName**: 商品名稱
+- **ReturnURL**: 付款結果通知 URL（後端接收）
+- **OrderResultURL**: 付款完成跳轉 URL（前端頁面）
+- **ChoosePayment**: 選擇的支付方式
+- **EncryptType**: 加密類型（固定為 "1" 表示 SHA256）
+- **CheckMacValue**: 檢查碼
+
+### 影響範圍
+- **後端**: 
+  - 新增 `/api/ecpay` 路由
+  - 訂單創建流程整合綠界金流
+- **前端**: 
+  - Checkout 頁面整合綠界支付
+- **數據庫**: 
+  - 訂單記錄包含支付方式信息
+
+### 注意事項
+1. **測試環境**: 目前使用綠界測試環境，正式上線時需要切換
+2. **配置管理**: 綠界金流配置信息應該從環境變數或配置文件讀取
+3. **付款通知**: ReturnURL 需要能夠接收綠界的 POST 請求並返回 "1|OK"
+4. **訂單狀態**: 目前 ReturnURL 端點尚未實現訂單狀態更新邏輯（TODO）
+5. **安全性**: CheckMacValue 驗證應該在 ReturnURL 端點實現
+
+### 後續改進
+1. 實現 ReturnURL 端點的 CheckMacValue 驗證
+2. 根據 RtnCode 更新訂單狀態
+3. 將綠界配置移到環境變數
+4. 添加訂單狀態更新邏輯
+
+### 參考資料
+- 綠界科技全方位金流 API 技術文件: https://developers.ecpay.com.tw/?p=2856
+- 綠界科技測試介接資訊: https://developers.ecpay.com.tw/?p=2866
+
+---
+
 ## [2025-11-26 22:47:45] - 修復 News add-edit 頁面隱藏 textarea 的 required 驗證錯誤
 
 ### 修改內容
