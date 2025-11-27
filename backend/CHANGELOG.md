@@ -147,14 +147,14 @@ backend/
 
 #### 1. 分類外鍵約束錯誤修復
 - **時間**: 2025-11-25 16:46:05
-- **問題**: 創建分類時出現外鍵約束錯誤（parent_id = 0 無法引用不存在的記錄）
+- **問題**: 建立分類時出現外鍵約束錯誤（parent_id = 0 無法引用不存在的記錄）
 - **解決方案**: 
-  - 將 `parent_id` 的默認值從 `0` 改為 `NULL`
+  - 將 `parent_id` 的預設值從 `0` 改為 `NULL`
   - 修改模型允許 `parent_id` 為 `NULL`（`nullable=True`）
   - 在 API 中將 `parent_id = 0` 轉換為 `parent_id = None`
 - **影響檔案**:
   - `app/models/product_category.py` - 模型定義
-  - `app/api/admin/categories.py` - 創建和更新邏輯
+  - `app/api/admin/categories.py` - 建立和更新邏輯
   - `app/api/categories.py` - 前端 API 查詢邏輯
   - `app/api/products.py` - 分類列表查詢
   - `app/schemas/category.py` - Schema 定義（parent_id 改為 Optional[int]）
@@ -171,11 +171,11 @@ backend/
 - **時間**: 2025-11-25 16:46:05
 - **問題**: 分類列表中的圖標無法正確顯示 Font Awesome 圖標
 - **解決方案**:
-  - 在 `base.html` 和 `index.html` 中添加 Font Awesome 6 CSS
+  - 在 `base.html` 和 `index.html` 中新增 Font Awesome 6 CSS
   - 改進圖標檢測邏輯，正確識別 Font Awesome 類名
   - 優化圖標渲染，支援多種格式（Font Awesome 圖標或圖片 URL）
 - **影響檔案**:
-  - `app/static/base.html` - 添加 Font Awesome CSS
+  - `app/static/base.html` - 新增 Font Awesome CSS
   - `app/static/admin/categories/index.html` - 圖標顯示邏輯和 CSS
   - `app/static/js/admin-common.js` - 確保 Font Awesome CSS 加載
 - **更改內容**:
@@ -208,13 +208,13 @@ backend/
   - `app/models/product_image.py` - ProductImage 模型
   - `app/api/admin/product_images.py` - 產品圖片管理 API
 - **修改檔案**:
-  - `app/models/product.py` - 添加 `images` 關係
+  - `app/models/product.py` - 新增 `images` 關係
   - `app/models/__init__.py` - 導出 ProductImage
   - `app/api/admin/__init__.py` - 註冊 product_images 路由
-  - `app/static/admin/products/add-edit.html` - 多圖片管理界面
+  - `app/static/admin/products/add-edit.html` - 多圖片管理介面
 - **API 端點**:
   - `GET /backend/admin/products/{product_id}/images` - 獲取產品圖片列表
-  - `POST /backend/admin/products/{product_id}/images` - 添加圖片
+  - `POST /backend/admin/products/{product_id}/images` - 新增圖片
   - `PUT /backend/admin/products/{product_id}/images/reorder` - 重新排序圖片
   - `DELETE /backend/admin/products/{product_id}/images/{image_id}` - 刪除圖片
 - **功能特點**:
@@ -236,40 +236,40 @@ backend/
   )
   ```
 - **前端功能**:
-  - 圖片上傳：點擊「添加圖片」按鈕上傳
+  - 圖片上傳：點擊「新增圖片」按鈕上傳
   - 拖拽排序：拖拽圖片卡片調整順序
   - 圖片預覽：網格顯示所有圖片
   - 刪除確認：刪除前彈出確認對話框
-  - 新增模式：圖片先保存在本地，產品創建後再保存到數據庫
-  - 編輯模式：圖片直接保存到數據庫，支援實時更新
+  - 新增模式：圖片先保存在本地，產品建立後再保存到資料庫
+  - 編輯模式：圖片直接保存到資料庫，支援即時更新
 
 ### 技術細節
 
 #### 分類模型改進
-- `parent_id` 字段改為 `nullable=True, default=None`
+- `parent_id` 欄位改為 `nullable=True, default=None`
 - 根分類使用 `parent_id = NULL` 表示
 - 所有查詢邏輯從 `parent_id == 0` 改為 `parent_id is None`
 
 #### 產品圖片管理
-- 使用 `order_index` 字段控制圖片顯示順序
+- 使用 `order_index` 欄位控制圖片顯示順序
 - 拖拽排序後自動更新所有圖片的 `order_index`
-- 第一張圖片作為產品主圖（`product.image` 字段）
+- 第一張圖片作為產品主圖（`product.image` 欄位）
 
 #### 前端拖拽實現
 - 使用 HTML5 Drag and Drop API
 - 實現 `dragstart`, `dragend`, `dragover`, `drop` 事件處理
 - 自動計算拖拽後的位置並更新 DOM
-- 拖拽結束後同步更新數據庫順序
+- 拖拽結束後同步更新資料庫順序
 
-### 數據庫遷移注意事項
+### 資料庫遷移注意事項
 
 1. **product_categories 表**:
-   - 現有數據的 `parent_id = 0` 需要手動更新為 `NULL`
+   - 現有資料的 `parent_id = 0` 需要手動更新為 `NULL`
    - 建議執行 SQL: `UPDATE product_categories SET parent_id = NULL WHERE parent_id = 0;`
 
 2. **product_images 表**:
-   - 新表，需要創建
-   - 運行應用後會自動創建（SQLAlchemy `Base.metadata.create_all`）
+   - 新表，需要建立
+   - 執行應用後會自動建立（SQLAlchemy `Base.metadata.create_all`）
 
 ### 依賴更新
 
@@ -297,17 +297,17 @@ backend/
 
 ### 注意事項
 
-1. **分類數據遷移**: 如果數據庫中已有 `parent_id = 0` 的分類，需要手動更新為 `NULL`
-2. **圖片存儲**: 產品圖片使用 `product_images` 表，不再只依賴 `product.image` 字段
+1. **分類資料遷移**: 如果資料庫中已有 `parent_id = 0` 的分類，需要手動更新為 `NULL`
+2. **圖片儲存**: 產品圖片使用 `product_images` 表，不再只依賴 `product.image` 欄位
 3. **主圖選擇**: 系統自動使用第一張圖片（`order_index = 0`）作為產品主圖
-4. **圖片排序**: 拖拽排序後會立即更新數據庫，無需額外保存操作
+4. **圖片排序**: 拖拽排序後會立即更新資料庫，無需額外保存操作
 
 ### 後續改進建議
 
-1. 分類管理頁面添加圖標選擇器（類似分類編輯頁面）
-2. 產品圖片添加圖片描述/標題功能
-3. 實現圖片批量上傳功能
-4. 添加圖片裁剪/編輯功能
+1. 分類管理頁面新增圖標選擇器（類似分類編輯頁面）
+2. 產品圖片新增圖片描述/標題功能
+3. 實現圖片批次上傳功能
+4. 新增圖片裁剪/編輯功能
 5. 實現圖片 CDN 整合
 
 ---

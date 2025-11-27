@@ -1,54 +1,54 @@
-# 部署配置说明
+# 部署配置說明
 
-## 项目结构
+## 專案結構
 
 ```
 /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/
 ├── frontend/          # React 前端
-│   └── dist/         # 构建后的静态文件
-└── backend/          # FastAPI 后端
+│   └── dist/         # 構建後的靜態檔案
+└── backend/          # FastAPI 後端
     ├── app/
-    ├── wsgi.py       # uWSGI 入口文件
-    └── .venv/        # Python 虚拟环境
+    ├── wsgi.py       # uWSGI 入口檔案
+    └── .venv/        # Python 虛擬環境
 ```
 
-## 端口配置
+## 埠號配置
 
-- **前端**: Port 8000 (开发模式) 或静态文件服务
-- **后端**: Port 8096 (uWSGI)
+- **前端**: Port 8000 (開發模式) 或靜態檔案服務
+- **後端**: Port 8096 (uWSGI)
 
-## 部署步骤
+## 部署步驟
 
-### 1. 准备后端
+### 1. 準備後端
 
 ```bash
 cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
 
-# 使用 uv sync 安装依赖（会自动创建虚拟环境并安装所有依赖）
-# 确保已安装 uv: curl -LsSf https://astral.sh/uv/install.sh | sh
+# 使用 uv sync 安裝依賴（會自動建立虛擬環境並安裝所有依賴）
+# 確保已安裝 uv: curl -LsSf https://astral.sh/uv/install.sh | sh
 uv sync
 
-# uv sync 会：
-# - 根据 pyproject.toml 和 uv.lock 创建/更新虚拟环境
-# - 安装所有依赖到 .venv 目录
-# - 确保依赖版本与 uv.lock 一致
+# uv sync 會：
+# - 根據 pyproject.toml 和 uv.lock 建立/更新虛擬環境
+# - 安裝所有依賴到 .venv 目錄
+# - 確保依賴版本與 uv.lock 一致
 
-# 确保 wsgi.py 存在
-# 文件已创建在 backend/wsgi.py
+# 確保 wsgi.py 存在
+# 檔案已建立在 backend/wsgi.py
 ```
 
 ### 2. 配置 uWSGI
 
 ```bash
-# 复制配置文件
+# 複製配置檔案
 sudo cp deployment/uwsgi.ini /etc/uwsgi/apps-available/shopping-react-backend.ini
 sudo ln -s /etc/uwsgi/apps-available/shopping-react-backend.ini /etc/uwsgi/apps-enabled/
 
-# 创建日志目录
+# 建立日誌目錄
 sudo mkdir -p /var/log/uwsgi
 sudo chown ai-tracks-shopping-react:ai-tracks-shopping-react /var/log/uwsgi
 
-# 启动 uWSGI
+# 啟動 uWSGI
 sudo systemctl start uwsgi
 sudo systemctl enable uwsgi
 ```
@@ -56,18 +56,18 @@ sudo systemctl enable uwsgi
 ### 3. 配置 Nginx
 
 ```bash
-# 复制配置文件
+# 複製配置檔案
 sudo cp deployment/nginx.conf /etc/nginx/sites-available/shopping-react.ai-tracks.com
 sudo ln -s /etc/nginx/sites-available/shopping-react.ai-tracks.com /etc/nginx/sites-enabled/
 
-# 修改 SSL 证书路径
+# 修改 SSL 憑證路徑
 sudo nano /etc/nginx/sites-available/shopping-react.ai-tracks.com
-# 更新 ssl_certificate_key 和 ssl_certificate 路径
+# 更新 ssl_certificate_key 和 ssl_certificate 路徑
 
-# 测试配置
+# 測試配置
 sudo nginx -t
 
-# 重载 Nginx
+# 重新載入 Nginx
 sudo systemctl reload nginx
 ```
 
@@ -76,143 +76,143 @@ sudo systemctl reload nginx
 ```bash
 cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/frontend
 
-# 构建生产版本
+# 構建生產版本
 npm run build
 # 或
 yarn build
 
-# 构建后的文件在 dist/ 目录
-# Nginx 会直接服务这些静态文件
+# 構建後的檔案在 dist/ 目錄
+# Nginx 會直接服務這些靜態檔案
 ```
 
-## 配置说明
+## 配置說明
 
 ### Nginx 配置
 
-- **前端**: 服务静态文件（`/` 路径）
-- **后端 API**: 代理到 `http://127.0.0.1:8096/api/`
-- **HTTPS**: 强制 HTTPS 重定向
-- **静态文件缓存**: JS/CSS/图片等缓存 1 年
+- **前端**: 服務靜態檔案（`/` 路徑）
+- **後端 API**: 代理到 `http://127.0.0.1:8096/api/`
+- **HTTPS**: 強制 HTTPS 重定向
+- **靜態檔案快取**: JS/CSS/圖片等快取 1 年
 
 ### uWSGI 配置
 
-- **监听**: `127.0.0.1:8096`
-- **进程数**: 8 个进程，每个 2 线程
-- **动态进程**: Cheaper mode，最少 2 个进程
-- **日志**: `/var/log/uwsgi/shopping-react-backend.log`
+- **監聽**: `127.0.0.1:8096`
+- **進程數**: 8 個進程，每個 2 執行緒
+- **動態進程**: Cheaper mode，最少 2 個進程
+- **日誌**: `/var/log/uwsgi/shopping-react-backend.log`
 
-## 注意事项
+## 注意事項
 
-### 依赖管理
+### 依賴管理
 
-项目使用 `uv` 进行依赖管理：
+專案使用 `uv` 進行依賴管理：
 
 ```bash
-# 安装/更新依赖
+# 安裝/更新依賴
 uv sync
 
-# 添加新依赖
+# 新增新依賴
 uv add package-name
 
-# 更新依赖
+# 更新依賴
 uv sync --upgrade
 
-# 查看依赖
+# 查看依賴
 uv tree
 ```
 
-`uv sync` 会根据 `pyproject.toml` 和 `uv.lock` 文件自动：
-- 创建/更新虚拟环境（`.venv`）
-- 安装所有依赖
-- 确保依赖版本锁定
+`uv sync` 會根據 `pyproject.toml` 和 `uv.lock` 檔案自動：
+- 建立/更新虛擬環境（`.venv`）
+- 安裝所有依賴
+- 確保依賴版本鎖定
 
 ### FastAPI 和 uWSGI
 
-FastAPI 是 ASGI 应用，但可以通过以下方式在 uWSGI 中运行：
+FastAPI 是 ASGI 應用，但可以透過以下方式在 uWSGI 中執行：
 
-1. **使用 WSGI 适配器**（当前方案）:
+1. **使用 WSGI 適配器**（目前方案）:
    - 使用 `asgiref` 的 `WSGIToASGIAdapter`
-   - `asgiref` 已包含在依赖中（通过 `uv sync` 安装）
+   - `asgiref` 已包含在依賴中（透過 `uv sync` 安裝）
 
-2. **使用 ASGI 插件**:
-   - 安装 `uwsgi-asgi` 插件
+2. **使用 ASGI 外掛**:
+   - 安裝 `uwsgi-asgi` 外掛
    - 配置 `asgi-app` 而不是 `wsgi-file`
 
-3. **推荐方案**（如果 uWSGI 有问题）:
+3. **推薦方案**（如果 uWSGI 有問題）:
    - 使用 `gunicorn` + `uvicorn` workers:
    ```bash
-   # 使用 uv 运行
+   # 使用 uv 執行
    uv run gunicorn app.main:app -w 8 -k uvicorn.workers.UvicornWorker -b 127.0.0.1:8096
    ```
 
-### 环境变量
+### 環境變數
 
-如果需要设置环境变量，可以在 uWSGI 配置中添加：
+如果需要設定環境變數，可以在 uWSGI 配置中新增：
 ```ini
 env = DATABASE_URL=postgresql://...
 env = SECRET_KEY=...
 ```
 
-或在 systemd service 文件中设置。
+或在 systemd service 檔案中設定。
 
-### 使用 uv 的优势
+### 使用 uv 的優勢
 
-- **快速安装**: `uv` 比 `pip` 快 10-100 倍
-- **依赖锁定**: `uv.lock` 确保生产环境依赖版本一致
-- **自动虚拟环境管理**: 无需手动创建虚拟环境
-- **更好的依赖解析**: 更快的依赖冲突检测和解决
+- **快速安裝**: `uv` 比 `pip` 快 10-100 倍
+- **依賴鎖定**: `uv.lock` 確保生產環境依賴版本一致
+- **自動虛擬環境管理**: 無需手動建立虛擬環境
+- **更好的依賴解析**: 更快的依賴衝突檢測和解決
 
-### 更新依赖
+### 更新依賴
 
 ```bash
 cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
 
-# 更新所有依赖到最新版本
+# 更新所有依賴到最新版本
 uv sync --upgrade
 
-# 更新特定依赖
+# 更新特定依賴
 uv add package-name@latest
 
-# 重新生成 uv.lock
+# 重新產生 uv.lock
 uv lock
 
-# 重启 uWSGI 使更改生效
+# 重新啟動 uWSGI 使更改生效
 sudo systemctl restart uwsgi
 ```
 
-### 日志
+### 日誌
 
-- **Nginx 访问日志**: `/var/log/nginx/shopping-react-access.log`
-- **Nginx 错误日志**: `/var/log/nginx/shopping-react-error.log`
-- **uWSGI 日志**: `/var/log/uwsgi/shopping-react-backend.log`
+- **Nginx 存取日誌**: `/var/log/nginx/shopping-react-access.log`
+- **Nginx 錯誤日誌**: `/var/log/nginx/shopping-react-error.log`
+- **uWSGI 日誌**: `/var/log/uwsgi/shopping-react-backend.log`
 
 ## 故障排查
 
-### 检查 uWSGI 状态
+### 檢查 uWSGI 狀態
 ```bash
 sudo systemctl status uwsgi
 sudo journalctl -u uwsgi -f
 ```
 
-### 检查 Nginx 状态
+### 檢查 Nginx 狀態
 ```bash
 sudo systemctl status nginx
 sudo nginx -t
 ```
 
-### 测试后端 API
+### 測試後端 API
 ```bash
 curl http://127.0.0.1:8096/api/health
 # 或
 curl https://shopping-react.ai-tracks.com/api/health
 ```
 
-### 查看日志
+### 查看日誌
 ```bash
-# uWSGI 日志
+# uWSGI 日誌
 tail -f /var/log/uwsgi/shopping-react-backend.log
 
-# Nginx 错误日志
+# Nginx 錯誤日誌
 tail -f /var/log/nginx/shopping-react-error.log
 ```
 

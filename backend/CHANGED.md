@@ -24,7 +24,7 @@
    - 使用 `urllib.parse.urlencode()` 構建 query string（值會被編碼，空格變成 +）
    - 使用 `urllib.parse.unquote_plus()` 解碼（+ 會變成空格，%XX 會解碼）
    - 這樣可以匹配 PHP 的 `urldecode(http_build_query($params))` 行為
-5. **添加 HashKey 和 HashIV**: 最前方加入 HashKey，最後方加入 HashIV
+5. **新增 HashKey 和 HashIV**: 最前方加入 HashKey，最後方加入 HashIV
 6. **URL Encode**: 對整個字串進行 URL 編碼
 7. **轉小寫**: 將編碼後的字串轉為全小寫
 8. **轉換特定字元**: 將特定編碼字元還原（與 .NET 相符）:
@@ -55,7 +55,7 @@ def generate_check_value(params: dict, hash_key: str, hash_iv: str) -> str:
     # 4) 使用 urlencode + unquote_plus 構建 query string
     query_string = urllib.parse.urlencode(sorted_params, doseq=True)
     query_string = urllib.parse.unquote_plus(query_string)
-    # 5) 添加 HashKey 和 HashIV
+    # 5) 新增 HashKey 和 HashIV
     # 6) URL Encode
     # 7) 轉小寫
     # 8) 轉換特定字元
@@ -98,7 +98,7 @@ def generate_check_value(params: dict, hash_key: str, hash_iv: str) -> str:
 2. **移除 CheckMacValue**: 如果參數中存在 CheckMacValue，先移除
 3. **參數排序**: 將鍵值按 A-Z 排序（不區分大小寫）
 4. **構建 Query String**: 將陣列轉為 `key=value&key2=value2` 格式
-5. **添加 HashKey 和 HashIV**: 最前方加入 HashKey，最後方加入 HashIV
+5. **新增 HashKey 和 HashIV**: 最前方加入 HashKey，最後方加入 HashIV
 6. **URL Encode**: 對整個字串進行 URL 編碼
 7. **轉小寫**: 將編碼後的字串轉為全小寫
 8. **轉換特定字元**: 將特定編碼字元還原（與 .NET 相符）:
@@ -125,7 +125,7 @@ def generate_check_value(params: dict, hash_key: str, hash_iv: str) -> str:
     # 2) 移除 CheckMacValue
     # 3) 按 A-Z 排序
     # 4) 構建 query string
-    # 5) 添加 HashKey 和 HashIV
+    # 5) 新增 HashKey 和 HashIV
     # 6) URL Encode
     # 7) 轉小寫
     # 8) 轉換特定字元
