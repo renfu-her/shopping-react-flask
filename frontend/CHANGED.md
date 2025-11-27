@@ -1,5 +1,56 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 15:52:00] - 更新 Checkout 頁面使用與 Profile 相同的地址字段
+
+### 修改內容
+
+#### 更新 Checkout 頁面地址字段
+- **時間**: 2025-11-27 15:52:00
+- **目的**: 將 Checkout 頁面的 Shipping Information 改為使用與 Profile 頁面相同的地址字段格式，並自動填充用戶的地址信息
+- **修改檔案**:
+  - `components/Checkout.tsx` - 更新地址字段為台灣地址格式
+
+### 變更詳情
+
+#### 地址字段更新
+- **移除舊字段**:
+  - `city` (城市)
+  - `zip` (郵遞區號)
+
+- **新增字段** (與 Profile 相同):
+  - `phone` (電話號碼)
+  - `county` (縣市) - 下拉選單
+  - `district` (區鄉鎮) - 下拉選單，根據縣市動態更新
+  - `zipcode` (郵遞區號) - 自動填充，只讀
+  - `address` (詳細地址) - 保留
+
+#### 功能改進
+- **自動填充**: 
+  - 從用戶 Profile 自動填充所有地址字段
+  - 包括 name, phone, address, county, district, zipcode
+
+- **智能聯動**:
+  - 選擇縣市時，自動清空區鄉鎮和郵遞區號
+  - 選擇區鄉鎮時，自動填充對應的郵遞區號
+  - 使用 `twzipcode` 工具函數處理台灣地址數據
+
+- **數據提交**:
+  - 將 `county` 和 `district` 組合為 `shipping_city` (例如: "台北市大安區")
+  - 使用 `zipcode` 作為 `shipping_zip`
+
+### 技術細節
+- 導入 `getCounties()`, `getDistricts()`, `getZipcode()` 工具函數
+- 使用與 Profile 頁面相同的地址選擇邏輯
+- 郵遞區號字段設為只讀，自動填充
+
+### 影響範圍
+- **前端**: 
+  - Checkout 頁面現在使用台灣地址格式
+  - 用戶可以從 Profile 快速填充地址信息
+  - 提供更好的用戶體驗
+
+---
+
 ## [2025-11-27 15:47:04] - 整合購物車和訂單 API
 
 ### 修改內容
