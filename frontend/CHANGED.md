@@ -1,5 +1,65 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 10:14:46] - Cart 頁面使用產品的第一張圖片
+
+### 修改內容
+
+#### Cart 頁面使用產品的第一張圖片
+- **時間**: 2025-11-27 10:14:46
+- **目的**: 將購物車頁面的商品圖片改為優先使用 `product_images` 數組中的第一張圖片，並正確處理圖片 URL
+- **修改檔案**:
+  - `components/Cart.tsx` - 更新圖片顯示邏輯，優先使用 product_images[0].image_url
+
+### 變更詳情
+
+#### 修改的組件
+- **Cart.tsx**:
+  - 添加 `getImageUrl` 函數處理相對路徑轉換為絕對 URL
+  - 添加 `getProductImage` 函數獲取商品的第一張圖片
+  - 優先使用 `product_images[0].image_url` 作為圖片源
+  - 如果 `product_images` 為空或不存在，回退到 `item.image`
+  - 自動處理相對路徑轉換為完整 URL
+
+### 技術細節
+
+#### 圖片選擇邏輯
+```typescript
+const getProductImage = (item: CartItem & { product_images?: Array<{ image_url: string; order_index: number }> }) => {
+  // Check if product_images exists and has items
+  if (item.product_images && item.product_images.length > 0) {
+    return item.product_images[0].image_url;
+  }
+  // Fallback to item.image
+  return item.image;
+};
+```
+
+#### 圖片 URL 處理
+- 優先使用 `product_images[0].image_url`（第一張圖片）
+- 如果 `product_images` 為空，使用 `item.image` 作為備用
+- 相對路徑自動轉換為完整 URL（添加 `http://localhost:8000` 前綴）
+- 確保所有圖片都能正確顯示
+
+#### 類型處理
+- 使用類型斷言處理 CartItem 可能包含 `product_images` 的情況
+- 保持向後兼容，如果沒有 `product_images` 則使用 `item.image`
+
+### 影響範圍
+- **前端**: 購物車頁面 (`/cart`)
+- **功能**: 
+  - 現在會優先顯示 `product_images` 數組中的第一張圖片
+  - 圖片 URL 自動處理相對路徑
+- **行為**: 
+  - 與商品列表頁面和商品詳情頁面保持一致
+  - 確保購物車中顯示的圖片與商品頁面一致
+
+### 注意事項
+1. **圖片優先級**: 優先使用 `product_images[0].image_url`（第一張圖片）
+2. **向後兼容**: 如果商品沒有 `product_images`，會回退到 `item.image`
+3. **URL 處理**: 所有圖片 URL 都會自動處理相對路徑
+
+---
+
 ## [2025-11-27 10:05:37] - Product Detail 頁面支援 Markdown 渲染
 
 ### 修改內容
@@ -992,5 +1052,5 @@ const hotProducts = await fetchHotProducts();
 
 ---
 
-**最後更新**: 2025-11-27 10:05:37
+**最後更新**: 2025-11-27 10:14:46
 

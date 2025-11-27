@@ -11,6 +11,26 @@ interface CartProps {
 }
 
 export const Cart: React.FC<CartProps> = ({ items, updateQuantity, removeFromCart, onCheckout, onContinueShopping }) => {
+  // Convert relative image URL to absolute URL
+  const getImageUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    // If it's a relative path, prepend the backend base URL
+    return `http://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
+  };
+
+  // Get the first image from product_images array or fallback to product.image
+  const getProductImage = (item: CartItem & { product_images?: Array<{ image_url: string; order_index: number }> }) => {
+    // Check if product_images exists and has items
+    if (item.product_images && item.product_images.length > 0) {
+      return item.product_images[0].image_url;
+    }
+    // Fallback to item.image
+    return item.image;
+  };
+
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (items.length === 0) {
@@ -38,11 +58,17 @@ export const Cart: React.FC<CartProps> = ({ items, updateQuantity, removeFromCar
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Cart Items List */}
         <div className="flex-1 space-y-4">
-          {items.map((item) => (
-            <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex gap-4 items-center">
-              <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-              </div>
+          {items.map((item) => {
+            // Get the first image (from product_images array or fallback to item.image)
+            const firstImage = getProductImage(item as CartItem & { product_images?: Array<{ image_url: string; order_index: number }> });
+            // Convert relative path to absolute URL
+            const imageUrl = getImageUrl(firstImage);
+
+            return (
+              <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex gap-4 items-center">
+                <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  <img src={imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                </div>
               
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-900 truncate">{item.title}</h3>
@@ -73,7 +99,8 @@ export const Cart: React.FC<CartProps> = ({ items, updateQuantity, removeFromCar
                 <Trash2 size={20} />
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Order Summary */}
