@@ -48,7 +48,10 @@ export const HomePage: React.FC = () => {
     <>
       {(location.pathname === '/' || location.pathname === '/shop') && (
         <CategoryNav 
-          onCategoryClick={handleCategorySelect}
+          onCategoryClick={(categoryName: string) => {
+            handleCategorySelect(categoryName);
+            navigate('/shop');
+          }}
           onViewAllClick={() => {
             handleCategorySelect(null);
             navigate('/shop');

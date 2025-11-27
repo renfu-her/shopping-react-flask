@@ -1,5 +1,56 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 16:19:45] - 修復首頁分類選單點擊跳轉問題
+
+### 修改內容
+
+#### 修復首頁分類選單點擊跳轉問題
+- **時間**: 2025-11-27 16:19:45
+- **目的**: 修復首頁分類選單點擊後沒有跳轉到應有畫面的問題
+- **修改檔案**:
+  - `components/CategoryNav.tsx` - 添加主分類點擊回調，修復"Shop All"按鈕
+  - `pages/HomePage.tsx` - 添加分類點擊後跳轉到 /shop 頁面
+  - `pages/ShopPage.tsx` - 統一分類點擊處理邏輯
+
+### 變更詳情
+
+#### CategoryNav 組件修改
+- **添加 onMainCategoryClick 回調**:
+  - 新增可選的 `onMainCategoryClick` prop
+  - 主分類點擊時，除了打開/關閉 mega menu，也會調用此回調
+  - 用於跳轉到 shop 頁面
+
+- **修復 "Shop All" 按鈕**:
+  - 將 `onViewAllClick()` 改為 `onCategoryClick(cat.name)`
+  - 現在會傳遞分類名稱，而不是清空分類選擇
+  - 點擊後會跳轉到 shop 頁面並顯示該分類的商品
+
+#### HomePage 修改
+- **分類點擊處理**:
+  - `onCategoryClick` 現在會設置分類並跳轉到 `/shop` 頁面
+  - `onMainCategoryClick` 也會設置分類並跳轉到 `/shop` 頁面
+  - 確保點擊分類後能正確跳轉
+
+#### ShopPage 修改
+- **統一分類點擊處理**:
+  - 所有 CategoryNav 實例（loading、error、正常狀態）都使用相同的處理邏輯
+  - 添加 `onMainCategoryClick` 處理
+
+### 技術細節
+- 分類點擊流程：
+  1. 用戶點擊分類（主分類或子分類）
+  2. 調用 `handleCategorySelect(categoryName)` 設置分類
+  3. 導航到 `/shop` 頁面
+  4. ShopPage 根據 `category_name` 過濾產品
+
+### 影響範圍
+- **前端**: 
+  - 首頁分類選單點擊後會正確跳轉到 shop 頁面
+  - 顯示對應分類的商品
+  - 提供更好的用戶體驗
+
+---
+
 ## [2025-11-27 16:16:08] - 完善 Checkout 支付流程和訂單完成頁面
 
 ### 修改內容

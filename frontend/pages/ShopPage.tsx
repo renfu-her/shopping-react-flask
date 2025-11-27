@@ -62,10 +62,11 @@ export const ShopPage: React.FC = () => {
     return (
       <>
         <CategoryNav 
-          onCategoryClick={handleCategorySelect}
+          onCategoryClick={(categoryName: string) => {
+            handleCategorySelect(categoryName);
+          }}
           onViewAllClick={() => {
             handleCategorySelect(null);
-            navigate('/shop');
           }}
         />
         <div className="max-w-7xl mx-auto p-6 text-center py-20">
@@ -79,10 +80,11 @@ export const ShopPage: React.FC = () => {
     return (
       <>
         <CategoryNav 
-          onCategoryClick={handleCategorySelect}
+          onCategoryClick={(categoryName: string) => {
+            handleCategorySelect(categoryName);
+          }}
           onViewAllClick={() => {
             handleCategorySelect(null);
-            navigate('/shop');
           }}
         />
         <div className="max-w-7xl mx-auto p-6 text-center py-20">
@@ -95,10 +97,11 @@ export const ShopPage: React.FC = () => {
   return (
     <>
       <CategoryNav 
-        onCategoryClick={handleCategorySelect}
+        onCategoryClick={(categoryName: string) => {
+          handleCategorySelect(categoryName);
+        }}
         onViewAllClick={() => {
           handleCategorySelect(null);
-          navigate('/shop');
         }}
       />
       <ProductList 

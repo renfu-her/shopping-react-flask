@@ -51,6 +51,8 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({ onCategoryClick, onVie
   }, []);
 
   const handleMainCategoryClick = (id: number) => {
+    // 如果 mega menu 已打開，點擊相同分類時關閉
+    // 否則打開 mega menu（不跳轉，只顯示子分類選單）
     setActiveMainCategory(activeMainCategory === id ? null : id);
   };
 
@@ -134,7 +136,7 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({ onCategoryClick, onVie
                                         </p>
                                         <button 
                                             onClick={() => {
-                                                onViewAllClick();
+                                                onCategoryClick(cat.name);
                                                 setActiveMainCategory(null);
                                             }}
                                             className="text-indigo-600 font-bold text-sm flex items-center hover:gap-2 transition-all"
