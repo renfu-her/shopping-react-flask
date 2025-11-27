@@ -1,5 +1,117 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 09:32:22] - Shop 頁面使用 /api/products API 獲取所有商品
+
+### 修改內容
+
+#### Shop 頁面使用 /api/products API 獲取所有商品
+- **時間**: 2025-11-27 09:32:22
+- **目的**: 將 `/shop` 頁面改為從後端 `/api/products` API 獲取所有商品，並正確處理圖片 URL
+- **修改檔案**:
+  - `services/api.ts` - 添加 `fetchProducts` 函數和 `ProductListResponse` 接口
+  - `pages/ShopPage.tsx` - 使用 API 獲取商品列表
+  - `components/ProductList.tsx` - 更新以處理圖片 URL 和 `category_name` 字段
+
+### 變更詳情
+
+#### 新增的 API 函數
+- **fetchProducts(categoryId?, page, pageSize)**: 調用 `/api/products` 端點獲取商品列表
+  - 支持可選的 `categoryId` 參數（目前未使用，使用前端篩選）
+  - 支持分頁參數 `page` 和 `pageSize`
+  - 返回 `ProductListResponse` 包含商品列表、總數、頁碼等信息
+
+#### 新增的類型定義
+- **ProductListResponse 接口**: 定義 API 響應結構
+  - `products`: Product[]
+  - `total`: number
+  - `page`: number
+  - `page_size`: number
+  - `total_pages`: number
+
+#### 修改的頁面
+- **ShopPage.tsx**:
+  - 移除對 `PRODUCTS` mock data 的依賴
+  - 移除對 `ITEMS_PER_PAGE` 常數的依賴
+  - 添加狀態管理（products, totalPages, loading, error）
+  - 使用 `useEffect` 從 API 加載商品列表
+  - 支持分類篩選（在前端根據 `category_name` 篩選）
+  - 當分類改變時，重置到第一頁
+  - 添加載入和錯誤狀態的 UI 處理
+
+#### 修改的組件
+- **ProductList.tsx**:
+  - 更新導入：從 `../types` 改為 `../services/api` 以使用正確的 Product 類型
+  - 添加 `getImageUrl` 函數處理相對路徑轉換為絕對 URL
+  - 優先使用 `product_images[0].image_url` 作為圖片源
+  - 如果 `product_images` 為空，回退到 `product.image`
+  - 將 `product.category` 改為 `product.category_name || 'Uncategorized'`
+  - 處理 `product.description` 可能為 null 的情況
+
+### 技術細節
+
+#### API 調用
+```typescript
+export async function fetchProducts(
+  categoryId?: number | null,
+  page: number = 1,
+  pageSize: number = 9
+): Promise<ProductListResponse> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    page_size: pageSize.toString(),
+  });
+  
+  if (categoryId) {
+    params.append('category_id', categoryId.toString());
+  }
+  
+  const response = await fetch(`${API_BASE_URL}/products?${params.toString()}`);
+  const data: ProductListResponse = await response.json();
+  return data;
+}
+```
+
+#### 圖片 URL 處理
+- 優先使用 `product_images[0].image_url`（第一張圖片）
+- 如果 `product_images` 為空，使用 `product.image` 作為備用
+- 相對路徑自動轉換為完整 URL（添加 `http://localhost:8000` 前綴）
+- 確保所有圖片都能正確顯示
+
+#### 分類篩選
+- 目前使用前端篩選（根據 `category_name` 匹配 `selectedCategory`）
+- 當分類改變時，重置到第一頁
+- 支持顯示所有商品（當 `selectedCategory` 為 null 時）
+
+#### 分頁處理
+- 使用 API 返回的 `total_pages` 進行分頁
+- 每頁顯示 9 個商品（`pageSize = 9`）
+- 分頁控件顯示當前頁和總頁數
+
+### 影響範圍
+- **前端**: 
+  - `/shop` 頁面
+  - 商品列表顯示
+  - 分類篩選功能
+  - 分頁功能
+- **數據來源**: 從 mock data (`PRODUCTS`) 改為後端 API (`/api/products`)
+- **行為**: 
+  - 現在顯示的是後端數據庫中的所有啟用商品
+  - 支持動態加載和錯誤處理
+  - 圖片 URL 自動處理相對路徑
+  - 分類篩選在前端進行（根據 `category_name`）
+
+### 錯誤處理
+- API 調用失敗時顯示錯誤信息
+- 載入狀態提供更好的用戶體驗
+- 空狀態處理（當沒有商品時顯示提示）
+
+### 注意事項
+1. **分類篩選**: 目前使用前端篩選，未來可以改為使用 API 的 `category_id` 參數進行後端篩選
+2. **圖片優先級**: 優先使用 `product_images` 數組中的第一張圖片
+3. **分頁**: 每頁固定顯示 9 個商品
+
+---
+
 ## [2025-11-27 09:26:13] - News Detail 頁面支援 Markdown 渲染
 
 ### 修改內容
@@ -669,5 +781,5 @@ const hotProducts = await fetchHotProducts();
 
 ---
 
-**最後更新**: 2025-11-27 09:26:13
+**最後更新**: 2025-11-27 09:32:22
 

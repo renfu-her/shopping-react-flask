@@ -149,3 +149,38 @@ export async function fetchNewsDetail(newsId: number): Promise<NewsItem> {
   }
 }
 
+export interface ProductListResponse {
+  products: Product[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export async function fetchProducts(
+  categoryId?: number | null,
+  page: number = 1,
+  pageSize: number = 9
+): Promise<ProductListResponse> {
+  try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+    });
+    
+    if (categoryId) {
+      params.append('category_id', categoryId.toString());
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/products?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch products: ${response.statusText}`);
+    }
+    const data: ProductListResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
+}
+

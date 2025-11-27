@@ -1,5 +1,5 @@
 import React from 'react';
-import { Product } from '../types';
+import { Product } from '../services/api';
 import { ShoppingCart, Star, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ProductListProps {
@@ -19,27 +19,45 @@ export const ProductList: React.FC<ProductListProps> = ({
   totalPages,
   onPageChange
 }) => {
+  // Convert relative image URL to absolute URL
+  const getImageUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    // If it's a relative path, prepend the backend base URL
+    return `http://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8 mb-12">
-        {products.map((product) => (
-          <div key={product.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group">
-            <div 
-              className="relative h-72 overflow-hidden bg-gray-100 cursor-pointer"
-              onClick={() => onProductClick(product)}
-            >
-              <img 
-                src={product.image} 
-                alt={product.title} 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-sm">
-                {product.category}
-              </div>
+        {products.map((product) => {
+          // Get the first image (from product_images array or fallback to product.image)
+          const firstImage = product.product_images && product.product_images.length > 0
+            ? product.product_images[0].image_url
+            : product.image;
+          
+          // Convert relative path to absolute URL
+          const imageUrl = getImageUrl(firstImage);
+          
+          return (
+            <div key={product.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group">
+              <div 
+                className="relative h-72 overflow-hidden bg-gray-100 cursor-pointer"
+                onClick={() => onProductClick(product)}
+              >
+                <img 
+                  src={imageUrl} 
+                  alt={product.title} 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-sm">
+                  {product.category_name || 'Uncategorized'}
+                </div>
               {/* Overlay button on hover */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <span className="bg-white text-gray-900 px-6 py-3 rounded-full font-bold text-sm shadow-xl flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform">
@@ -63,7 +81,7 @@ export const ProductList: React.FC<ProductListProps> = ({
                 <span className="text-xs text-gray-400 ml-2">(42 reviews)</span>
               </div>
 
-              <p className="text-gray-500 text-sm mb-6 line-clamp-2 flex-1 leading-relaxed">{product.description}</p>
+              <p className="text-gray-500 text-sm mb-6 line-clamp-2 flex-1 leading-relaxed">{product.description || 'No description available'}</p>
               
               <div className="flex items-center justify-between mt-auto">
                 <span className="font-bold text-2xl text-gray-900">${product.price}</span>
@@ -80,7 +98,8 @@ export const ProductList: React.FC<ProductListProps> = ({
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Pagination */}
