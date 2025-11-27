@@ -22,13 +22,42 @@ FastAPI 後端系統，提供購物車、訂單、產品管理等完整功能。
 
 1. 安裝 uv (如果尚未安裝):
    ```bash
+   # 方法 1: 使用官方安裝腳本（推薦）
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   
+   # 方法 2: 使用 pip 安裝
    pip install uv
+   
+   # 驗證安裝
+   uv --version
    ```
 
-2. 安裝依賴:
+2. 確保 Python 3.12.12 可用:
+   ```bash
+   # 檢查 Python 版本
+   python3.12 --version
+   
+   # 如果沒有 Python 3.12.12，讓 uv 自動安裝
+   uv python install 3.12.12
+   
+   # 手動指定 Python 版本
+   uv python pin 3.12.12
+   ```
+
+3. 安裝依賴:
    ```bash
    cd backend
+   
+   # uv sync 會自動偵測 .python-version 檔案並使用 Python 3.12.12
+   # 如果系統中沒有該版本，會自動下載並安裝
    uv sync
+   
+   # uv sync 會：
+   # - 自動偵測 .python-version 檔案（Python 3.12.12）
+   # - 如果系統中沒有 Python 3.12.12，會自動下載並安裝
+   # - 根據 pyproject.toml 和 uv.lock 建立/更新虛擬環境 (.venv)
+   # - 安裝所有依賴到 .venv 目錄
+   # - 確保依賴版本與 uv.lock 一致
    ```
 
 3. 設定環境變數:

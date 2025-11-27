@@ -26,12 +26,16 @@ cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
 
 # 使用 uv sync 安裝依賴（會自動建立虛擬環境並安裝所有依賴）
 # 確保已安裝 uv: curl -LsSf https://astral.sh/uv/install.sh | sh
+# 確保已安裝 Python 3.12.12，或讓 uv 自動安裝：uv python install 3.12.12
 uv sync
 
 # uv sync 會：
+# - 自動偵測 .python-version 檔案（Python 3.12.12）
+# - 如果系統中沒有 Python 3.12.12，會自動下載並安裝
 # - 根據 pyproject.toml 和 uv.lock 建立/更新虛擬環境
 # - 安裝所有依賴到 .venv 目錄
 # - 確保依賴版本與 uv.lock 一致
+# - 確保 Python 版本符合 pyproject.toml 中的 requires-python
 
 # 確保 wsgi.py 存在
 # 檔案已建立在 backend/wsgi.py

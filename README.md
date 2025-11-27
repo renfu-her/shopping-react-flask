@@ -28,7 +28,7 @@ shopping-react-flask/
 
 - **Node.js**: 22.x
 - **npm**: 随 Node.js 安装
-- **Python**: 3.12.x
+- **Python**: 3.12.12（推薦，已在 `.python-version` 中指定）
 - **uv**: Python 套件管理器（最新版本）
 - **uWSGI**: Python WSGI 伺服器
 - **Nginx**: Web 伺服器和反向代理
@@ -48,32 +48,51 @@ node --version  # 應該顯示 v22.x.x
 npm --version
 ```
 
-### 2. 安装 Python 3.12
+### 2. 安裝 Python 3.12.12
 
 ```bash
 # Ubuntu/Debian
+# 方法 1: 使用 deadsnakes PPA 安裝特定版本
+sudo apt update
+sudo apt install -y software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
 sudo apt install -y python3.12 python3.12-venv python3.12-dev
 
 # 驗證安裝
-python3.12 --version
+python3.12 --version  # 應該顯示 Python 3.12.12
+
+# 方法 2: 從源碼編譯（如果需要特定版本）
+# 參考: https://www.python.org/downloads/
 ```
 
-### 3. 安装 uv
+**注意**: 專案已指定 Python 3.12.12（在 `backend/.python-version` 中），建議使用此版本以確保一致性。
+
+### 3. 安裝 uv
 
 ```bash
-# 安裝 uv (Python 套件管理器)
+# 方法 1: 使用官方安裝腳本（推薦）
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 新增到 PATH (如果使用預設安裝路徑)
 export PATH="$HOME/.cargo/bin:$PATH"
 
-# 或使用 pip 安裝
-pip install uv
+# 方法 2: 使用 pip 安裝（需要先有 Python）
+python3.12 -m pip install uv
 
 # 驗證安裝
 uv --version
+
+# 設定 uv 使用 Python 3.12.12
+# uv 會自動偵測 .python-version 檔案，或手動指定：
+uv python install 3.12.12
+uv python pin 3.12.12
 ```
+
+**注意**: 
+- `uv` 會自動偵測專案目錄中的 `.python-version` 檔案
+- 如果專案中有 `backend/.python-version` 指定 `3.12.12`，`uv sync` 會自動使用該版本
+- 如果系統中沒有 Python 3.12.12，`uv` 會自動下載並安裝
 
 ### 4. 安装 uWSGI
 
@@ -117,16 +136,28 @@ cd $PROJECT_DIR
 cd $PROJECT_DIR/backend
 
 # 使用 uv sync 安裝依賴（會自動建立虛擬環境）
+# uv 會自動偵測 .python-version 檔案並使用 Python 3.12.12
 uv sync
 
 # uv sync 會：
+# - 自動偵測 .python-version 檔案（如果存在）
+# - 如果系統中沒有指定的 Python 版本，會自動下載並安裝
 # - 根據 pyproject.toml 和 uv.lock 建立/更新虛擬環境 (.venv)
 # - 安裝所有依賴到 .venv 目錄
 # - 確保依賴版本與 uv.lock 一致
+# - 確保 Python 版本符合 pyproject.toml 中的 requires-python
+
+# 驗證 Python 版本
+.venv/bin/python --version  # 應該顯示 Python 3.12.12
 
 # 驗證安裝
 .venv/bin/python -c "from app.main import app; print('應用匯入成功')"
 ```
+
+**重要**: 
+- 專案使用 Python 3.12.12（在 `backend/.python-version` 和 `pyproject.toml` 中指定）
+- `uv sync` 會自動使用正確的 Python 版本
+- 如果系統中沒有 Python 3.12.12，`uv` 會自動下載並安裝（需要網路連線）
 
 ### 3. 前端部署
 
@@ -266,8 +297,15 @@ sudo nginx -t
 ```bash
 cd backend
 
-# 安裝/更新依賴
+# 安裝/更新依賴（會自動使用 Python 3.12.12）
 uv sync
+
+# uv sync 會：
+# - 自動偵測 .python-version 檔案（Python 3.12.12）
+# - 如果系統中沒有 Python 3.12.12，會自動下載並安裝
+# - 建立/更新虛擬環境 (.venv)
+# - 安裝所有依賴到 .venv 目錄
+# - 確保依賴版本與 uv.lock 一致
 
 # 新增新依賴
 uv add package-name
@@ -277,6 +315,12 @@ uv sync --upgrade
 
 # 查看依賴樹
 uv tree
+
+# 查看 Python 版本
+uv python list
+
+# 手動指定 Python 版本（如果需要）
+uv python pin 3.12.12
 
 # 重新產生鎖定檔案
 uv lock
@@ -378,9 +422,13 @@ tail -f /var/log/nginx/shopping-react-error.log
    - 檢查檔案權限
 
 4. **依賴安裝失敗**
-   - 確保 Python 版本正確：`python3.12 --version`
+   - 確保 Python 版本正確：`python3.12 --version`（應該顯示 3.12.12）
    - 確保 uv 已安裝：`uv --version`
-   - 檢查網路連線
+   - 檢查 `.python-version` 檔案是否存在：`cat backend/.python-version`
+   - 讓 uv 自動安裝 Python：`uv python install 3.12.12`
+   - 檢查網路連線（uv 可能需要下載 Python）
+   - 檢查 pyproject.toml 中的 `requires-python` 設定（應該是 `>=3.12,<3.13`）
+   - 手動指定 Python 版本：`uv python pin 3.12.12`
 
 ## 開發環境
 
