@@ -24,14 +24,40 @@
 ```bash
 cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
 
+# **重要**：先使用 uv 安裝 Python 3.12.3
+# uv 會下載並安裝完整的 Python 3.12.3（包含 C 擴展模組）
+uv python install 3.12.3
+
+# 驗證 Python 已安裝
+uv python list
+# 應該顯示 3.12.3
+
+# **重要**：刪除舊的虛擬環境（如果存在）
+rm -rf .venv
+
 # 使用 uv sync 安裝依賴（會自動建立虛擬環境並安裝所有依賴）
+# uv 會根據 .python-version 檔案（3.12.3）使用正確的 Python 版本
 # 確保已安裝 uv: curl -LsSf https://astral.sh/uv/install.sh | sh
 uv sync
 
 # uv sync 會：
+# - 根據 .python-version 檔案使用 Python 3.12.3
 # - 根據 pyproject.toml 和 uv.lock 建立/更新虛擬環境
 # - 安裝所有依賴到 .venv 目錄
 # - 確保依賴版本與 uv.lock 一致
+
+# **驗證**：確保虛擬環境使用正確的 Python
+source .venv/bin/activate
+python --version
+# 應該顯示：Python 3.12.3
+
+python -c "import sys; print('Python 路徑:', sys.executable)"
+# Python 路徑應該指向：/home/.../backend/.venv/bin/python
+# 不應該包含：~/.local/share/uv/python/
+
+# **重要**：驗證 C 擴展模組
+python -c "import _contextvars; import _decimal; print('✅ C 擴展模組正常')"
+# 如果出現錯誤，說明虛擬環境使用了錯誤的 Python，需要重新創建
 
 # 確保 wsgi.py 存在
 # 檔案已建立在 backend/wsgi.py
@@ -57,41 +83,60 @@ sudo apt-get install python3.12 python3.12-venv python3.12-dev
 python3.12 --version
 ```
 
-#### 步驟 2: 使用系統 Python 3.12 重新創建虛擬環境
+#### 步驟 2: 使用 uv 安裝 Python 3.12.3 並創建虛擬環境
 
 ```bash
 cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
 
-# **重要**：刪除舊的虛擬環境（使用 uv 管理的 Python，缺少 C 擴展模組）
+# **方法 1: 使用 uv 安裝 Python 3.12.3（推薦）**
+# uv 會下載並安裝完整的 Python 3.12.3（包含 C 擴展模組）
+uv python install 3.12.3
+
+# 驗證 Python 已安裝
+uv python list
+# 應該顯示 3.12.3
+
+# **重要**：刪除舊的虛擬環境
 rm -rf .venv
 
-# 使用系統 Python 3.12 創建新的虛擬環境
-python3.12 -m venv .venv
+# 使用 uv 創建虛擬環境，明確指定 Python 3.12.3
+uv venv --python 3.12.3
 
 # 激活虛擬環境
 source .venv/bin/activate
 
-# 驗證 Python 版本和路徑（應該是系統 Python，不是 uv 管理的）
+# 驗證 Python 版本和路徑
 which python
 python --version
-# 應該顯示類似：
+# 應該顯示：
 # /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend/.venv/bin/python
-# Python 3.12.x
+# Python 3.12.3
 
-# 驗證不是 uv 管理的 Python（路徑不應該包含 ~/.local/share/uv/python/）
-echo $VIRTUAL_ENV
+# 驗證 Python 路徑（應該指向 .venv，不是 ~/.local/share/uv/python/）
+python -c "import sys; print(sys.executable)"
+# 應該顯示：/home/.../backend/.venv/bin/python
+
+# **方法 2: 使用系統 Python 3.12（如果方法 1 不工作）**
+# 如果 uv python install 不工作，可以使用系統 Python：
+# sudo apt-get install python3.12 python3.12-venv python3.12-dev
+# rm -rf .venv
+# python3.12 -m venv .venv
+# source .venv/bin/activate
 ```
 
 #### 步驟 3: 使用 uv 安裝依賴
 
 ```bash
-# uv 會使用當前激活的虛擬環境中的系統 Python
+# uv 會使用當前激活的虛擬環境中的 Python 3.12.3
 uv sync
 
-# 驗證 C 擴展模組是否正常（重要！）
+# **重要**：驗證 C 擴展模組是否正常
 python -c "import _contextvars; import _decimal; print('✅ C 擴展模組正常')"
 
-# 如果出現錯誤，說明虛擬環境仍然使用 uv 管理的 Python，需要重新創建
+# 如果出現錯誤，檢查 Python 路徑：
+python -c "import sys; print('Python 路徑:', sys.executable)"
+# 如果路徑包含 ~/.local/share/uv/python/，說明虛擬環境使用了錯誤的 Python
+# 解決方法：重新創建虛擬環境，確保使用 uv python install 3.12.3
 ```
 
 #### 步驟 4: 配置 uWSGI（選擇 WSGI 或 ASGI 模式）
