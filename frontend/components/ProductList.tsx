@@ -44,20 +44,20 @@ export const ProductList: React.FC<ProductListProps> = ({
           const imageUrl = getImageUrl(firstImage);
           
           return (
-            <div key={product.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group">
-              <div 
-                className="relative h-72 overflow-hidden bg-gray-100 cursor-pointer"
-                onClick={() => onProductClick(product)}
-              >
-                <img 
+          <div key={product.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group">
+            <div 
+              className="relative h-72 overflow-hidden bg-gray-100 cursor-pointer"
+              onClick={() => onProductClick(product)}
+            >
+              <img 
                   src={imageUrl} 
-                  alt={product.title} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-sm">
+                alt={product.title} 
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-sm">
                   {product.category_name || 'Uncategorized'}
-                </div>
+              </div>
               {/* Overlay button on hover */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <span className="bg-white text-gray-900 px-6 py-3 rounded-full font-bold text-sm shadow-xl flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform">

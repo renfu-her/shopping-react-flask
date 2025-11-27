@@ -22,13 +22,13 @@ export const Auth: React.FC<AuthProps> = ({ currentView, setView, onLogin }) => 
     setLoading(true);
 
     try {
-      if (currentView === AppView.FORGOT_PASSWORD) {
+    if (currentView === AppView.FORGOT_PASSWORD) {
         alert("If an account exists, a reset link has been sent.");
         setView(AppView.LOGIN);
         setLoading(false);
         return;
-      }
-
+    }
+    
       if (currentView === AppView.LOGIN) {
         // Login - Session is automatically set by backend
         const response = await login({ email, password });
@@ -155,9 +155,9 @@ export const Auth: React.FC<AuthProps> = ({ currentView, setView, onLogin }) => 
               "Processing..."
             ) : (
               <>
-                {currentView === AppView.LOGIN && "Sign In"}
-                {currentView === AppView.REGISTER && "Sign Up"}
-                {currentView === AppView.FORGOT_PASSWORD && "Send Reset Link"}
+            {currentView === AppView.LOGIN && "Sign In"}
+            {currentView === AppView.REGISTER && "Sign Up"}
+            {currentView === AppView.FORGOT_PASSWORD && "Send Reset Link"}
               </>
             )}
           </button>

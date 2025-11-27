@@ -65,10 +65,10 @@ export const Cart: React.FC<CartProps> = ({ items, updateQuantity, removeFromCar
             const imageUrl = getImageUrl(firstImage);
 
             return (
-              <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex gap-4 items-center">
-                <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+            <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex gap-4 items-center">
+              <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                   <img src={imageUrl} alt={item.title} className="w-full h-full object-cover" />
-                </div>
+              </div>
               
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-900 truncate">{item.title}</h3>

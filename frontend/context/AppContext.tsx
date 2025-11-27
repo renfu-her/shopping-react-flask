@@ -135,7 +135,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (cartItem) {
         await apiRemoveCartItem(cartItem.id);
         // 更新本地狀態
-        setCart(prev => prev.filter(item => item.id !== id));
+    setCart(prev => prev.filter(item => item.id !== id));
       }
     } catch (error) {
       console.error('Error removing cart item:', error);
@@ -171,21 +171,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, []);
 
   const value = useMemo(() => ({
-    user,
-    cart,
-    selectedCategory,
-    currentPage,
+        user,
+        cart,
+        selectedCategory,
+        currentPage,
     isLoadingUser,
-    setUser,
-    setCart,
-    setSelectedCategory,
-    setCurrentPage,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    handleLogin,
-    handleLogout,
-    handleCategorySelect,
+        setUser,
+        setCart,
+        setSelectedCategory,
+        setCurrentPage,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        handleLogin,
+        handleLogout,
+        handleCategorySelect,
   }), [user, cart, selectedCategory, currentPage, isLoadingUser, addToCart, updateQuantity, removeFromCart, handleLogin, handleLogout, handleCategorySelect]);
 
   return (

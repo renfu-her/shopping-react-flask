@@ -143,7 +143,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, a
             <div className="text-gray-600 text-lg mb-8 leading-relaxed">
               {product.description ? (
                 <ReactMarkdown components={markdownComponents}>
-                  {product.description}
+              {product.description}
                 </ReactMarkdown>
               ) : (
                 <p>No description available.</p>

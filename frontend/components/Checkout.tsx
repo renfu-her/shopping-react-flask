@@ -61,7 +61,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onBack, onSubmit, total }) =
         zipcode: zipcode || ''
       }));
     } else {
-      setDetails(prev => ({ ...prev, [name]: value }));
+    setDetails(prev => ({ ...prev, [name]: value }));
     }
   };
 
@@ -419,10 +419,10 @@ export const Checkout: React.FC<CheckoutProps> = ({ onBack, onSubmit, total }) =
             <div>
                  <label className="block text-sm font-medium text-gray-700 mb-1">Choose Payment Method</label>
                  <select 
-                    required 
+                        required 
                     name="payment_method" 
                     value={details.payment_method} 
-                    onChange={handleChange} 
+                        onChange={handleChange} 
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                  >
                     <option value="Credit">信用卡</option>
