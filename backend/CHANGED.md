@@ -1,5 +1,48 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-27 15:02:14] - 支援 JWT Token 認證
+
+### 修改內容
+
+#### 支援 JWT Token 認證
+- **時間**: 2025-11-27 15:02:14
+- **目的**: 更新 `get_current_user` 和 `get_current_user_optional` 函數以支援 JWT Token 認證，同時保持向後兼容 Session 認證
+- **修改檔案**:
+  - `dependencies.py` - 更新認證邏輯以支援 JWT Token
+
+### 變更詳情
+
+#### 更新的認證邏輯
+- **get_current_user()**: 優先使用 JWT Token 認證，如果無效則回退到 Session 認證
+  - 檢查 `Authorization` header 中的 Bearer token
+  - 使用 `decode_access_token()` 解碼 token
+  - 從 token payload 中獲取用戶 ID (`sub`)
+  - 如果 JWT Token 無效或不存在，回退到 Session 認證（向後兼容）
+
+- **get_current_user_optional()**: 同樣支援 JWT Token 和 Session 認證
+  - 優先檢查 JWT Token
+  - 如果沒有 token 或 token 無效，回退到 Session 認證
+
+#### 技術細節
+- 使用 `HTTPBearer(auto_error=False)` 使 Bearer token 為可選
+- 同時檢查 `HTTPAuthorizationCredentials` 和 `Authorization` header
+- 保持向後兼容，支援原有的 Session 認證方式
+
+### 影響範圍
+- **後端**: 
+  - 所有使用 `get_current_user` 的 API 端點現在都支援 JWT Token 認證
+  - 保持向後兼容，仍支援 Session 認證
+- **前端**: 
+  - 現在可以正確使用 JWT Token 進行認證
+  - 頁面刷新後會自動驗證 token 並恢復用戶狀態
+
+### 注意事項
+1. **向後兼容**: 仍支援 Session 認證，不會影響現有的後台管理功能
+2. **優先級**: JWT Token 優先於 Session 認證
+3. **Token 驗證**: 使用 `decode_access_token()` 驗證 token 的有效性
+
+---
+
 ## [2025-11-27 14:16:33] - 用戶資料管理功能擴展
 
 ### 修改內容

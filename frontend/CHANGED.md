@@ -1,5 +1,99 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 15:02:14] - JWT Token 認證與自動恢復登入狀態
+
+### 修改內容
+
+#### JWT Token 認證與自動恢復登入狀態
+- **時間**: 2025-11-27 15:02:14
+- **目的**: 實現完整的 JWT Token 認證流程，包括頁面刷新後自動驗證 token 並恢復用戶登入狀態
+- **修改檔案**:
+  - `context/AppContext.tsx` - 添加 `isLoadingUser` 狀態和自動驗證 token 邏輯
+  - `services/api.ts` - 添加 `getCurrentUser` 函數
+  - `components/Auth.tsx` - 更新以傳遞完整的用戶對象
+  - `pages/SignPage.tsx` - 添加加載狀態檢查和自動重定向
+  - `pages/CheckoutPage.tsx` - 添加加載狀態檢查
+  - `pages/ProfilePage.tsx` - 添加加載狀態檢查
+
+### 變更詳情
+
+#### 新增的功能
+- **自動驗證 Token**: 頁面加載時自動檢查 localStorage 中的 token 並驗證
+- **恢復用戶狀態**: 如果 token 有效，自動恢復用戶登入狀態
+- **加載狀態管理**: 添加 `isLoadingUser` 狀態，防止在驗證完成前顯示錯誤頁面
+
+#### 新增的 API 函數
+- **getCurrentUser()**: 調用 `/api/auth/me` 端點獲取當前用戶信息
+  - 自動從 localStorage 獲取 token
+  - 在請求頭中添加 `Authorization: Bearer {token}`
+  - 如果 token 無效（401），自動清除 localStorage 中的 token
+
+#### 更新的組件
+- **AppContext.tsx**:
+  - 添加 `isLoadingUser` 狀態
+  - 在 `useEffect` 中自動驗證 token
+  - 導出 `isLoadingUser` 供其他組件使用
+
+- **SignPage.tsx**:
+  - 在 token 驗證期間顯示加載狀態
+  - 如果已登入，自動重定向到首頁
+  - 僅在驗證完成且未登入時顯示登入頁面
+
+- **CheckoutPage.tsx**:
+  - 在 token 驗證期間顯示加載狀態
+  - 避免在驗證完成前重定向
+
+- **ProfilePage.tsx**:
+  - 在 token 驗證期間顯示加載狀態
+  - 僅在驗證完成後檢查登入狀態
+
+- **Auth.tsx**:
+  - 更新以傳遞完整的用戶對象（包含所有字段）
+  - 添加調試日誌
+
+### 技術細節
+
+#### JWT Token 認證流程
+1. **登入時**:
+   - 調用 `/api/auth/login` 獲取 `access_token`
+   - 自動將 token 存儲到 `localStorage`
+   - 保存完整的用戶信息到 context
+
+2. **頁面加載時**:
+   - 檢查 `localStorage` 中是否有 token
+   - 如果有，調用 `/api/auth/me` 驗證 token
+   - 如果驗證成功，恢復用戶登入狀態
+   - 如果驗證失敗，清除 token 並重置用戶狀態
+
+3. **API 調用時**:
+   - 所有需要認證的 API 調用都會自動從 localStorage 獲取 token
+   - 在請求頭中添加 `Authorization: Bearer {token}`
+
+4. **登出時**:
+   - 清除 localStorage 中的 token
+   - 清除用戶狀態
+
+#### 加載狀態管理
+- `isLoadingUser`: 表示正在驗證 token
+- 在加載期間顯示加載動畫
+- 防止在驗證完成前顯示錯誤頁面或重定向
+
+### 影響範圍
+- **前端**: 
+  - 所有需要認證的頁面
+  - 登入流程
+  - 頁面刷新後的狀態恢復
+- **後端**: 
+  - `/api/auth/me` 端點現在支援 JWT Token 認證
+
+### 注意事項
+1. **Token 存儲**: Token 存儲在 localStorage 中，頁面刷新後仍然存在
+2. **自動驗證**: 每次頁面加載都會自動驗證 token
+3. **錯誤處理**: 如果 token 無效或過期，會自動清除並重置用戶狀態
+4. **向後兼容**: 後端仍支援 Session 認證，不影響後台管理功能
+
+---
+
 ## [2025-11-27 14:16:33] - 用戶資料管理功能與 Profile 頁面
 
 ### 修改內容

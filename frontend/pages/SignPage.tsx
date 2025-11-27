@@ -9,10 +9,11 @@ export const SignPage: React.FC = () => {
   const { handleLogin, user, isLoadingUser } = useApp();
   const [authView, setAuthView] = useState<AppView>(AppView.LOGIN);
   
-  // Redirect to home if already logged in
+  // Redirect to home if already logged in (only after loading completes)
   useEffect(() => {
     if (!isLoadingUser && user) {
-      navigate('/');
+      console.log('User is logged in, redirecting to home');
+      navigate('/', { replace: true });
     }
   }, [user, isLoadingUser, navigate]);
   

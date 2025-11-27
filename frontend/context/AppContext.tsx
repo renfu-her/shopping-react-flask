@@ -32,20 +32,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Auto-verify JWT token on mount and restore user state
   useEffect(() => {
     const verifyToken = async () => {
-      const token = getToken();
-      if (token) {
-        try {
-          // Verify token and get current user info
-          const userData = await getCurrentUser();
-          setUser(userData);
-        } catch (error) {
-          // Token is invalid or expired, clear it
-          console.error('Token verification failed:', error);
-          apiLogout();
-          setUser(null);
+      try {
+        const token = getToken();
+        console.log('Verifying token on mount, token exists:', !!token);
+        
+        if (token) {
+          try {
+            // Verify token and get current user info
+            const userData = await getCurrentUser();
+            console.log('Token verified successfully, user:', userData);
+            setUser(userData);
+          } catch (error) {
+            // Token is invalid or expired, clear it
+            console.error('Token verification failed:', error);
+            apiLogout();
+            setUser(null);
+          }
+        } else {
+          console.log('No token found, user remains null');
         }
+      } catch (error) {
+        console.error('Error in verifyToken:', error);
+      } finally {
+        setIsLoadingUser(false);
       }
-      setIsLoadingUser(false);
     };
 
     verifyToken();

@@ -290,6 +290,7 @@ export async function getCurrentUser(): Promise<User> {
       throw new Error('Not authenticated');
     }
 
+    console.log('Calling /auth/me with token:', token.substring(0, 20) + '...');
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: 'GET',
       headers: {
@@ -298,9 +299,12 @@ export async function getCurrentUser(): Promise<User> {
       },
     });
 
+    console.log('Response status:', response.status);
+
     if (!response.ok) {
       if (response.status === 401) {
         // Token is invalid or expired, clear it
+        console.log('Token is invalid (401), clearing it');
         localStorage.removeItem('access_token');
       }
       const errorData = await response.json().catch(() => ({ detail: response.statusText }));
@@ -308,6 +312,7 @@ export async function getCurrentUser(): Promise<User> {
     }
 
     const data: User = await response.json();
+    console.log('getCurrentUser success, user data:', data);
     return data;
   } catch (error) {
     console.error('Error getting current user:', error);
