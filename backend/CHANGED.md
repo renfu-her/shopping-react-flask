@@ -1,5 +1,81 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-27 16:46:07] - 根據官方 SDK 修正 ECPay CheckMacValue 計算方式
+
+### 修改內容
+
+#### 根據官方 SDK 修正綠界金流 CheckMacValue 檢查碼計算
+- **時間**: 2025-11-27 16:46:07
+- **目的**: 根據綠界官方 Python SDK 修正 CheckMacValue 計算方式，解決 "CheckMacValue Error" 錯誤
+- **參考文件**: 
+  - https://github.com/ECPay/ECPayAIO_Python/blob/master/sdk/ecpay_payment_sdk.py
+- **修改檔案**:
+  - `api/ecpay.py` - 修正 `generate_check_value()` 函數的 query string 構建方式
+
+### 變更詳情
+
+#### CheckMacValue 計算步驟修正
+根據綠界官方 Python SDK，修正 query string 構建方式：
+
+1. **null 值處理**: 將所有 null 值轉為空字串
+2. **移除 CheckMacValue**: 如果參數中存在 CheckMacValue，先移除
+3. **參數排序**: 將鍵值按 A-Z 排序（不區分大小寫）
+4. **構建 Query String**: 
+   - 使用 `urllib.parse.urlencode()` 構建 query string（值會被編碼，空格變成 +）
+   - 使用 `urllib.parse.unquote_plus()` 解碼（+ 會變成空格，%XX 會解碼）
+   - 這樣可以匹配 PHP 的 `urldecode(http_build_query($params))` 行為
+5. **添加 HashKey 和 HashIV**: 最前方加入 HashKey，最後方加入 HashIV
+6. **URL Encode**: 對整個字串進行 URL 編碼
+7. **轉小寫**: 將編碼後的字串轉為全小寫
+8. **轉換特定字元**: 將特定編碼字元還原（與 .NET 相符）:
+   - `%2d` → `-`
+   - `%5f` → `_`
+   - `%2e` → `.`
+   - `%21` → `!`
+   - `%2a` → `*`
+   - `%28` → `(`
+   - `%29` → `)`
+9. **SHA256 編碼**: 使用 SHA256 產生雜湊值
+10. **轉大寫**: 將結果轉為全大寫
+
+### 技術細節
+
+#### 關鍵修正
+- **Query String 構建**: 
+  - 修改前：直接構建 `key=value` 格式
+  - 修改後：使用 `urlencode` + `unquote_plus` 來匹配 PHP 的 `http_build_query` + `urldecode` 行為
+  - 這樣可以正確處理特殊字符（如空格、中文等）
+
+#### 修正後的實現
+```python
+def generate_check_value(params: dict, hash_key: str, hash_iv: str) -> str:
+    # 1) null 值轉空字串
+    # 2) 移除 CheckMacValue
+    # 3) 按 A-Z 排序
+    # 4) 使用 urlencode + unquote_plus 構建 query string
+    query_string = urllib.parse.urlencode(sorted_params, doseq=True)
+    query_string = urllib.parse.unquote_plus(query_string)
+    # 5) 添加 HashKey 和 HashIV
+    # 6) URL Encode
+    # 7) 轉小寫
+    # 8) 轉換特定字元
+    # 9) SHA256 編碼
+    # 10) 轉大寫
+```
+
+### 影響範圍
+- **後端**: 
+  - ECPay 訂單創建 API 現在能正確生成 CheckMacValue
+  - 解決 "訊息代碼: 10200073 - CheckMacValue Error" 錯誤
+  - 正確處理參數中的特殊字符（空格、中文等）
+
+### 注意事項
+1. 此修正基於綠界官方 Python SDK 的實現邏輯
+2. `unquote_plus` 會將 `+` 解碼為空格，匹配 PHP 的 `urldecode` 行為
+3. 測試環境和正式環境使用相同的計算方式
+
+---
+
 ## [2025-11-27 16:39:16] - 修正 ECPay CheckMacValue 計算方式
 
 ### 修改內容

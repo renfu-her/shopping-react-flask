@@ -37,7 +37,7 @@ class ECPayOrderRequest(BaseModel):
 def generate_check_value(params: dict, hash_key: str, hash_iv: str) -> str:
     """
     生成绿界金流检查码 (CheckMacValue)
-    参考: https://developers.ecpay.com.tw/?p=29998
+    参考: https://github.com/ECPay/ECPayAIO_Python/blob/master/sdk/ecpay_payment_sdk.py
     """
     # 1) 如果資料中有 null，必需轉成空字串
     params = {k: str(v) if v is not None else "" for k, v in params.items()}
@@ -45,17 +45,15 @@ def generate_check_value(params: dict, hash_key: str, hash_iv: str) -> str:
     # 2) 如果資料中有 CheckMacValue 必需先移除
     params.pop("CheckMacValue", None)
     
-    # 3) 將鍵值由 A-Z 排序（不区分大小写）
+    # 3) 將鍵值由 A-Z 排序（不区分大小写，但保持原始键名）
     sorted_params = sorted(params.items(), key=lambda x: x[0].lower())
     
     # 4) 將陣列轉為 query 字串
     # PHP: urldecode(http_build_query($params))
-    # http_build_query 会自动编码，然后 urldecode 会解码
-    # 在 Python 中，我们直接构建未编码的 query string
-    query_parts = []
-    for k, v in sorted_params:
-        query_parts.append(f"{k}={v}")
-    query_string = "&".join(query_parts)
+    # http_build_query 使用 + 编码空格，urldecode 会将 + 解码为空格
+    # 在 Python 中：使用 urlencode (默认 quote_plus)，然后 unquote_plus 解码
+    query_string = urllib.parse.urlencode(sorted_params, doseq=True)
+    query_string = urllib.parse.unquote_plus(query_string)
     
     # 5) 最前方加入 HashKey，最後方加入 HashIV
     check_string = f"HashKey={hash_key}&{query_string}&HashIV={hash_iv}"
