@@ -198,3 +198,87 @@ export async function fetchProductDetail(productId: number): Promise<Product> {
   }
 }
 
+export interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  status: string;
+  created_at: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  name: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+}
+
+export async function login(credentials: LoginRequest): Promise<LoginResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new Error(errorData.detail || `Failed to login: ${response.statusText}`);
+    }
+
+    const data: LoginResponse = await response.json();
+    // Store token in localStorage
+    if (data.access_token) {
+      localStorage.setItem('access_token', data.access_token);
+    }
+    return data;
+  } catch (error) {
+    console.error('Error logging in:', error);
+    throw error;
+  }
+}
+
+export async function register(userData: RegisterRequest): Promise<User> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new Error(errorData.detail || `Failed to register: ${response.statusText}`);
+    }
+
+    const data: User = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error registering:', error);
+    throw error;
+  }
+}
+
+export function logout(): void {
+  localStorage.removeItem('access_token');
+}
+
+export function getToken(): string | null {
+  return localStorage.getItem('access_token');
+}
+

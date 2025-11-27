@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AppView, User } from '../types';
 import { Mail, Lock, User as UserIcon, ArrowLeft } from 'lucide-react';
+import { login, register } from '../services/api';
 
 interface AuthProps {
   currentView: AppView;
@@ -12,21 +13,50 @@ export const Auth: React.FC<AuthProps> = ({ currentView, setView, onLogin }) => 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate auth
-    if (currentView === AppView.FORGOT_PASSWORD) {
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (currentView === AppView.FORGOT_PASSWORD) {
         alert("If an account exists, a reset link has been sent.");
         setView(AppView.LOGIN);
+        setLoading(false);
         return;
+      }
+
+      if (currentView === AppView.LOGIN) {
+        // Login
+        const response = await login({ email, password });
+        onLogin({
+          email: response.user.email,
+          name: response.user.name
+        });
+      } else if (currentView === AppView.REGISTER) {
+        // Register
+        if (!name.trim()) {
+          setError('Name is required');
+          setLoading(false);
+          return;
+        }
+        const user = await register({ email, name, password });
+        // After successful registration, automatically login
+        const loginResponse = await login({ email, password });
+        onLogin({
+          email: loginResponse.user.email,
+          name: loginResponse.user.name
+        });
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred. Please try again.');
+      console.error('Auth error:', err);
+    } finally {
+      setLoading(false);
     }
-    
-    // Simulate login/register success
-    onLogin({ 
-        email, 
-        name: name || email.split('@')[0] 
-    });
   };
 
   const renderTitle = () => {
@@ -57,6 +87,12 @@ export const Auth: React.FC<AuthProps> = ({ currentView, setView, onLogin }) => 
                 {currentView === AppView.FORGOT_PASSWORD && "Enter your email to receive recovery instructions."}
             </p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {currentView === AppView.REGISTER && (
@@ -111,10 +147,20 @@ export const Auth: React.FC<AuthProps> = ({ currentView, setView, onLogin }) => 
              </div>
           )}
 
-          <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all active:scale-[0.98]">
-            {currentView === AppView.LOGIN && "Sign In"}
-            {currentView === AppView.REGISTER && "Sign Up"}
-            {currentView === AppView.FORGOT_PASSWORD && "Send Reset Link"}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all active:scale-[0.98]"
+          >
+            {loading ? (
+              "Processing..."
+            ) : (
+              <>
+                {currentView === AppView.LOGIN && "Sign In"}
+                {currentView === AppView.REGISTER && "Sign Up"}
+                {currentView === AppView.FORGOT_PASSWORD && "Send Reset Link"}
+              </>
+            )}
           </button>
         </form>
 

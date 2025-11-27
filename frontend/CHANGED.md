@@ -1,5 +1,122 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 10:20:39] - Sign 頁面使用真實的登入和註冊 API
+
+### 修改內容
+
+#### Sign 頁面使用真實的登入和註冊 API
+- **時間**: 2025-11-27 10:20:39
+- **目的**: 將 `/sign` 頁面的登入和註冊功能改為使用後端 `/api/auth/login` 和 `/api/auth/register` API
+- **修改檔案**:
+  - `services/api.ts` - 添加 `login`、`register`、`logout` 和 `getToken` 函數
+  - `components/Auth.tsx` - 使用真實 API 進行登入和註冊
+  - `context/AppContext.tsx` - 更新 `handleLogout` 以清除 token
+
+### 變更詳情
+
+#### 新增的 API 函數
+- **login(credentials)**: 調用 `/api/auth/login` 端點進行登入
+  - 接收 `LoginRequest`（email, password）
+  - 返回 `LoginResponse`（access_token, token_type, user）
+  - 自動將 token 存儲到 localStorage
+
+- **register(userData)**: 調用 `/api/auth/register` 端點進行註冊
+  - 接收 `RegisterRequest`（email, name, password）
+  - 返回 `User` 對象
+  - 註冊成功後自動登入
+
+- **logout()**: 清除 localStorage 中的 token
+
+- **getToken()**: 獲取 localStorage 中的 token
+
+#### 新增的類型定義
+- **User 接口**: 定義用戶數據結構
+  - `id`: number
+  - `email`: string
+  - `name`: string
+  - `role`: string
+  - `status`: string
+  - `created_at`: string
+
+- **LoginRequest 接口**: 登入請求數據
+  - `email`: string
+  - `password`: string
+
+- **RegisterRequest 接口**: 註冊請求數據
+  - `email`: string
+  - `name`: string
+  - `password`: string
+
+- **LoginResponse 接口**: 登入響應數據
+  - `access_token`: string
+  - `token_type`: string
+  - `user`: User
+
+#### 修改的組件
+- **Auth.tsx**:
+  - 移除模擬認證邏輯
+  - 使用真實的 `login` 和 `register` API 函數
+  - 添加 `loading` 狀態管理
+  - 添加 `error` 狀態管理和錯誤顯示
+  - 註冊成功後自動登入
+  - 表單提交時顯示載入狀態
+  - 顯示錯誤信息（如果 API 調用失敗）
+
+- **AppContext.tsx**:
+  - 更新 `handleLogout` 函數，調用 `apiLogout()` 清除 token
+
+### 技術細節
+
+#### API 調用
+```typescript
+// 登入
+const response = await login({ email, password });
+// Token 自動存儲到 localStorage
+
+// 註冊
+const user = await register({ email, name, password });
+// 註冊成功後自動登入
+const loginResponse = await login({ email, password });
+```
+
+#### Token 管理
+- 登入成功後，token 自動存儲到 `localStorage` 的 `access_token` 鍵
+- 登出時，清除 `localStorage` 中的 token
+- 使用 `getToken()` 函數獲取當前 token
+
+#### 錯誤處理
+- API 調用失敗時，顯示錯誤信息
+- 錯誤信息顯示在表單上方
+- 支持後端返回的詳細錯誤信息
+
+#### 用戶體驗
+- 表單提交時顯示 "Processing..." 狀態
+- 按鈕在載入時禁用，防止重複提交
+- 註冊成功後自動登入，無需用戶再次輸入憑證
+
+### 影響範圍
+- **前端**: 
+  - `/sign` 頁面
+  - 登入功能
+  - 註冊功能
+- **數據來源**: 從模擬認證改為後端 API
+- **行為**: 
+  - 現在使用真實的用戶認證系統
+  - Token 自動管理
+  - 支持錯誤處理和用戶反饋
+
+### 錯誤處理
+- API 調用失敗時顯示錯誤信息
+- 支持後端返回的詳細錯誤信息（如 "Email already registered"、"Incorrect email or password"）
+- 表單驗證（如註冊時 name 為必填）
+
+### 注意事項
+1. **Token 存儲**: Token 存儲在 localStorage 中，頁面刷新後需要重新驗證
+2. **自動登入**: 註冊成功後會自動登入，無需用戶再次輸入憑證
+3. **錯誤信息**: 錯誤信息會顯示在表單上方，用戶可以清楚看到問題
+
+---
+
 ## [2025-11-27 10:14:46] - Cart 頁面使用產品的第一張圖片
 
 ### 修改內容
@@ -1052,5 +1169,5 @@ const hotProducts = await fetchHotProducts();
 
 ---
 
-**最後更新**: 2025-11-27 10:14:46
+**最後更新**: 2025-11-27 10:20:39
 

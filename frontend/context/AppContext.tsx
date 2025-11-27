@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { User, CartItem, Product } from '../types';
+import { logout as apiLogout } from '../services/api';
 
 interface AppContextType {
   user: User | null;
@@ -59,6 +60,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const handleLogout = () => {
+    apiLogout(); // Clear token from localStorage
     setUser(null);
     setCart([]);
   };
