@@ -1,5 +1,85 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-27 21:10:04] - 解決 uWSGI `_contextvars` 錯誤，添加 Gunicorn 支持
+
+### 修改內容
+
+#### 解決 uWSGI `_contextvars` 模組錯誤
+- **時間**: 2025-11-27 21:10:04
+- **問題**: uWSGI 使用 `uv` 管理的 Python 時出現 `ModuleNotFoundError: No module named '_contextvars'` 錯誤
+- **原因**: `uv` 管理的 Python 可能缺少 C 擴展模組（`_contextvars`、`_decimal` 等）
+- **解決方案**: 
+  1. **推薦方案**: 使用 `gunicorn + uvicorn` workers（原生支持 ASGI，無需 WSGI 適配器）
+  2. **替代方案**: 使用系統 Python 3.12 重新創建虛擬環境
+- **修改檔案**:
+  - `pyproject.toml` - 新增 `gunicorn>=21.2.0` 依賴
+  - `deployment/gunicorn.service` - 新增 Gunicorn systemd 服務檔案
+  - `deployment/uwsgi.ini` - 更新配置說明，添加解決方案
+  - `deployment/README.md` - 更新部署文檔，添加 Gunicorn 配置步驟
+
+### 變更詳情
+
+#### 新增 Gunicorn 支持
+- **新增檔案**: `deployment/gunicorn.service`
+  - 使用 `gunicorn + uvicorn.workers.UvicornWorker` 運行 FastAPI
+  - 原生支持 ASGI，無需 WSGI 適配器
+  - 8 個 worker 進程
+  - 監聽 `127.0.0.1:8096`
+  - 日誌輸出到 `/var/log/gunicorn/`
+
+#### 部署方式選擇
+
+**方式 1: Gunicorn + Uvicorn（推薦）**
+```bash
+# 安裝 gunicorn
+uv add gunicorn
+
+# 配置 systemd 服務
+sudo cp deployment/gunicorn.service /etc/systemd/system/shopping-react-gunicorn.service
+sudo mkdir -p /var/log/gunicorn
+sudo chown ai-tracks-shopping-react:ai-tracks-shopping-react /var/log/gunicorn
+sudo systemctl daemon-reload
+sudo systemctl start shopping-react-gunicorn
+sudo systemctl enable shopping-react-gunicorn
+```
+
+**方式 2: 使用系統 Python 3.12（如果必須使用 uWSGI）**
+```bash
+# 使用系統 Python 重新創建虛擬環境
+python3.12 -m venv .venv
+source .venv/bin/activate
+uv sync
+```
+
+### 技術細節
+
+#### `_contextvars` 錯誤原因
+- `uv` 管理的 Python 安裝在 `~/.local/share/uv/python/` 目錄
+- 這些 Python 可能缺少某些 C 擴展模組
+- uWSGI 使用系統 uWSGI（`/usr/bin/uwsgi-core`），它可能無法正確鏈接到 `uv` 管理的 Python 的 C 擴展
+
+#### Gunicorn 優勢
+- 原生支持 ASGI（通過 `uvicorn.workers.UvicornWorker`）
+- 不需要 WSGI 適配器（`asgiref`）
+- 更好的異步支持
+- 更簡單的配置
+- 避免 C 擴展模組問題
+
+### 影響範圍
+- **後端部署**: 
+  - 推薦使用 Gunicorn 替代 uWSGI
+  - 如果必須使用 uWSGI，需要使用系統 Python 3.12
+- **依賴**: 新增 `gunicorn>=21.2.0`
+- **部署文檔**: 更新了部署步驟和故障排查
+
+### 注意事項
+1. **Gunicorn 是推薦方案**: 更簡單，更穩定，原生支持 ASGI
+2. **如果使用 uWSGI**: 必須使用系統 Python 3.12 創建虛擬環境
+3. **Nginx 配置**: 不需要修改，仍然代理到 `127.0.0.1:8096`
+4. **日誌位置**: Gunicorn 日誌在 `/var/log/gunicorn/`，uWSGI 日誌在 `/var/log/uwsgi/`
+
+---
+
 ## [2025-11-27 16:46:07] - 根據官方 SDK 修正 ECPay CheckMacValue 計算方式
 
 ### 修改內容

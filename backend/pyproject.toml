@@ -20,6 +20,7 @@ dependencies = [
     "itsdangerous>=2.1.0",
     "pillow>=10.0.0",
     "asgiref>=3.7.0",  # ASGI/WSGI 适配器，用于 uWSGI
+    "gunicorn>=21.2.0",  # WSGI/ASGI 服务器，推荐用于生产环境（解决 _contextvars 错误）
 ]
 
 [build-system]

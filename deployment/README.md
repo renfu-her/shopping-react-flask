@@ -37,18 +37,74 @@ uv sync
 # 檔案已建立在 backend/wsgi.py
 ```
 
-### 2. 配置 uWSGI
+### 2. 配置後端服務器
+
+有兩種方式可以運行 FastAPI 後端：
+
+#### 方式 1: 使用 Gunicorn + Uvicorn（推薦，解決 `_contextvars` 錯誤）
 
 ```bash
-# 複製配置檔案
+cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
+
+# 安裝 gunicorn
+uv add gunicorn
+
+# 複製 systemd 服務檔案
+sudo cp deployment/gunicorn.service /etc/systemd/system/shopping-react-gunicorn.service
+
+# 建立日誌目錄
+sudo mkdir -p /var/log/gunicorn
+sudo chown ai-tracks-shopping-react:ai-tracks-shopping-react /var/log/gunicorn
+
+# 重新載入 systemd
+sudo systemctl daemon-reload
+
+# 啟動服務
+sudo systemctl start shopping-react-gunicorn
+sudo systemctl enable shopping-react-gunicorn
+
+# 檢查狀態
+sudo systemctl status shopping-react-gunicorn
+```
+
+**優點**：
+- 原生支持 ASGI，無需 WSGI 適配器
+- 避免 `_contextvars`、`_decimal` 等 C 擴展模組問題
+- 更簡單，更穩定
+- 更好的異步支持
+
+#### 方式 2: 使用 uWSGI（如果遇到 `_contextvars` 錯誤，請使用方式 1）
+
+**重要**：如果使用 `uv` 管理的 Python，可能會遇到 `_contextvars` 錯誤。
+解決方法：使用系統 Python 3.12 創建虛擬環境。
+
+```bash
+# 1. 檢查系統是否有 Python 3.12
+which python3.12
+
+# 2. 如果沒有，安裝系統 Python 3.12
+# Ubuntu/Debian:
+sudo apt-get update
+sudo apt-get install python3.12 python3.12-venv python3.12-dev
+
+# 3. 使用系統 Python 重新創建虛擬環境
+cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
+rm -rf .venv
+python3.12 -m venv .venv
+source .venv/bin/activate
+
+# 4. 使用 uv 安裝依賴（uv 會使用當前激活的虛擬環境）
+uv sync
+
+# 5. 配置 uWSGI
 sudo cp deployment/uwsgi.ini /etc/uwsgi/apps-available/shopping-react-backend.ini
 sudo ln -s /etc/uwsgi/apps-available/shopping-react-backend.ini /etc/uwsgi/apps-enabled/
 
-# 建立日誌目錄
+# 6. 建立日誌目錄
 sudo mkdir -p /var/log/uwsgi
 sudo chown ai-tracks-shopping-react:ai-tracks-shopping-react /var/log/uwsgi
 
-# 啟動 uWSGI
+# 7. 啟動 uWSGI
 sudo systemctl start uwsgi
 sudo systemctl enable uwsgi
 ```
@@ -144,12 +200,30 @@ FastAPI 是 ASGI 應用，但可以透過以下方式在 uWSGI 中執行：
    - 安裝 `uwsgi-asgi` 外掛
    - 配置 `asgi-app` 而不是 `wsgi-file`
 
-3. **推薦方案**（如果 uWSGI 有問題）:
-   - 使用 `gunicorn` + `uvicorn` workers:
+3. **推薦方案**（如果 uWSGI 有問題，特別是遇到 `_contextvars` 錯誤）:
+   - 使用 `gunicorn` + `uvicorn` workers（原生支持 ASGI，無需 WSGI 適配器）:
    ```bash
-   # 使用 uv 執行
+   # 1. 安裝 gunicorn（如果尚未安裝）
+   cd /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
+   uv add gunicorn
+   
+   # 2. 測試運行
    uv run gunicorn app.main:app -w 8 -k uvicorn.workers.UvicornWorker -b 127.0.0.1:8096
+   
+   # 3. 使用 systemd 服務（推薦）
+   sudo cp deployment/gunicorn.service /etc/systemd/system/shopping-react-gunicorn.service
+   sudo mkdir -p /var/log/gunicorn
+   sudo chown ai-tracks-shopping-react:ai-tracks-shopping-react /var/log/gunicorn
+   sudo systemctl daemon-reload
+   sudo systemctl start shopping-react-gunicorn
+   sudo systemctl enable shopping-react-gunicorn
    ```
+   
+   **優點**：
+   - 原生支持 ASGI，無需 WSGI 適配器
+   - 更簡單，更穩定
+   - 避免 `_contextvars` 等 C 擴展模組問題
+   - 更好的異步支持
 
 ### 環境變數
 

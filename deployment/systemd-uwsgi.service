@@ -6,9 +6,13 @@ After=network.target
 User=ai-tracks-shopping-react
 Group=ai-tracks-shopping-react
 WorkingDirectory=/home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
+# 确保 PATH 包含虚拟环境的 bin 目录（Python 3.12+）
 Environment="PATH=/home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend/.venv/bin:/usr/local/bin:/usr/bin:/bin"
 # 如果使用 uv 管理的虚拟环境，确保 PATH 包含 .venv/bin
+# 明确指定使用虚拟环境中的 uwsgi（如果已安装）或系统 uwsgi
 ExecStart=/usr/bin/uwsgi --ini /etc/uwsgi/apps-enabled/shopping-react-backend.ini
+# 如果系统 uwsgi 版本太旧，可以使用虚拟环境中的 uwsgi:
+# ExecStart=/home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend/.venv/bin/uwsgi --ini /etc/uwsgi/apps-enabled/shopping-react-backend.ini
 Restart=always
 KillSignal=SIGQUIT
 Type=notify
