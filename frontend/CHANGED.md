@@ -1,5 +1,70 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 15:28:44] - 重構 API 服務層，使用 Clean Code 原則優化
+
+### 修改內容
+
+#### 重構 API 服務層
+- **時間**: 2025-11-27 15:28:44
+- **目的**: 消除代碼重複，統一錯誤處理，提高代碼可維護性和性能
+- **修改檔案**:
+  - `services/api.ts` - 完全重構，使用統一的 API 客戶端函數
+
+### 變更詳情
+
+#### 代碼重構
+- **創建統一的 API 客戶端函數 `apiRequest<T>()`**:
+  - 統一處理所有 HTTP 請求
+  - 自動處理錯誤響應
+  - 支持認證請求（`requiresAuth` 選項）
+  - 統一設置 headers 和 credentials
+  - 處理空響應（204 No Content）
+
+- **消除代碼重複**:
+  - 移除所有重複的 try-catch 塊
+  - 移除重複的錯誤處理邏輯
+  - 移除重複的 `credentials: 'include'` 設置
+  - 統一錯誤消息格式
+
+- **類型安全**:
+  - 使用 TypeScript 泛型 `<T>` 確保類型安全
+  - 所有 API 函數都有明確的返回類型
+
+- **代碼組織**:
+  - 將所有類型定義集中在文件頂部
+  - 清晰的函數分組（Categories, Ads, Products, News, Auth, etc.）
+  - 添加註釋說明
+
+### 技術細節
+
+#### API 客戶端設計
+```typescript
+interface RequestOptions extends RequestInit {
+  requiresAuth?: boolean;
+}
+
+async function apiRequest<T>(
+  endpoint: string,
+  options: RequestOptions = {}
+): Promise<T>
+```
+
+#### 優勢
+1. **減少代碼量**: 從 ~414 行減少到 ~280 行（減少約 32%）
+2. **統一錯誤處理**: 所有錯誤都通過同一個函數處理
+3. **易於維護**: 修改請求邏輯只需修改一個地方
+4. **類型安全**: TypeScript 泛型確保編譯時類型檢查
+5. **性能優化**: 減少重複代碼，提高執行效率
+
+### 影響範圍
+- **前端**: 
+  - 所有 API 調用現在都通過統一的客戶端函數
+  - 代碼更易於維護和擴展
+  - 錯誤處理更一致
+  - 沒有破壞性變更，所有現有功能保持不變
+
+---
+
 ## [2025-11-27 15:15:59] - 從 JWT Token 認證切換到 Session 認證
 
 ### 修改內容

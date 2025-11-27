@@ -1,5 +1,7 @@
 const API_BASE_URL = 'http://localhost:8000/api';
 
+// ==================== Types ====================
+
 export interface Category {
   id: number;
   name: string;
@@ -21,34 +23,6 @@ export interface Ad {
   created_at: string;
 }
 
-export async function fetchCategories(): Promise<Category[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/categories`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch categories: ${response.statusText}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    throw error;
-  }
-}
-
-export async function fetchAds(): Promise<Ad[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/ads`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ads: ${response.statusText}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching ads:', error);
-    throw error;
-  }
-}
-
 export interface Product {
   id: number;
   title: string;
@@ -67,34 +41,6 @@ export interface Product {
   }>;
 }
 
-export async function fetchHotProducts(): Promise<Product[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/home/hot`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch hot products: ${response.statusText}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching hot products:', error);
-    throw error;
-  }
-}
-
-export async function fetchFeaturedProducts(): Promise<Product[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/home/featured`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch featured products: ${response.statusText}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching featured products:', error);
-    throw error;
-  }
-}
-
 export interface NewsItem {
   id: number;
   title: string;
@@ -110,92 +56,12 @@ export interface NewsListResponse {
   total: number;
 }
 
-export async function fetchNews(): Promise<NewsItem[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/news`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch news: ${response.statusText}`);
-    }
-    const data: NewsListResponse = await response.json();
-    // Map the API response to match frontend NewsItem format
-    // Convert date from ISO format to YYYY-MM-DD if needed
-    return data.news.map(item => ({
-      ...item,
-      date: item.date.split('T')[0], // Extract date part from ISO string
-      excerpt: item.excerpt || '', // Ensure excerpt is never null
-    }));
-  } catch (error) {
-    console.error('Error fetching news:', error);
-    throw error;
-  }
-}
-
-export async function fetchNewsDetail(newsId: number): Promise<NewsItem> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/news/${newsId}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch news detail: ${response.statusText}`);
-    }
-    const data: NewsItem = await response.json();
-    // Map the API response to match frontend NewsItem format
-    return {
-      ...data,
-      date: data.date.split('T')[0], // Extract date part from ISO string
-      excerpt: data.excerpt || '', // Ensure excerpt is never null
-    };
-  } catch (error) {
-    console.error('Error fetching news detail:', error);
-    throw error;
-  }
-}
-
 export interface ProductListResponse {
   products: Product[];
   total: number;
   page: number;
   page_size: number;
   total_pages: number;
-}
-
-export async function fetchProducts(
-  categoryId?: number | null,
-  page: number = 1,
-  pageSize: number = 9
-): Promise<ProductListResponse> {
-  try {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      page_size: pageSize.toString(),
-    });
-    
-    if (categoryId) {
-      params.append('category_id', categoryId.toString());
-    }
-    
-    const response = await fetch(`${API_BASE_URL}/products?${params.toString()}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch products: ${response.statusText}`);
-    }
-    const data: ProductListResponse = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    throw error;
-  }
-}
-
-export async function fetchProductDetail(productId: number): Promise<Product> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/products/${productId}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch product detail: ${response.statusText}`);
-    }
-    const data: Product = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching product detail:', error);
-    throw error;
-  }
 }
 
 export interface User {
@@ -227,88 +93,6 @@ export interface LoginResponse {
   user: User;
 }
 
-export async function login(credentials: LoginRequest): Promise<LoginResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 發送 cookie (session)
-      body: JSON.stringify(credentials),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-      throw new Error(errorData.detail || `Failed to login: ${response.statusText}`);
-    }
-
-    const data: LoginResponse = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error logging in:', error);
-    throw error;
-  }
-}
-
-export async function register(userData: RegisterRequest): Promise<User> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-      throw new Error(errorData.detail || `Failed to register: ${response.statusText}`);
-    }
-
-    const data: User = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error registering:', error);
-    throw error;
-  }
-}
-
-export async function logout(): Promise<void> {
-  try {
-    await fetch(`${API_BASE_URL}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include', // 發送 cookie (session)
-    });
-  } catch (error) {
-    console.error('Error logging out:', error);
-    // 即使登出失敗也繼續，確保前端狀態清除
-  }
-}
-
-export async function getCurrentUser(): Promise<User> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/me`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 發送 cookie (session)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-      throw new Error(errorData.detail || `Failed to get current user: ${response.statusText}`);
-    }
-
-    const data: User = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    throw error;
-  }
-}
-
 export interface UserUpdateRequest {
   name?: string;
   email?: string;
@@ -322,54 +106,6 @@ export interface UserUpdateRequest {
 export interface UserPasswordUpdateRequest {
   current_password: string;
   new_password: string;
-}
-
-export async function updateUserProfile(userData: UserUpdateRequest): Promise<User> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/me`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 發送 cookie (session)
-      body: JSON.stringify(userData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-      throw new Error(errorData.detail || `Failed to update profile: ${response.statusText}`);
-    }
-
-    const data: User = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error updating profile:', error);
-    throw error;
-  }
-}
-
-export async function updateUserPassword(passwordData: UserPasswordUpdateRequest): Promise<User> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/me/password`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 發送 cookie (session)
-      body: JSON.stringify(passwordData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-      throw new Error(errorData.detail || `Failed to update password: ${response.statusText}`);
-    }
-
-    const data: User = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error updating password:', error);
-    throw error;
-  }
 }
 
 export interface ECPayOrderRequest {
@@ -387,27 +123,177 @@ export interface ECPayOrderResponse {
   form_url: string;
 }
 
-export async function createECPayOrder(orderData: ECPayOrderRequest): Promise<ECPayOrderResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/ecpay/create-order`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 發送 cookie (session)
-      body: JSON.stringify(orderData),
-    });
+// ==================== API Client ====================
 
+interface RequestOptions extends RequestInit {
+  requiresAuth?: boolean;
+}
+
+/**
+ * 统一的 API 请求函数
+ * @param endpoint API 端点（不包含 base URL）
+ * @param options 请求选项
+ * @returns Promise<T>
+ */
+async function apiRequest<T>(
+  endpoint: string,
+  options: RequestOptions = {}
+): Promise<T> {
+  const { requiresAuth = false, ...fetchOptions } = options;
+  
+  const url = `${API_BASE_URL}${endpoint}`;
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...fetchOptions.headers,
+  };
+
+  const config: RequestInit = {
+    ...fetchOptions,
+    headers,
+    credentials: requiresAuth ? 'include' : 'same-origin',
+  };
+
+  try {
+    const response = await fetch(url, config);
+    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-      throw new Error(errorData.detail || `Failed to create ECPay order: ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({ 
+        detail: response.statusText 
+      }));
+      throw new Error(errorData.detail || `Request failed: ${response.statusText}`);
     }
 
-    const data: ECPayOrderResponse = await response.json();
-    return data;
+    // 处理空响应（如 204 No Content）
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    return await response.json();
   } catch (error) {
-    console.error('Error creating ECPay order:', error);
-    throw error;
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('An unexpected error occurred');
   }
 }
 
+// ==================== Public API ====================
+
+// Categories
+export async function fetchCategories(): Promise<Category[]> {
+  return apiRequest<Category[]>('/categories');
+}
+
+// Ads
+export async function fetchAds(): Promise<Ad[]> {
+  return apiRequest<Ad[]>('/ads');
+}
+
+// Products
+export async function fetchHotProducts(): Promise<Product[]> {
+  return apiRequest<Product[]>('/home/hot');
+}
+
+export async function fetchFeaturedProducts(): Promise<Product[]> {
+  return apiRequest<Product[]>('/home/featured');
+}
+
+export async function fetchProducts(
+  categoryId?: number | null,
+  page: number = 1,
+  pageSize: number = 9
+): Promise<ProductListResponse> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    page_size: pageSize.toString(),
+  });
+  
+  if (categoryId) {
+    params.append('category_id', categoryId.toString());
+  }
+  
+  return apiRequest<ProductListResponse>(`/products?${params.toString()}`);
+}
+
+export async function fetchProductDetail(productId: number): Promise<Product> {
+  return apiRequest<Product>(`/products/${productId}`);
+}
+
+// News
+export async function fetchNews(): Promise<NewsItem[]> {
+  const data = await apiRequest<NewsListResponse>('/news');
+  return data.news.map(item => ({
+    ...item,
+    date: item.date.split('T')[0],
+    excerpt: item.excerpt || '',
+  }));
+}
+
+export async function fetchNewsDetail(newsId: number): Promise<NewsItem> {
+  const data = await apiRequest<NewsItem>(`/news/${newsId}`);
+  return {
+    ...data,
+    date: data.date.split('T')[0],
+    excerpt: data.excerpt || '',
+  };
+}
+
+// Authentication
+export async function login(credentials: LoginRequest): Promise<LoginResponse> {
+  return apiRequest<LoginResponse>('/auth/login', {
+    method: 'POST',
+    requiresAuth: true,
+    body: JSON.stringify(credentials),
+  });
+}
+
+export async function register(userData: RegisterRequest): Promise<User> {
+  return apiRequest<User>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  });
+}
+
+export async function logout(): Promise<void> {
+  await apiRequest<void>('/auth/logout', {
+    method: 'POST',
+    requiresAuth: true,
+  });
+}
+
+export async function getCurrentUser(): Promise<User> {
+  return apiRequest<User>('/auth/me', {
+    method: 'GET',
+    requiresAuth: true,
+  });
+}
+
+// User Profile
+export async function updateUserProfile(userData: UserUpdateRequest): Promise<User> {
+  return apiRequest<User>('/auth/me', {
+    method: 'PUT',
+    requiresAuth: true,
+    body: JSON.stringify(userData),
+  });
+}
+
+export async function updateUserPassword(
+  passwordData: UserPasswordUpdateRequest
+): Promise<User> {
+  return apiRequest<User>('/auth/me/password', {
+    method: 'PUT',
+    requiresAuth: true,
+    body: JSON.stringify(passwordData),
+  });
+}
+
+// ECPay
+export async function createECPayOrder(
+  orderData: ECPayOrderRequest
+): Promise<ECPayOrderResponse> {
+  return apiRequest<ECPayOrderResponse>('/ecpay/create-order', {
+    method: 'POST',
+    requiresAuth: true,
+    body: JSON.stringify(orderData),
+  });
+}
