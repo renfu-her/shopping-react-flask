@@ -46,7 +46,12 @@ def decode_access_token(token: str) -> Optional[dict]:
     """解碼 JWT token"""
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        print(f"DEBUG decode_access_token: Successfully decoded token, payload keys: {list(payload.keys())}")
         return payload
-    except JWTError:
+    except JWTError as e:
+        print(f"DEBUG decode_access_token: JWTError - {type(e).__name__}: {str(e)}")
+        return None
+    except Exception as e:
+        print(f"DEBUG decode_access_token: Unexpected error - {type(e).__name__}: {str(e)}")
         return None
 

@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from app.database import get_db
 from app.models.user import User, UserRole, UserStatus
 from app.models.cart import Cart
 from app.schemas.user import UserCreate, UserResponse, UserLogin, UserUpdate, UserPasswordUpdate
-from app.core.security import verify_password, get_password_hash, create_access_token
-from app.config import settings
+from app.core.security import verify_password, get_password_hash
+from app.core.session import set_session_user, clear_session
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -45,8 +45,8 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    """用戶登入"""
+def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db)):
+    """用戶登入（使用 Session 認證）"""
     user = db.query(User).filter(User.email == user_data.email).first()
     
     if not user or not verify_password(user_data.password, user.password_hash):
@@ -55,18 +55,19 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
             detail="Incorrect email or password"
         )
     
-    # 創建 access token
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    access_token = create_access_token(
-        data={"sub": user.id},
-        expires_delta=access_token_expires
-    )
+    # 設置 session
+    set_session_user(request, user.id, user.role.value, user.status.value)
     
     return {
-        "access_token": access_token,
-        "token_type": "bearer",
         "user": UserResponse.model_validate(user)
     }
+
+
+@router.post("/logout")
+def logout(request: Request):
+    """用戶登出（清除 Session）"""
+    clear_session(request)
+    return {"message": "Logged out successfully"}
 
 
 @router.get("/me", response_model=UserResponse)

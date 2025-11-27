@@ -224,8 +224,6 @@ export interface RegisterRequest {
 }
 
 export interface LoginResponse {
-  access_token: string;
-  token_type: string;
   user: User;
 }
 
@@ -236,6 +234,7 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // 發送 cookie (session)
       body: JSON.stringify(credentials),
     });
 
@@ -245,10 +244,6 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
     }
 
     const data: LoginResponse = await response.json();
-    // Store token in localStorage
-    if (data.access_token) {
-      localStorage.setItem('access_token', data.access_token);
-    }
     return data;
   } catch (error) {
     console.error('Error logging in:', error);
@@ -279,40 +274,34 @@ export async function register(userData: RegisterRequest): Promise<User> {
   }
 }
 
-export function logout(): void {
-  localStorage.removeItem('access_token');
+export async function logout(): Promise<void> {
+  try {
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include', // 發送 cookie (session)
+    });
+  } catch (error) {
+    console.error('Error logging out:', error);
+    // 即使登出失敗也繼續，確保前端狀態清除
+  }
 }
 
 export async function getCurrentUser(): Promise<User> {
   try {
-    const token = getToken();
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
-    console.log('Calling /auth/me with token:', token.substring(0, 20) + '...');
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include', // 發送 cookie (session)
     });
 
-    console.log('Response status:', response.status);
-
     if (!response.ok) {
-      if (response.status === 401) {
-        // Token is invalid or expired, clear it
-        console.log('Token is invalid (401), clearing it');
-        localStorage.removeItem('access_token');
-      }
       const errorData = await response.json().catch(() => ({ detail: response.statusText }));
       throw new Error(errorData.detail || `Failed to get current user: ${response.statusText}`);
     }
 
     const data: User = await response.json();
-    console.log('getCurrentUser success, user data:', data);
     return data;
   } catch (error) {
     console.error('Error getting current user:', error);
@@ -337,17 +326,12 @@ export interface UserPasswordUpdateRequest {
 
 export async function updateUserProfile(userData: UserUpdateRequest): Promise<User> {
   try {
-    const token = getToken();
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include', // 發送 cookie (session)
       body: JSON.stringify(userData),
     });
 
@@ -366,17 +350,12 @@ export async function updateUserProfile(userData: UserUpdateRequest): Promise<Us
 
 export async function updateUserPassword(passwordData: UserPasswordUpdateRequest): Promise<User> {
   try {
-    const token = getToken();
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
     const response = await fetch(`${API_BASE_URL}/auth/me/password`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include', // 發送 cookie (session)
       body: JSON.stringify(passwordData),
     });
 
@@ -391,10 +370,6 @@ export async function updateUserPassword(passwordData: UserPasswordUpdateRequest
     console.error('Error updating password:', error);
     throw error;
   }
-}
-
-export function getToken(): string | null {
-  return localStorage.getItem('access_token');
 }
 
 export interface ECPayOrderRequest {
@@ -414,17 +389,12 @@ export interface ECPayOrderResponse {
 
 export async function createECPayOrder(orderData: ECPayOrderRequest): Promise<ECPayOrderResponse> {
   try {
-    const token = getToken();
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
     const response = await fetch(`${API_BASE_URL}/ecpay/create-order`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include', // 發送 cookie (session)
       body: JSON.stringify(orderData),
     });
 

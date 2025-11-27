@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 import { User, CartItem, Product } from '../types';
-import { logout as apiLogout, getToken, getCurrentUser } from '../services/api';
+import { logout as apiLogout, getCurrentUser } from '../services/api';
 
 interface AppContextType {
   user: User | null;
@@ -29,36 +29,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-  // Auto-verify JWT token on mount and restore user state
+  // Auto-verify session on mount and restore user state
   useEffect(() => {
-    const verifyToken = async () => {
+    const verifySession = async () => {
       try {
-        const token = getToken();
-        console.log('Verifying token on mount, token exists:', !!token);
-        
-        if (token) {
-          try {
-            // Verify token and get current user info
-            const userData = await getCurrentUser();
-            console.log('Token verified successfully, user:', userData);
-            setUser(userData);
-          } catch (error) {
-            // Token is invalid or expired, clear it
-            console.error('Token verification failed:', error);
-            apiLogout();
-            setUser(null);
-          }
-        } else {
-          console.log('No token found, user remains null');
+        // 嘗試從 session 獲取當前用戶
+        try {
+          const userData = await getCurrentUser();
+          setUser(userData);
+        } catch (error: any) {
+          // Session 無效或不存在
+          setUser(null);
         }
-      } catch (error) {
-        console.error('Error in verifyToken:', error);
+      } catch (error: any) {
+        console.error('[AppContext] Error in verifySession:', error);
+        setUser(null);
       } finally {
         setIsLoadingUser(false);
       }
     };
 
-    verifyToken();
+    verifySession();
   }, []);
 
   const addToCart = useCallback((product: Product) => {
@@ -93,8 +84,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setUser(userData);
   }, []);
 
-  const handleLogout = useCallback(() => {
-    apiLogout(); // Clear token from localStorage
+  const handleLogout = useCallback(async () => {
+    await apiLogout(); // 清除 session
     setUser(null);
     setCart([]);
   }, []);

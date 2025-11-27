@@ -1,5 +1,130 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-27 15:15:59] - 從 JWT Token 認證切換到 Session 認證
+
+### 修改內容
+
+#### 從 JWT Token 認證切換到 Session 認證
+- **時間**: 2025-11-27 15:15:59
+- **目的**: 放棄 JWT Token 認證，改用 Session 認證來記住登入狀態
+- **修改檔案**:
+  - `api/auth.py` - 修改登入 API，使用 session 而不是 JWT token
+  - `dependencies.py` - 簡化認證邏輯，移除所有 JWT 相關代碼，只使用 session
+
+### 變更詳情
+
+#### 登入 API 修改
+- **POST `/api/auth/login`**: 
+  - 移除 JWT token 創建邏輯
+  - 使用 `set_session_user()` 設置 session
+  - 返回格式改為只包含 `user` 對象（移除 `access_token` 和 `token_type`）
+
+#### 新增登出 API
+- **POST `/api/auth/logout`**: 
+  - 新增登出端點
+  - 使用 `clear_session()` 清除 session
+
+#### 認證依賴簡化
+- **get_current_user()**: 
+  - 移除所有 JWT token 相關代碼
+  - 移除 HTTPBearer 和 Authorization header 處理
+  - 只使用 session 認證
+  - 簡化邏輯，直接檢查 `is_authenticated()` 和 `get_session_user_id()`
+
+- **get_current_user_optional()**: 
+  - 同樣簡化，只使用 session 認證
+
+### 技術細節
+- Session 使用 Starlette 的 SessionMiddleware
+- Session 通過 cookie 自動管理
+- 不再需要前端手動管理 token
+
+### 影響範圍
+- **後端**: 
+  - 所有需要認證的 API 端點現在都使用 session 認證
+  - 簡化了認證邏輯，移除了 JWT 相關的複雜性
+- **前端**: 
+  - 需要修改所有 API 調用，添加 `credentials: 'include'` 來發送 cookie
+  - 不再需要存儲和管理 JWT token
+
+---
+
+## [2025-11-27 15:11:04] - 增強 JWT Token 認證調試日誌
+
+### 修改內容
+
+#### 增強 JWT Token 認證調試日誌
+- **時間**: 2025-11-27 15:11:04
+- **目的**: 添加詳細的調試日誌，幫助診斷 JWT Token 認證失敗的問題
+- **修改檔案**:
+  - `dependencies.py` - 添加詳細的 token 獲取和解析調試日誌
+  - `core/security.py` - 添加 token 解碼過程的詳細日誌
+
+### 變更詳情
+
+#### 調試日誌增強
+- **get_current_user()**: 添加全面的調試日誌
+  - 記錄所有可能的 token 來源（HTTPBearer credentials、Authorization header、request.headers）
+  - 記錄 token 解析的每一步
+  - 記錄 user_id 的類型和轉換過程
+  - 記錄用戶查詢結果
+
+- **decode_access_token()**: 添加錯誤日誌
+  - 記錄成功解碼的 payload keys
+  - 記錄 JWTError 的詳細信息
+  - 記錄其他意外的錯誤
+
+### 技術細節
+- 使用多種方法嘗試獲取 token（確保兼容性）
+- 記錄 token 的前 30 個字符（用於調試，不暴露完整 token）
+- 記錄所有異常的類型和詳細信息
+
+### 影響範圍
+- **後端**: 
+  - 更容易診斷 JWT Token 認證失敗的問題
+  - 提供更詳細的調試信息
+
+---
+
+## [2025-11-27 15:06:47] - 修復 JWT Token 用戶 ID 類型轉換問題
+
+### 修改內容
+
+#### 修復 JWT Token 用戶 ID 類型轉換問題
+- **時間**: 2025-11-27 15:06:47
+- **目的**: 修復 JWT Token 中 `sub` 字段的類型轉換問題，確保用戶 ID 正確轉換為整數
+- **修改檔案**:
+  - `dependencies.py` - 添加用戶 ID 類型轉換和調試日誌
+
+### 變更詳情
+
+#### 類型轉換修復
+- **get_current_user()**: 添加用戶 ID 類型轉換邏輯
+  - 確保從 JWT payload 中獲取的 `sub` 字段正確轉換為整數
+  - 處理 JWT 庫可能返回字符串的情況
+  - 添加錯誤處理，防止類型轉換失敗
+
+- **get_current_user_optional()**: 同樣添加類型轉換邏輯
+
+#### 調試日誌
+- 添加調試日誌，記錄 token 的來源（credentials 或 authorization header）
+- 記錄 token 的前 20 個字符（用於調試，不暴露完整 token）
+- 記錄無效的 user_id 類型警告
+
+### 技術細節
+- 使用 `int(user_id)` 將字符串轉換為整數
+- 使用 `isinstance(user_id, int)` 檢查是否已經是整數
+- 使用 try-except 處理類型轉換錯誤
+
+### 影響範圍
+- **後端**: 
+  - 修復了 JWT Token 認證中可能存在的類型不匹配問題
+  - 提高了認證的穩定性
+- **前端**: 
+  - 修復了登入後刷新頁面導致登出的問題
+
+---
+
 ## [2025-11-27 15:02:14] - 支援 JWT Token 認證
 
 ### 修改內容
