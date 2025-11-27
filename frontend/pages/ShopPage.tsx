@@ -58,6 +58,7 @@ export const ShopPage: React.FC = () => {
     return products.filter(p => p.category_name === selectedCategory);
   }, [products, selectedCategory]);
 
+  // Show empty product list while loading (no loading message)
   if (loading) {
     return (
       <>
@@ -69,9 +70,14 @@ export const ShopPage: React.FC = () => {
             handleCategorySelect(null);
           }}
         />
-        <div className="max-w-7xl mx-auto p-6 text-center py-20">
-          <p className="text-gray-500">Loading products...</p>
-        </div>
+        <ProductList 
+          products={[]} 
+          addToCart={handleAddToCart} 
+          onProductClick={handleProductClick}
+          currentPage={currentPage}
+          totalPages={1}
+          onPageChange={setCurrentPage}
+        />
       </>
     );
   }

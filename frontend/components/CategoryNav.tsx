@@ -56,13 +56,13 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({ onCategoryClick, onVie
     setActiveMainCategory(activeMainCategory === id ? null : id);
   };
 
-  // Show loading or error state
+  // Show empty nav bar while loading (no loading message)
   if (loading) {
     return (
       <div className="bg-white border-b border-gray-200 sticky top-20 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center h-14">
-            <span className="text-gray-500 text-sm">Loading categories...</span>
+          <div className="flex items-center h-14">
+            {/* Empty navigation bar */}
           </div>
         </div>
       </div>

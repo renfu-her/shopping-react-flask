@@ -1,5 +1,87 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 16:41:23] - 移除 categories 和 products 的 loading 提示
+
+### 修改內容
+
+#### 移除 loading 狀態的文字說明
+- **時間**: 2025-11-27 16:41:23
+- **目的**: 移除 categories 和 products 的 loading 文字提示，直接顯示空的結構或內容
+- **修改檔案**:
+  - `components/CategoryNav.tsx` - 移除 "Loading categories..." 提示
+  - `pages/ShopPage.tsx` - 移除 "Loading products..." 提示
+
+### 變更詳情
+
+#### CategoryNav 組件
+- **修改前**: loading 時顯示 "Loading categories..." 文字
+- **修改後**: loading 時直接顯示空的導航欄結構（不顯示任何文字）
+
+#### ShopPage 頁面
+- **修改前**: loading 時顯示 "Loading products..." 文字
+- **修改後**: loading 時直接顯示空的商品列表（使用空的 products 陣列）
+
+### 技術細節
+
+#### CategoryNav.tsx
+```typescript
+// 修改前
+if (loading) {
+  return (
+    <div>
+      <span>Loading categories...</span>
+    </div>
+  );
+}
+
+// 修改後
+if (loading) {
+  return (
+    <div>
+      {/* Empty navigation bar */}
+    </div>
+  );
+}
+```
+
+#### ShopPage.tsx
+```typescript
+// 修改前
+if (loading) {
+  return (
+    <>
+      <CategoryNav />
+      <div>
+        <p>Loading products...</p>
+      </div>
+    </>
+  );
+}
+
+// 修改後
+if (loading) {
+  return (
+    <>
+      <CategoryNav />
+      <ProductList products={[]} ... />
+    </>
+  );
+}
+```
+
+### 影響範圍
+- **用戶體驗**: 
+  - 不再顯示 loading 文字，頁面直接顯示空的結構
+  - 當資料載入完成後，內容會自動出現
+- **前端**: 
+  - CategoryNav 和 ShopPage 的 loading 狀態處理更簡潔
+
+### 注意事項
+1. 錯誤狀態的處理保持不變（仍會顯示錯誤訊息）
+2. 其他頁面的 loading 狀態不受影響（如 ProductDetailPage, NewsPage 等）
+
+---
+
 ## [2025-11-27 16:19:45] - 修復首頁分類選單點擊跳轉問題
 
 ### 修改內容
