@@ -35,23 +35,55 @@ class ECPayOrderRequest(BaseModel):
 
 
 def generate_check_value(params: dict, hash_key: str, hash_iv: str) -> str:
-    """生成绿界金流检查码"""
-    # 按字母顺序排序参数
-    sorted_params = sorted(params.items())
+    """
+    生成绿界金流检查码 (CheckMacValue)
+    参考: https://developers.ecpay.com.tw/?p=29998
+    """
+    # 1) 如果資料中有 null，必需轉成空字串
+    params = {k: str(v) if v is not None else "" for k, v in params.items()}
     
-    # 构建查询字符串
-    query_string = "&".join([f"{k}={v}" for k, v in sorted_params])
+    # 2) 如果資料中有 CheckMacValue 必需先移除
+    params.pop("CheckMacValue", None)
     
-    # 添加 HashKey 和 HashIV
+    # 3) 將鍵值由 A-Z 排序（不区分大小写）
+    sorted_params = sorted(params.items(), key=lambda x: x[0].lower())
+    
+    # 4) 將陣列轉為 query 字串
+    # PHP: urldecode(http_build_query($params))
+    # http_build_query 会自动编码，然后 urldecode 会解码
+    # 在 Python 中，我们直接构建未编码的 query string
+    query_parts = []
+    for k, v in sorted_params:
+        query_parts.append(f"{k}={v}")
+    query_string = "&".join(query_parts)
+    
+    # 5) 最前方加入 HashKey，最後方加入 HashIV
     check_string = f"HashKey={hash_key}&{query_string}&HashIV={hash_iv}"
     
-    # URL Encode
+    # 6) 做 URLEncode
     encoded_string = urllib.parse.quote(check_string, safe="")
+    
+    # 7) 轉為全小寫
     encoded_string = encoded_string.lower()
     
-    # SHA256 加密
+    # 8) 轉換特定字元（與 .NET 相符的字元）
+    # 这些字符在 URLEncode 后需要还原为原始字符
+    char_replacements = {
+        "%2d": "-",
+        "%5f": "_",
+        "%2e": ".",
+        "%21": "!",
+        "%2a": "*",
+        "%28": "(",
+        "%29": ")"
+    }
+    for encoded_char, original_char in char_replacements.items():
+        encoded_string = encoded_string.replace(encoded_char, original_char)
+    
+    # 9) 進行 SHA256 編碼
     sha256_hash = hashlib.sha256(encoded_string.encode('utf-8')).hexdigest()
     
+    # 10) 轉為全大寫後回傳
     return sha256_hash.upper()
 
 

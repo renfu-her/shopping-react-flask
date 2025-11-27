@@ -1,5 +1,76 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-27 16:39:16] - 修正 ECPay CheckMacValue 計算方式
+
+### 修改內容
+
+#### 修正綠界金流 CheckMacValue 檢查碼計算
+- **時間**: 2025-11-27 16:39:16
+- **目的**: 修正 CheckMacValue 計算方式，符合綠界官方規範，解決 "CheckMacValue Error" 錯誤
+- **參考文件**: 
+  - https://developers.ecpay.com.tw/?p=29998
+  - https://gist.github.com/liaosankai/7aada599848ad599529fd5fdfa7926e6
+- **修改檔案**:
+  - `api/ecpay.py` - 修正 `generate_check_value()` 函數
+
+### 變更詳情
+
+#### CheckMacValue 計算步驟修正
+根據綠界全方位金流 API 規範，修正計算流程：
+
+1. **null 值處理**: 將所有 null 值轉為空字串
+2. **移除 CheckMacValue**: 如果參數中存在 CheckMacValue，先移除
+3. **參數排序**: 將鍵值按 A-Z 排序（不區分大小寫）
+4. **構建 Query String**: 將陣列轉為 `key=value&key2=value2` 格式
+5. **添加 HashKey 和 HashIV**: 最前方加入 HashKey，最後方加入 HashIV
+6. **URL Encode**: 對整個字串進行 URL 編碼
+7. **轉小寫**: 將編碼後的字串轉為全小寫
+8. **轉換特定字元**: 將特定編碼字元還原（與 .NET 相符）:
+   - `%2d` → `-`
+   - `%5f` → `_`
+   - `%2e` → `.`
+   - `%21` → `!`
+   - `%2a` → `*`
+   - `%28` → `(`
+   - `%29` → `)`
+9. **SHA256 編碼**: 使用 SHA256 產生雜湊值
+10. **轉大寫**: 將結果轉為全大寫
+
+### 技術細節
+
+#### 修正前的問題
+- 缺少特定字元轉換步驟
+- Query string 構建方式可能不正確
+
+#### 修正後的實現
+```python
+def generate_check_value(params: dict, hash_key: str, hash_iv: str) -> str:
+    # 1) null 值轉空字串
+    # 2) 移除 CheckMacValue
+    # 3) 按 A-Z 排序
+    # 4) 構建 query string
+    # 5) 添加 HashKey 和 HashIV
+    # 6) URL Encode
+    # 7) 轉小寫
+    # 8) 轉換特定字元
+    # 9) SHA256 編碼
+    # 10) 轉大寫
+```
+
+### 影響範圍
+- **後端**: 
+  - ECPay 訂單創建 API 現在能正確生成 CheckMacValue
+  - 解決 "訊息代碼: 10200073 - CheckMacValue Error" 錯誤
+- **前端**: 
+  - 無需修改，但結帳流程現在應該能正常運作
+
+### 注意事項
+1. 此修正基於綠界全方位金流 API 規範
+2. 特定字元轉換步驟是為了與 .NET 實現保持一致
+3. 測試環境和正式環境使用相同的計算方式
+
+---
+
 ## [2025-11-27 15:15:59] - 從 JWT Token 認證切換到 Session 認證
 
 ### 修改內容
