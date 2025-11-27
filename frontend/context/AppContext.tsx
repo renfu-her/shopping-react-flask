@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 import { User, CartItem, Product } from '../types';
-import { logout as apiLogout, getCurrentUser } from '../services/api';
+import { logout as apiLogout, getCurrentUser, getCart, addToCart as apiAddToCart, updateCartItem as apiUpdateCartItem, removeCartItem as apiRemoveCartItem } from '../services/api';
 
 interface AppContextType {
   user: User | null;
@@ -37,13 +37,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         try {
           const userData = await getCurrentUser();
           setUser(userData);
+          // 載入購物車
+          try {
+            const cartData = await getCart();
+            // 轉換 CartItemResponse 為 CartItem
+            const cartItems: CartItem[] = cartData.items.map(item => ({
+              ...item.product,
+              quantity: item.quantity,
+            }));
+            setCart(cartItems);
+          } catch (error) {
+            // 購物車可能為空，設為空數組
+            setCart([]);
+          }
         } catch (error: any) {
           // Session 無效或不存在
           setUser(null);
+          setCart([]);
         }
       } catch (error: any) {
         console.error('[AppContext] Error in verifySession:', error);
         setUser(null);
+        setCart([]);
       } finally {
         setIsLoadingUser(false);
       }
@@ -52,36 +67,96 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     verifySession();
   }, []);
 
-  const addToCart = useCallback((product: Product) => {
+  const addToCart = useCallback(async (product: Product) => {
     if (!user) {
       return; // Navigation will be handled by the component
     }
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item => 
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 } 
-            : item
-        );
+    try {
+      // 檢查購物車中是否已有該商品
+      const existing = cart.find(item => item.id === product.id);
+      const quantity = existing ? existing.quantity + 1 : 1;
+      
+      // 調用 API 添加商品
+      const cartData = await apiAddToCart({
+        product_id: product.id,
+        quantity: 1, // 每次添加 1 個
+      });
+      
+      // 更新本地狀態
+      const cartItems: CartItem[] = cartData.items.map(item => ({
+        ...item.product,
+        quantity: item.quantity,
+      }));
+      setCart(cartItems);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      throw error;
+    }
+  }, [user, cart]);
+
+  const updateQuantity = useCallback(async (id: number, delta: number) => {
+    if (!user) return;
+    
+    const item = cart.find(item => item.id === id);
+    if (!item) return;
+    
+    const newQuantity = Math.max(1, item.quantity + delta);
+    
+    try {
+      // 找到 cart item ID（需要從 API 獲取的完整購物車數據中獲取）
+      // 這裡我們需要重新獲取購物車來找到正確的 item ID
+      const cartData = await getCart();
+      const cartItem = cartData.items.find(ci => ci.product_id === id);
+      
+      if (cartItem) {
+        await apiUpdateCartItem(cartItem.id, { quantity: newQuantity });
+        // 重新載入購物車
+        const updatedCart = await getCart();
+        const cartItems: CartItem[] = updatedCart.items.map(ci => ({
+          ...ci.product,
+          quantity: ci.quantity,
+        }));
+        setCart(cartItems);
       }
-      return [...prev, { ...product, quantity: 1 }];
-    });
+    } catch (error) {
+      console.error('Error updating cart item:', error);
+      throw error;
+    }
+  }, [user, cart]);
+
+  const removeFromCart = useCallback(async (id: number) => {
+    if (!user) return;
+    
+    try {
+      // 獲取購物車以找到正確的 item ID
+      const cartData = await getCart();
+      const cartItem = cartData.items.find(ci => ci.product_id === id);
+      
+      if (cartItem) {
+        await apiRemoveCartItem(cartItem.id);
+        // 更新本地狀態
+        setCart(prev => prev.filter(item => item.id !== id));
+      }
+    } catch (error) {
+      console.error('Error removing cart item:', error);
+      throw error;
+    }
   }, [user]);
 
-  const updateQuantity = useCallback((id: number, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === id) return { ...item, quantity: Math.max(1, item.quantity + delta) };
-      return item;
-    }));
-  }, []);
-
-  const removeFromCart = useCallback((id: number) => {
-    setCart(prev => prev.filter(item => item.id !== id));
-  }, []);
-
-  const handleLogin = useCallback((userData: User) => {
+  const handleLogin = useCallback(async (userData: User) => {
     setUser(userData);
+    // 載入購物車
+    try {
+      const cartData = await getCart();
+      const cartItems: CartItem[] = cartData.items.map(item => ({
+        ...item.product,
+        quantity: item.quantity,
+      }));
+      setCart(cartItems);
+    } catch (error) {
+      // 購物車可能為空
+      setCart([]);
+    }
   }, []);
 
   const handleLogout = useCallback(async () => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, CreditCard, Truck, ShieldCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { createECPayOrder } from '../services/api';
+import { createOrder, createECPayOrder } from '../services/api';
 
 interface CheckoutProps {
   onBack: () => void;
@@ -40,7 +40,16 @@ export const Checkout: React.FC<CheckoutProps> = ({ onBack, onSubmit, total }) =
     setLoading(true);
 
     try {
-      // 创建绿界订单
+      // 先創建訂單
+      const order = await createOrder({
+        shipping_name: details.name,
+        shipping_address: details.address,
+        shipping_city: details.city,
+        shipping_zip: details.zip,
+        payment_method: details.payment_method
+      });
+
+      // 然後創建綠界訂單（用於支付）
       const ecpayOrder = await createECPayOrder({
         shipping_name: details.name,
         shipping_address: details.address,
@@ -49,13 +58,13 @@ export const Checkout: React.FC<CheckoutProps> = ({ onBack, onSubmit, total }) =
         payment_method: details.payment_method
       });
 
-      // 创建隐藏表单并提交到绿界
+      // 創建隱藏表單並提交到綠界
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = ecpayOrder.form_url;
       form.style.display = 'none';
 
-      // 添加所有表单字段
+      // 添加所有表單字段
       Object.entries(ecpayOrder.form_data).forEach(([key, value]) => {
         const input = document.createElement('input');
         input.type = 'hidden';
@@ -67,7 +76,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onBack, onSubmit, total }) =
       document.body.appendChild(form);
       form.submit();
 
-      // 清空购物车（订单已创建）
+      // 清空購物車（訂單已創建）
       onSubmit();
     } catch (err: any) {
       setError(err.message || 'Failed to create order. Please try again.');

@@ -1,5 +1,86 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 15:47:04] - 整合購物車和訂單 API
+
+### 修改內容
+
+#### 整合購物車和訂單 API
+- **時間**: 2025-11-27 15:47:04
+- **目的**: 將購物車和訂單功能與後端 API 整合，使用 POST /api/cart、GET /api/cart 和 POST /api/orders
+- **修改檔案**:
+  - `services/api.ts` - 添加購物車和訂單相關的 API 函數
+  - `context/AppContext.tsx` - 修改購物車操作以調用 API
+  - `pages/CheckoutPage.tsx` - 從 API 獲取購物車數據
+  - `pages/CartPage.tsx` - 從 API 獲取購物車數據
+  - `components/Checkout.tsx` - 在提交時調用 POST /api/orders
+
+### 變更詳情
+
+#### API 服務擴展
+- **購物車 API**:
+  - `getCart()` - GET /api/cart 獲取購物車
+  - `addToCart(item)` - POST /api/cart/items 添加商品到購物車
+  - `updateCartItem(itemId, update)` - PUT /api/cart/items/{item_id} 更新購物車項目
+  - `removeCartItem(itemId)` - DELETE /api/cart/items/{item_id} 移除購物車項目
+  - `clearCart()` - DELETE /api/cart 清空購物車
+
+- **訂單 API**:
+  - `createOrder(orderData)` - POST /api/orders 創建訂單
+  - `getOrders()` - GET /api/orders 獲取訂單列表
+  - `getOrder(orderId)` - GET /api/orders/{id} 獲取訂單詳情
+
+#### AppContext 修改
+- **addToCart()**: 
+  - 改為異步函數
+  - 調用 POST /api/cart/items API
+  - 更新本地狀態以反映 API 響應
+
+- **updateQuantity()**: 
+  - 改為異步函數
+  - 調用 PUT /api/cart/items/{item_id} API
+  - 重新載入購物車以獲取最新數據
+
+- **removeFromCart()**: 
+  - 改為異步函數
+  - 調用 DELETE /api/cart/items/{item_id} API
+  - 更新本地狀態
+
+- **handleLogin()**: 
+  - 登入後自動從 API 載入購物車
+
+- **verifySession()**: 
+  - 驗證 session 時自動載入購物車
+
+#### 頁面修改
+- **CheckoutPage**: 
+  - 從 GET /api/cart 獲取購物車數據
+  - 顯示載入狀態
+  - 如果購物車為空，重定向到購物車頁面
+
+- **CartPage**: 
+  - 從 GET /api/cart 獲取購物車數據
+  - 顯示載入狀態
+  - 包裝異步函數調用
+
+- **Checkout 組件**: 
+  - 在提交時先調用 POST /api/orders 創建訂單
+  - 然後調用 createECPayOrder 創建綠界訂單
+  - 提交到綠界支付頁面
+
+### 技術細節
+- 所有購物車操作現在都通過 API 進行
+- 購物車狀態與後端同步
+- 訂單創建流程：先創建訂單，再創建綠界訂單
+- 異步操作使用 try-catch 處理錯誤
+
+### 影響範圍
+- **前端**: 
+  - 購物車數據現在存儲在後端，跨設備同步
+  - 訂單創建流程更完整
+  - 所有購物車操作都需要用戶登入
+
+---
+
 ## [2025-11-27 15:28:44] - 重構 API 服務層，使用 Clean Code 原則優化
 
 ### 修改內容

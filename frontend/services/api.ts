@@ -123,6 +123,64 @@ export interface ECPayOrderResponse {
   form_url: string;
 }
 
+// Cart Types
+export interface CartItemResponse {
+  id: number;
+  product_id: number;
+  quantity: number;
+  product: Product;
+}
+
+export interface CartResponse {
+  id: number;
+  user_id: number;
+  items: CartItemResponse[];
+  total: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CartItemCreate {
+  product_id: number;
+  quantity: number;
+}
+
+export interface CartItemUpdate {
+  quantity: number;
+}
+
+// Order Types
+export interface OrderItemResponse {
+  id: number;
+  product_id: number;
+  quantity: number;
+  price: number;
+  product: Product;
+}
+
+export interface OrderResponse {
+  id: number;
+  user_id: number;
+  total_amount: number;
+  status: string;
+  shipping_name: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_zip: string;
+  payment_method: string | null;
+  items: OrderItemResponse[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrderCreate {
+  shipping_name: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_zip: string;
+  payment_method?: string;
+}
+
 // ==================== API Client ====================
 
 interface RequestOptions extends RequestInit {
@@ -284,6 +342,70 @@ export async function updateUserPassword(
     method: 'PUT',
     requiresAuth: true,
     body: JSON.stringify(passwordData),
+  });
+}
+
+// Cart
+export async function getCart(): Promise<CartResponse> {
+  return apiRequest<CartResponse>('/cart', {
+    method: 'GET',
+    requiresAuth: true,
+  });
+}
+
+export async function addToCart(item: CartItemCreate): Promise<CartResponse> {
+  return apiRequest<CartResponse>('/cart/items', {
+    method: 'POST',
+    requiresAuth: true,
+    body: JSON.stringify(item),
+  });
+}
+
+export async function updateCartItem(
+  itemId: number,
+  update: CartItemUpdate
+): Promise<CartResponse> {
+  return apiRequest<CartResponse>(`/cart/items/${itemId}`, {
+    method: 'PUT',
+    requiresAuth: true,
+    body: JSON.stringify(update),
+  });
+}
+
+export async function removeCartItem(itemId: number): Promise<CartResponse> {
+  return apiRequest<CartResponse>(`/cart/items/${itemId}`, {
+    method: 'DELETE',
+    requiresAuth: true,
+  });
+}
+
+export async function clearCart(): Promise<void> {
+  return apiRequest<void>('/cart', {
+    method: 'DELETE',
+    requiresAuth: true,
+  });
+}
+
+// Orders
+export async function createOrder(orderData: OrderCreate): Promise<OrderResponse> {
+  return apiRequest<OrderResponse>('/orders', {
+    method: 'POST',
+    requiresAuth: true,
+    body: JSON.stringify(orderData),
+  });
+}
+
+export async function getOrders(): Promise<OrderResponse[]> {
+  return apiRequest<OrderResponse[]>('/orders', {
+    method: 'GET',
+    requiresAuth: true,
+  });
+}
+
+export async function getOrder(orderId: number): Promise<OrderResponse> {
+  return apiRequest<OrderResponse>(`/orders/${orderId}`, {
+    method: 'GET',
+    requiresAuth: true,
   });
 }
 
