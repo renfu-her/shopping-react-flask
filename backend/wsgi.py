@@ -1,21 +1,37 @@
 """
-WSGI/ASGI adapter for uWSGI
-FastAPI 应用通过 uWSGI 运行
+FastAPI 應用入口文件
 
-注意：FastAPI 是 ASGI 应用，需要通过适配器转换为 WSGI
-如果 uWSGI 支持 ASGI 插件，建议使用 ASGI 模式
-否则使用 asgiref 的 WSGIToASGIAdapter
+可以直接運行此文件進行測試：
+  python wsgi.py
+  或
+  uv run python wsgi.py
 """
-try:
-    # 尝试使用 asgiref 适配器（需要安装 asgiref）
-    from asgiref.wsgi import WsgiToAsgi
-    from app.main import app
-    
-    # 将 ASGI 应用转换为 WSGI
-    application = WsgiToAsgi(app)
-except ImportError:
-    # 如果没有 asgiref，尝试直接使用（可能不工作）
-    # 建议安装: pip install asgiref
-    from app.main import app
-    application = app
+from app.main import app
 
+# 用於 uWSGI（如果需要）
+# 注意：FastAPI 是 ASGI 應用，uWSGI 需要使用 ASGI 插件或 gunicorn + uvicorn
+application = app
+
+if __name__ == "__main__":
+    # 直接運行模式：使用 uvicorn 運行 FastAPI（用於測試）
+    import uvicorn
+    
+    print("=" * 60)
+    print("啟動 FastAPI 應用（開發模式）")
+    print("=" * 60)
+    print("訪問地址:")
+    print("  - API 文檔: http://localhost:8000/docs")
+    print("  - ReDoc: http://localhost:8000/redoc")
+    print("  - 後台管理: http://localhost:8000/backend")
+    print("=" * 60)
+    print("按 Ctrl+C 停止服務器")
+    print("=" * 60)
+    
+    # 使用 uvicorn 運行
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        reload=True,  # 開發模式：自動重載
+        log_level="info"
+    )

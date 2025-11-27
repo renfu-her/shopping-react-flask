@@ -97,17 +97,37 @@ source .venv/bin/activate
 uv sync
 
 # 5. 配置 uWSGI
+# 注意：如果服務器上使用的是不同的配置文件名（如 shopping-react.uwsgi.ini），
+# 請檢查實際的配置文件名：
+# ls -la /etc/uwsgi/apps-enabled/
 sudo cp deployment/uwsgi.ini /etc/uwsgi/apps-available/shopping-react-backend.ini
+# 如果服務器上已有配置文件，可能需要使用相同的名稱：
+# sudo cp deployment/uwsgi.ini /etc/uwsgi/apps-available/shopping-react.uwsgi.ini
 sudo ln -s /etc/uwsgi/apps-available/shopping-react-backend.ini /etc/uwsgi/apps-enabled/
 
 # 6. 建立日誌目錄
 sudo mkdir -p /var/log/uwsgi
 sudo chown ai-tracks-shopping-react:ai-tracks-shopping-react /var/log/uwsgi
 
-# 7. 啟動 uWSGI
+# 7. 檢查配置文件路徑是否正確
+# 確保配置文件中的 chdir 和 virtualenv 都指向 backend 目錄：
+# chdir = /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
+# virtualenv = /home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend/.venv
+sudo nano /etc/uwsgi/apps-enabled/shopping-react-backend.ini
+
+# 8. 啟動 uWSGI
 sudo systemctl start uwsgi
 sudo systemctl enable uwsgi
+
+# 9. 檢查狀態和日誌
+sudo systemctl status uwsgi
+sudo tail -f /var/log/uwsgi/shopping-react-backend.log
 ```
+
+**常見問題排查**：
+- 如果出現 `ModuleNotFoundError: No module named 'encodings'`，檢查 `virtualenv` 路徑是否正確
+- 如果出現 `unable to load app`，檢查 `chdir` 和 `wsgi-file` 路徑是否正確
+- 確保 `chdir` 指向 `backend` 目錄，不是項目根目錄
 
 ### 3. 配置 Nginx
 
