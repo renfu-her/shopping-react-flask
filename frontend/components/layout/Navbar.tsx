@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, LogOut, Menu, X, LogIn, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, LogOut, Menu, X, LogIn, ShoppingBag, User, ChevronDown } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export const Navbar: React.FC = () => {
@@ -8,6 +8,22 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const { user, cart, handleLogout, handleCategorySelect } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const isActive = (path: string) => 
@@ -68,18 +84,43 @@ export const Navbar: React.FC = () => {
             </button>
             
             {user ? (
-              <div className="hidden md:flex items-center gap-3 pl-4 border-l border-gray-200">
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">Welcome,</p>
-                  <p className="text-sm font-bold text-gray-900 leading-none">{user.name}</p>
-                </div>
-                <button 
-                  onClick={handleLogout} 
-                  className="p-2 bg-gray-100 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors" 
-                  title="Logout"
+              <div className="hidden md:flex items-center gap-3 pl-4 border-l border-gray-200 relative" ref={profileMenuRef}>
+                <button
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <LogOut size={18} />
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Welcome,</p>
+                    <p className="text-sm font-bold text-gray-900 leading-none">{user.name}</p>
+                  </div>
+                  <ChevronDown size={16} className={`text-gray-400 transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
+                
+                {profileMenuOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                    <button
+                      onClick={() => {
+                        navigate('/profile');
+                        setProfileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <User size={16} />
+                      Profile
+                    </button>
+                    <hr className="my-1 border-gray-100" />
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setProfileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <button 
@@ -131,12 +172,20 @@ export const Navbar: React.FC = () => {
             </button>
             
             {user ? (
-              <button 
-                onClick={handleLogout} 
-                className="block w-full text-left p-2 font-medium text-red-600 hover:bg-red-50 rounded-lg"
-              >
-                Logout ({user.name})
-              </button>
+              <>
+                <button 
+                  onClick={() => { navigate('/profile'); setMobileMenuOpen(false); }} 
+                  className="block w-full text-left p-2 font-medium text-gray-900 hover:bg-gray-50 rounded-lg"
+                >
+                  Profile ({user.name})
+                </button>
+                <button 
+                  onClick={() => { handleLogout(); setMobileMenuOpen(false); }} 
+                  className="block w-full text-left p-2 font-medium text-red-600 hover:bg-red-50 rounded-lg"
+                >
+                  Logout
+                </button>
+              </>
             ) : (
               <button 
                 onClick={() => { navigate('/sign'); setMobileMenuOpen(false); }} 

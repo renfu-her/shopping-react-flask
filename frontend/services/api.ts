@@ -204,6 +204,11 @@ export interface User {
   name: string;
   role: string;
   status: string;
+  phone?: string;
+  address?: string;
+  county?: string;
+  district?: string;
+  zipcode?: string;
   created_at: string;
 }
 
@@ -276,6 +281,79 @@ export async function register(userData: RegisterRequest): Promise<User> {
 
 export function logout(): void {
   localStorage.removeItem('access_token');
+}
+
+export interface UserUpdateRequest {
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  county?: string;
+  district?: string;
+  zipcode?: string;
+}
+
+export interface UserPasswordUpdateRequest {
+  current_password: string;
+  new_password: string;
+}
+
+export async function updateUserProfile(userData: UserUpdateRequest): Promise<User> {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new Error(errorData.detail || `Failed to update profile: ${response.statusText}`);
+    }
+
+    const data: User = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    throw error;
+  }
+}
+
+export async function updateUserPassword(passwordData: UserPasswordUpdateRequest): Promise<User> {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/me/password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(passwordData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new Error(errorData.detail || `Failed to update password: ${response.statusText}`);
+    }
+
+    const data: User = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error updating password:', error);
+    throw error;
+  }
 }
 
 export function getToken(): string | null {

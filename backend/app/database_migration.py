@@ -157,10 +157,102 @@ def add_product_is_hot_column():
         engine.dispose()
 
 
+def add_user_address_fields():
+    """为 users 表添加 address, phone, county, district, zipcode 字段"""
+    engine = create_engine(
+        settings.get_database_url(),
+        pool_pre_ping=True,
+        echo=False
+    )
+    
+    try:
+        with engine.connect() as conn:
+            # 检查表是否存在
+            inspector = inspect(engine)
+            if 'users' not in inspector.get_table_names():
+                logger.warning("users 表不存在，跳过迁移")
+                return
+            
+            # 检查字段是否已存在
+            columns = [col['name'] for col in inspector.get_columns('users')]
+            
+            # 添加 phone 字段（如果不存在）
+            if 'phone' not in columns:
+                logger.info("添加 phone 字段...")
+                conn.execute(text("""
+                    ALTER TABLE users 
+                    ADD COLUMN phone VARCHAR(20) NULL
+                    AFTER status
+                """))
+                conn.commit()
+                logger.info("phone 字段添加成功")
+            else:
+                logger.info("phone 字段已存在，跳过")
+            
+            # 添加 address 字段（如果不存在）
+            if 'address' not in columns:
+                logger.info("添加 address 字段...")
+                conn.execute(text("""
+                    ALTER TABLE users 
+                    ADD COLUMN address VARCHAR(500) NULL
+                    AFTER phone
+                """))
+                conn.commit()
+                logger.info("address 字段添加成功")
+            else:
+                logger.info("address 字段已存在，跳过")
+            
+            # 添加 county 字段（如果不存在）
+            if 'county' not in columns:
+                logger.info("添加 county 字段...")
+                conn.execute(text("""
+                    ALTER TABLE users 
+                    ADD COLUMN county VARCHAR(50) NULL
+                    AFTER address
+                """))
+                conn.commit()
+                logger.info("county 字段添加成功")
+            else:
+                logger.info("county 字段已存在，跳过")
+            
+            # 添加 district 字段（如果不存在）
+            if 'district' not in columns:
+                logger.info("添加 district 字段...")
+                conn.execute(text("""
+                    ALTER TABLE users 
+                    ADD COLUMN district VARCHAR(50) NULL
+                    AFTER county
+                """))
+                conn.commit()
+                logger.info("district 字段添加成功")
+            else:
+                logger.info("district 字段已存在，跳过")
+            
+            # 添加 zipcode 字段（如果不存在）
+            if 'zipcode' not in columns:
+                logger.info("添加 zipcode 字段...")
+                conn.execute(text("""
+                    ALTER TABLE users 
+                    ADD COLUMN zipcode VARCHAR(10) NULL
+                    AFTER district
+                """))
+                conn.commit()
+                logger.info("zipcode 字段添加成功")
+            else:
+                logger.info("zipcode 字段已存在，跳过")
+                
+    except Exception as e:
+        logger.error(f"迁移失败: {e}")
+        raise
+    finally:
+        engine.dispose()
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     add_user_role_status_columns()
     add_category_sort_order_column()
     add_product_is_hot_column()
+    add_user_address_fields()
     print("迁移完成！")
 

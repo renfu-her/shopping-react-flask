@@ -23,6 +23,11 @@ class UserResponse(BaseModel):
     name: str
     role: str
     status: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    county: Optional[str] = None
+    district: Optional[str] = None
+    zipcode: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -32,9 +37,18 @@ class UserResponse(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    county: Optional[str] = None
+    district: Optional[str] = None
+    zipcode: Optional[str] = None
     role: Optional[UserRole] = None
     status: Optional[UserStatus] = None
-    password: Optional[str] = None
+
+
+class UserPasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str
 
 
 class UserListResponse(BaseModel):

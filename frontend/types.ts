@@ -27,8 +27,17 @@ export interface CartItem extends Product {
 }
 
 export interface User {
+  id: number;
   email: string;
   name: string;
+  role: string;
+  status: string;
+  phone?: string;
+  address?: string;
+  county?: string;
+  district?: string;
+  zipcode?: string;
+  created_at: string;
 }
 
 export interface OrderDetails {

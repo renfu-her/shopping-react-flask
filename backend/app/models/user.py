@@ -66,6 +66,11 @@ class User(Base):
         nullable=False,
         index=True
     )
+    phone = Column(String(20), nullable=True)
+    address = Column(String(500), nullable=True)
+    county = Column(String(50), nullable=True)  # 縣市
+    district = Column(String(50), nullable=True)  # 區/鄉鎮
+    zipcode = Column(String(10), nullable=True)  # 郵遞區號
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

@@ -15,6 +15,7 @@ import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { SignPage } from './pages/SignPage';
 import { OrderSuccessPage } from './pages/OrderSuccessPage';
+import { ProfilePage } from './pages/ProfilePage';
 
 const AppContent: React.FC = () => {
   const aiContext = useAiContext();
@@ -34,6 +35,7 @@ const AppContent: React.FC = () => {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/sign" element={<SignPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/shop-finish" element={<OrderSuccessPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

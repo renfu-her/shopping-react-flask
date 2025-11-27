@@ -1,5 +1,123 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 14:16:33] - 用戶資料管理功能與 Profile 頁面
+
+### 修改內容
+
+#### 用戶資料管理功能與 Profile 頁面
+- **時間**: 2025-11-27 14:16:33
+- **目的**: 添加用戶資料管理功能，包括地址、電話、縣市、區/鄉鎮、郵遞區號等欄位，並創建 Profile 頁面供用戶查看和修改資料
+- **修改檔案**:
+  - `components/layout/Navbar.tsx` - 將登出按鈕改為下拉菜單（Profile, Logout）
+  - `pages/ProfilePage.tsx` - 新增 Profile 頁面組件
+  - `services/api.ts` - 添加 `updateUserProfile` 和 `updateUserPassword` API 函數
+  - `utils/twzipcode.ts` - 新增台灣郵遞區號資料工具
+  - `types.ts` - 更新 User 接口以包含新欄位
+  - `App.tsx` - 添加 `/profile` 路由
+
+### 變更詳情
+
+#### 新增的 API 函數
+- **updateUserProfile(userData)**: 更新用戶資料（不包含密碼）
+  - 調用 `PUT /api/auth/me` 端點
+  - 支持更新：name, email, phone, address, county, district, zipcode
+
+- **updateUserPassword(passwordData)**: 更新用戶密碼
+  - 調用 `PUT /api/auth/me/password` 端點
+  - 需要提供當前密碼和新密碼
+
+#### 新增的類型定義
+- **UserUpdateRequest 接口**: 定義用戶資料更新請求
+  - `name?`: string
+  - `email?`: string
+  - `phone?`: string
+  - `address?`: string
+  - `county?`: string
+  - `district?`: string
+  - `zipcode?`: string
+
+- **UserPasswordUpdateRequest 接口**: 定義密碼更新請求
+  - `current_password`: string
+  - `new_password`: string
+
+#### 新增的工具函數（twzipcode.ts）
+- **getCounties()**: 獲取所有縣市列表
+- **getDistricts(county)**: 根據縣市獲取區/鄉鎮列表
+- **getZipcode(county, district)**: 根據縣市和區/鄉鎮獲取郵遞區號
+- **TW_ZIPCODE_DATA**: 台灣郵遞區號完整資料（參考 jQuery-TWzipcode）
+
+#### 修改的組件
+- **Navbar.tsx**:
+  - 將登出按鈕改為下拉菜單
+  - 添加 Profile 和 Logout 選項
+  - 使用 `useRef` 和 `useEffect` 處理點擊外部關閉菜單
+  - 移動端也更新為顯示 Profile 和 Logout 選項
+
+- **ProfilePage.tsx** (新增):
+  - 兩個標籤頁：Profile Information 和 Change Password
+  - Profile Information 標籤：
+    - 顯示和編輯所有用戶資料
+    - 台灣郵遞區號選擇器（縣市 → 區/鄉鎮 → 郵遞區號自動填充）
+    - 表單驗證和錯誤處理
+  - Change Password 標籤：
+    - 當前密碼驗證
+    - 新密碼和確認密碼匹配驗證
+    - 密碼長度驗證（至少 6 個字符）
+
+#### 更新的類型定義
+- **User 接口** (types.ts 和 services/api.ts):
+  - 添加 `id`: number
+  - 添加 `role`: string
+  - 添加 `status`: string
+  - 添加 `phone?`: string
+  - 添加 `address?`: string
+  - 添加 `county?`: string
+  - 添加 `district?`: string
+  - 添加 `zipcode?`: string
+  - 添加 `created_at`: string
+
+### 技術細節
+
+#### 台灣郵遞區號選擇器
+- 使用三級聯動：縣市 → 區/鄉鎮 → 郵遞區號
+- 選擇縣市時，自動清空區/鄉鎮和郵遞區號
+- 選擇區/鄉鎮時，自動填充郵遞區號
+- 郵遞區號欄位為只讀，由系統自動填充
+
+#### 表單驗證
+- Profile 表單：name 和 email 為必填
+- Password 表單：
+  - 當前密碼為必填
+  - 新密碼至少 6 個字符
+  - 新密碼和確認密碼必須匹配
+
+#### 錯誤處理
+- API 調用失敗時顯示錯誤信息
+- 表單驗證錯誤時顯示相應提示
+- 成功更新時顯示成功信息
+
+### 影響範圍
+- **前端**: 
+  - `/profile` 頁面
+  - Navbar 下拉菜單
+  - 用戶資料管理
+- **後端**: 
+  - `/api/auth/me` PUT 端點（更新資料）
+  - `/api/auth/me/password` PUT 端點（更新密碼）
+- **數據庫**: 
+  - users 表新增欄位：phone, address, county, district, zipcode
+
+### 注意事項
+1. **用戶驗證**: Profile 頁面會檢查用戶是否已登入，未登入時自動重定向到登入頁面
+2. **資料同步**: 更新資料後會自動更新 AppContext 中的用戶資料
+3. **密碼安全**: 更新密碼需要提供當前密碼進行驗證
+4. **郵遞區號**: 使用台灣郵遞區號資料，參考 jQuery-TWzipcode 專案
+
+### 參考資料
+- jQuery-TWzipcode: https://github.com/essoduke/jQuery-TWzipcode/blob/master/jquery.twzipcode.js
+
+---
+
 ## [2025-11-27 12:24:03] - Checkout 頁面整合綠界金流 (ECPay)
 
 ### 修改內容

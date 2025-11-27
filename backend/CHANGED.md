@@ -1,5 +1,101 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-27 14:16:33] - 用戶資料管理功能擴展
+
+### 修改內容
+
+#### 用戶資料管理功能擴展
+- **時間**: 2025-11-27 14:16:33
+- **目的**: 擴展用戶資料欄位，添加地址、電話、縣市、區/鄉鎮、郵遞區號等欄位，並提供用戶資料更新和密碼更新 API
+- **修改檔案**:
+  - `models/user.py` - 添加新欄位到 User 模型
+  - `schemas/user.py` - 更新 UserResponse 和添加 UserUpdate、UserPasswordUpdate
+  - `api/auth.py` - 添加用戶資料更新和密碼更新端點
+  - `database_migration.py` - 添加用戶地址欄位遷移函數
+  - `main.py` - 註冊遷移函數
+
+### 變更詳情
+
+#### 新增的資料庫欄位
+- **phone**: VARCHAR(20) - 電話號碼
+- **address**: VARCHAR(500) - 地址
+- **county**: VARCHAR(50) - 縣市
+- **district**: VARCHAR(50) - 區/鄉鎮
+- **zipcode**: VARCHAR(10) - 郵遞區號
+
+#### 新增的 API 端點
+- **PUT `/api/auth/me`**: 更新當前用戶資料（不包含密碼）
+  - 需要認證
+  - 支持更新：name, email, phone, address, county, district, zipcode
+  - 返回更新後的用戶資料
+
+- **PUT `/api/auth/me/password`**: 更新當前用戶密碼
+  - 需要認證
+  - 需要提供當前密碼和新密碼
+  - 驗證當前密碼正確性
+  - 返回更新後的用戶資料
+
+#### 新增的 Schema
+- **UserUpdate**: 用戶資料更新請求
+  - `name?`: Optional[str]
+  - `email?`: Optional[EmailStr]
+  - `phone?`: Optional[str]
+  - `address?`: Optional[str]
+  - `county?`: Optional[str]
+  - `district?`: Optional[str]
+  - `zipcode?`: Optional[str]
+  - `role?`: Optional[UserRole]
+  - `status?`: Optional[UserStatus]
+
+- **UserPasswordUpdate**: 密碼更新請求
+  - `current_password`: str
+  - `new_password`: str
+
+#### 更新的 Schema
+- **UserResponse**: 添加新欄位
+  - `phone?`: Optional[str]
+  - `address?`: Optional[str]
+  - `county?`: Optional[str]
+  - `district?`: Optional[str]
+  - `zipcode?`: Optional[str]
+
+#### 資料庫遷移
+- **add_user_address_fields()**: 添加用戶地址相關欄位的遷移函數
+  - 檢查欄位是否已存在
+  - 按順序添加：phone, address, county, district, zipcode
+  - 所有欄位都為可選（NULL）
+
+### 技術細節
+
+#### 資料驗證
+- Email 唯一性檢查：更新 email 時檢查是否已被其他用戶使用
+- 密碼驗證：更新密碼時驗證當前密碼是否正確
+- 欄位更新：只更新提供的欄位，未提供的欄位保持不變
+
+#### 安全性
+- 所有端點都需要認證（使用 `get_current_user` 依賴）
+- 密碼更新需要提供當前密碼
+- 密碼使用 bcrypt 加密存儲
+
+### 影響範圍
+- **後端**: 
+  - User 模型
+  - 用戶認證 API
+  - 資料庫結構
+- **前端**: 
+  - Profile 頁面
+  - 用戶資料管理
+- **數據庫**: 
+  - users 表結構變更
+
+### 注意事項
+1. **資料遷移**: 新欄位為可選，不會影響現有用戶資料
+2. **向後兼容**: 現有 API 端點保持不變，新欄位為可選
+3. **資料驗證**: Email 唯一性檢查確保不會有重複的 email
+4. **密碼安全**: 密碼更新需要驗證當前密碼，防止未授權修改
+
+---
+
 ## [2025-11-27 12:24:35] - 整合綠界科技 (ECPay) 全方位金流 API
 
 ### 修改內容
