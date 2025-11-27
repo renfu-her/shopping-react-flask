@@ -30,7 +30,7 @@ export const Navbar: React.FC = () => {
     location.pathname === path || (path === '/shop' && location.pathname.startsWith('/product/'));
 
   return (
-    <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200 transition-all h-20">
+    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 transition-all h-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
@@ -97,7 +97,7 @@ export const Navbar: React.FC = () => {
                 </button>
                 
                 {profileMenuOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2" style={{ zIndex: 1000 }}>
                     <button
                       onClick={() => {
                         navigate('/profile');

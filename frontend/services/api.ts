@@ -283,6 +283,38 @@ export function logout(): void {
   localStorage.removeItem('access_token');
 }
 
+export async function getCurrentUser(): Promise<User> {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Token is invalid or expired, clear it
+        localStorage.removeItem('access_token');
+      }
+      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new Error(errorData.detail || `Failed to get current user: ${response.statusText}`);
+    }
+
+    const data: User = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    throw error;
+  }
+}
+
 export interface UserUpdateRequest {
   name?: string;
   email?: string;

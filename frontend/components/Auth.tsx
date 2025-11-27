@@ -30,12 +30,10 @@ export const Auth: React.FC<AuthProps> = ({ currentView, setView, onLogin }) => 
       }
 
       if (currentView === AppView.LOGIN) {
-        // Login
+        // Login - JWT token is automatically stored in localStorage by login function
         const response = await login({ email, password });
-        onLogin({
-          email: response.user.email,
-          name: response.user.name
-        });
+        // Pass complete user object with all fields
+        onLogin(response.user);
       } else if (currentView === AppView.REGISTER) {
         // Register
         if (!name.trim()) {
@@ -43,13 +41,12 @@ export const Auth: React.FC<AuthProps> = ({ currentView, setView, onLogin }) => 
           setLoading(false);
           return;
         }
-        const user = await register({ email, name, password });
+        await register({ email, name, password });
         // After successful registration, automatically login
+        // JWT token is automatically stored in localStorage by login function
         const loginResponse = await login({ email, password });
-        onLogin({
-          email: loginResponse.user.email,
-          name: loginResponse.user.name
-        });
+        // Pass complete user object with all fields
+        onLogin(loginResponse.user);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred. Please try again.');

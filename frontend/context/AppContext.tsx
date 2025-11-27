@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 import { User, CartItem, Product } from '../types';
-import { logout as apiLogout } from '../services/api';
+import { logout as apiLogout, getToken, getCurrentUser } from '../services/api';
 
 interface AppContextType {
   user: User | null;
@@ -26,6 +26,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  // Auto-verify JWT token on mount and restore user state
+  useEffect(() => {
+    const verifyToken = async () => {
+      const token = getToken();
+      if (token) {
+        try {
+          // Verify token and get current user info
+          const userData = await getCurrentUser();
+          setUser(userData);
+        } catch (error) {
+          // Token is invalid or expired, clear it
+          console.error('Token verification failed:', error);
+          apiLogout();
+          setUser(null);
+        }
+      }
+      setIsLoadingUser(false);
+    };
+
+    verifyToken();
+  }, []);
 
   const addToCart = useCallback((product: Product) => {
     if (!user) {
