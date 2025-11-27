@@ -95,3 +95,57 @@ export async function fetchFeaturedProducts(): Promise<Product[]> {
   }
 }
 
+export interface NewsItem {
+  id: number;
+  title: string;
+  excerpt: string | null;
+  content: string;
+  image: string;
+  date: string;
+  created_at: string;
+}
+
+export interface NewsListResponse {
+  news: NewsItem[];
+  total: number;
+}
+
+export async function fetchNews(): Promise<NewsItem[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/news`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch news: ${response.statusText}`);
+    }
+    const data: NewsListResponse = await response.json();
+    // Map the API response to match frontend NewsItem format
+    // Convert date from ISO format to YYYY-MM-DD if needed
+    return data.news.map(item => ({
+      ...item,
+      date: item.date.split('T')[0], // Extract date part from ISO string
+      excerpt: item.excerpt || '', // Ensure excerpt is never null
+    }));
+  } catch (error) {
+    console.error('Error fetching news:', error);
+    throw error;
+  }
+}
+
+export async function fetchNewsDetail(newsId: number): Promise<NewsItem> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/news/${newsId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch news detail: ${response.statusText}`);
+    }
+    const data: NewsItem = await response.json();
+    // Map the API response to match frontend NewsItem format
+    return {
+      ...data,
+      date: data.date.split('T')[0], // Extract date part from ISO string
+      excerpt: data.excerpt || '', // Ensure excerpt is never null
+    };
+  } catch (error) {
+    console.error('Error fetching news detail:', error);
+    throw error;
+  }
+}
+

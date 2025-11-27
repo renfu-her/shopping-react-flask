@@ -3,32 +3,37 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Home } from '../components/Home';
 import { CategoryNav } from '../components/CategoryNav';
 import { useApp } from '../context/AppContext';
-import { NEWS_ITEMS } from '../data/mockData';
-import { fetchFeaturedProducts, Product } from '../services/api';
+import { fetchFeaturedProducts, fetchNews, Product, NewsItem } from '../services/api';
 
 export const HomePage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { selectedCategory, handleCategorySelect } = useApp();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadFeaturedProducts = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        const products = await fetchFeaturedProducts();
+        const [products, news] = await Promise.all([
+          fetchFeaturedProducts(),
+          fetchNews()
+        ]);
         setFeaturedProducts(products);
+        setNewsItems(news);
       } catch (error) {
-        console.error('Error loading featured products:', error);
+        console.error('Error loading data:', error);
         // 如果 API 失败，使用空数组
         setFeaturedProducts([]);
+        setNewsItems([]);
       } finally {
         setLoading(false);
       }
     };
 
-    loadFeaturedProducts();
+    loadData();
   }, []);
 
   const handleProductClick = (product: { id: number }) => {
@@ -52,7 +57,7 @@ export const HomePage: React.FC = () => {
       )}
       <Home 
         featuredProducts={featuredProducts} 
-        newsItems={NEWS_ITEMS}
+        newsItems={newsItems}
         onShopNow={() => {
           handleCategorySelect(null);
           navigate('/shop');

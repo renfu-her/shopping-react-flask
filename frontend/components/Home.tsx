@@ -233,18 +233,22 @@ export const Home: React.FC<HomeProps> = ({ featuredProducts, newsItems, onShopN
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {newsItems.map((news) => (
-                    <div 
-                        key={news.id} 
-                        className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 group cursor-pointer"
-                        onClick={() => onNewsClick(news)}
-                    >
-                        <div className="h-48 overflow-hidden relative">
-                            <img src={news.image} alt={news.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold text-gray-800 flex items-center gap-1">
-                                <Clock size={12} /> {news.date}
+                {newsItems.map((news) => {
+                    // Convert relative image URL to absolute URL
+                    const newsImageUrl = getImageUrl(news.image);
+                    
+                    return (
+                        <div 
+                            key={news.id} 
+                            className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 group cursor-pointer"
+                            onClick={() => onNewsClick(news)}
+                        >
+                            <div className="h-48 overflow-hidden relative">
+                                <img src={newsImageUrl} alt={news.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold text-gray-800 flex items-center gap-1">
+                                    <Clock size={12} /> {news.date}
+                                </div>
                             </div>
-                        </div>
                         <div className="p-6">
                             <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-2">{news.title}</h3>
                             <p className="text-gray-500 mb-4 line-clamp-3 text-sm leading-relaxed">{news.excerpt}</p>
@@ -259,7 +263,8 @@ export const Home: React.FC<HomeProps> = ({ featuredProducts, newsItems, onShopN
                             </button>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
       </div>

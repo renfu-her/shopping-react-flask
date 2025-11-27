@@ -8,6 +8,18 @@ interface NewsDetailProps {
 }
 
 export const NewsDetail: React.FC<NewsDetailProps> = ({ newsItem, onBack }) => {
+  // Convert relative image URL to absolute URL
+  const getImageUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    // If it's a relative path, prepend the backend base URL
+    return `http://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
+  };
+
+  const imageUrl = getImageUrl(newsItem.image);
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 animate-in slide-in-from-right-8 duration-300">
       <button
@@ -21,7 +33,7 @@ export const NewsDetail: React.FC<NewsDetailProps> = ({ newsItem, onBack }) => {
       <article className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="h-64 md:h-96 overflow-hidden relative">
           <img
-            src={newsItem.image}
+            src={imageUrl}
             alt={newsItem.title}
             className="w-full h-full object-cover"
           />

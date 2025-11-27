@@ -1,5 +1,139 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 09:14:25] - Latest News & Stories 使用 /api/news API
+
+### 修改內容
+
+#### Latest News & Stories 使用 /api/news API
+- **時間**: 2025-11-27 09:14:25
+- **目的**: 將首頁的 "Latest News & Stories" 部分和新聞頁面改為使用後端 `/api/news` API 獲取新聞數據
+- **修改檔案**:
+  - `services/api.ts` - 添加 `fetchNews` 和 `fetchNewsDetail` 函數
+  - `pages/HomePage.tsx` - 使用 API 獲取新聞數據
+  - `pages/NewsPage.tsx` - 使用 API 獲取新聞列表
+  - `pages/NewsDetailPage.tsx` - 使用 API 獲取單個新聞詳情
+  - `components/Home.tsx` - 更新新聞圖片 URL 處理
+  - `components/NewsDetail.tsx` - 更新新聞圖片 URL 處理
+
+### 變更詳情
+
+#### 添加的 API 函數
+- **fetchNews()**: 調用 `/api/news` 端點獲取新聞列表
+  - 返回 `NewsItem[]` 數組
+  - 自動處理日期格式轉換（從 ISO 格式提取日期部分）
+  - 確保 `excerpt` 字段不為 null（轉換為空字符串）
+  
+- **fetchNewsDetail(newsId)**: 調用 `/api/news/{news_id}` 端點獲取單個新聞詳情
+  - 返回單個 `NewsItem` 對象
+  - 同樣處理日期和 excerpt 格式
+
+#### 新增的類型定義
+- **NewsItem 接口**: 定義新聞數據結構
+  - `id`: number
+  - `title`: string
+  - `excerpt`: string | null
+  - `content`: string
+  - `image`: string
+  - `date`: string
+  - `created_at`: string
+
+- **NewsListResponse 接口**: 定義 API 響應結構
+  - `news`: NewsItem[]
+  - `total`: number
+
+#### 修改的頁面
+- **HomePage.tsx**:
+  - 移除對 `NEWS_ITEMS` mock data 的依賴
+  - 添加 `newsItems` 狀態管理
+  - 使用 `Promise.all` 並行加載 featured products 和 news
+  - 從 API 動態加載新聞數據
+
+- **NewsPage.tsx**:
+  - 移除對 `NEWS_ITEMS` mock data 的依賴
+  - 添加狀態管理（newsItems, loading, error）
+  - 在組件掛載時從 API 加載新聞列表
+  - 添加載入和錯誤狀態的 UI 處理
+  - 添加空狀態處理（當沒有新聞時顯示提示）
+
+- **NewsDetailPage.tsx**:
+  - 移除對 `NEWS_ITEMS` mock data 的依賴
+  - 添加狀態管理（newsItem, loading, error）
+  - 使用 `useParams` 獲取新聞 ID
+  - 從 API 動態加載新聞詳情
+  - 添加載入和錯誤狀態處理
+  - 如果新聞不存在，重定向到新聞列表頁
+
+#### 圖片 URL 處理
+- **Home.tsx**: 更新新聞圖片顯示邏輯
+  - 使用 `getImageUrl` 函數處理相對路徑
+  - 將相對路徑轉換為完整 URL（添加 `http://localhost:8000` 前綴）
+
+- **NewsDetail.tsx**: 添加圖片 URL 處理
+  - 新增 `getImageUrl` 輔助函數
+  - 處理相對路徑轉換
+
+- **NewsPage.tsx**: 添加圖片 URL 處理
+  - 在渲染新聞卡片時處理圖片 URL
+
+### 技術細節
+
+#### API 調用
+```typescript
+// 獲取新聞列表
+export async function fetchNews(): Promise<NewsItem[]> {
+  const response = await fetch(`${API_BASE_URL}/news`);
+  const data: NewsListResponse = await response.json();
+  return data.news.map(item => ({
+    ...item,
+    date: item.date.split('T')[0], // 提取日期部分
+    excerpt: item.excerpt || '', // 確保不為 null
+  }));
+}
+
+// 獲取新聞詳情
+export async function fetchNewsDetail(newsId: number): Promise<NewsItem> {
+  const response = await fetch(`${API_BASE_URL}/news/${newsId}`);
+  const data: NewsItem = await response.json();
+  return {
+    ...data,
+    date: data.date.split('T')[0],
+    excerpt: data.excerpt || '',
+  };
+}
+```
+
+#### 數據加載策略
+- **HomePage**: 使用 `Promise.all` 並行加載 featured products 和 news，提高性能
+- **NewsPage**: 單獨加載新聞列表，包含完整的錯誤處理
+- **NewsDetailPage**: 根據路由參數動態加載新聞詳情
+
+#### 日期格式處理
+- API 返回的日期是 ISO 格式字符串（如 `2025-11-27T00:00:00`）
+- 前端提取日期部分（`split('T')[0]`）以顯示為 `YYYY-MM-DD` 格式
+
+#### 圖片路徑處理
+- 檢查圖片 URL 是否為完整 URL（以 `http://` 或 `https://` 開頭）
+- 如果是相對路徑，添加 `http://localhost:8000` 前綴
+- 確保圖片能正確顯示
+
+### 影響範圍
+- **前端**: 
+  - 首頁的 "Latest News & Stories" 部分
+  - 新聞列表頁面 (`/news`)
+  - 新聞詳情頁面 (`/news/:id`)
+- **數據來源**: 從 mock data (`NEWS_ITEMS`) 改為後端 API (`/api/news`)
+- **行為**: 
+  - 現在顯示的是後端數據庫中的新聞
+  - 支持動態加載和錯誤處理
+  - 圖片 URL 自動處理相對路徑
+
+### 錯誤處理
+- API 調用失敗時顯示錯誤信息
+- 新聞不存在時重定向到新聞列表
+- 載入狀態提供更好的用戶體驗
+
+---
+
 ## [2025-11-26 22:32:56] - 修復 Popular This Week 顯示第一張產品圖片
 
 ### 修改內容
@@ -427,5 +561,5 @@ const hotProducts = await fetchHotProducts();
 
 ---
 
-**最後更新**: 2025-11-26 16:21:57
+**最後更新**: 2025-11-27 09:14:25
 
