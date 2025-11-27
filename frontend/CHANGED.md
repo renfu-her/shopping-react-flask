@@ -1,5 +1,105 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-27 09:35:52] - Product Detail 頁面使用 /api/products/{id} API 獲取商品詳情
+
+### 修改內容
+
+#### Product Detail 頁面使用 /api/products/{id} API 獲取商品詳情
+- **時間**: 2025-11-27 09:35:52
+- **目的**: 將商品詳情頁面改為從後端 `/api/products/{id}` API 獲取商品數據，並正確處理圖片 URL 和多張圖片顯示
+- **修改檔案**:
+  - `services/api.ts` - 添加 `fetchProductDetail` 函數
+  - `pages/ProductDetailPage.tsx` - 使用 API 獲取商品詳情
+  - `components/ProductDetail.tsx` - 更新以處理圖片 URL、多張圖片和 `category_name` 字段
+
+### 變更詳情
+
+#### 新增的 API 函數
+- **fetchProductDetail(productId)**: 調用 `/api/products/{product_id}` 端點獲取單個商品詳情
+  - 返回完整的 `Product` 對象，包含所有商品信息和 `product_images` 數組
+
+#### 修改的頁面
+- **ProductDetailPage.tsx**:
+  - 移除對 `PRODUCTS` mock data 的依賴
+  - 添加狀態管理（product, loading, error）
+  - 使用 `useEffect` 從 API 加載商品詳情
+  - 使用 `useParams` 獲取商品 ID
+  - 添加載入和錯誤狀態的 UI 處理
+  - 如果商品不存在，重定向到商店頁面
+
+#### 修改的組件
+- **ProductDetail.tsx**:
+  - 更新導入：從 `../types` 改為 `../services/api` 以使用正確的 Product 類型
+  - 添加 `getImageUrl` 函數處理相對路徑轉換為絕對 URL
+  - 支持多張圖片顯示：
+    - 優先使用 `product_images` 數組中的所有圖片
+    - 如果 `product_images` 為空，使用 `product.image` 作為備用
+    - 添加圖片輪播功能（上一張/下一張按鈕）
+    - 添加圖片指示器（小圓點顯示當前圖片位置）
+  - 將 `product.category` 改為 `product.category_name || 'Uncategorized'`
+  - 處理 `product.description` 可能為 null 的情況
+
+### 技術細節
+
+#### API 調用
+```typescript
+export async function fetchProductDetail(productId: number): Promise<Product> {
+  const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+  const data: Product = await response.json();
+  return data;
+}
+```
+
+#### 圖片處理
+- **多張圖片支持**: 
+  - 從 `product_images` 數組中獲取所有圖片
+  - 如果數組為空，使用 `product.image` 作為單張圖片
+  - 支持圖片輪播（當有多張圖片時）
+
+- **圖片 URL 處理**:
+  - 相對路徑自動轉換為完整 URL（添加 `http://localhost:8000` 前綴）
+  - 確保所有圖片都能正確顯示
+
+- **圖片導航**:
+  - 左/右箭頭按鈕切換圖片
+  - 底部指示器顯示當前圖片位置
+  - 點擊指示器可直接跳轉到對應圖片
+
+#### 狀態管理
+- 使用 `useState` 管理當前顯示的圖片索引
+- 當有多張圖片時，顯示導航控件
+- 單張圖片時，隱藏導航控件
+
+### 影響範圍
+- **前端**: 
+  - `/product/:id` 頁面
+  - 商品詳情顯示
+  - 多張圖片輪播功能
+- **數據來源**: 從 mock data (`PRODUCTS`) 改為後端 API (`/api/products/{id}`)
+- **行為**: 
+  - 現在顯示的是後端數據庫中的商品詳情
+  - 支持動態加載和錯誤處理
+  - 圖片 URL 自動處理相對路徑
+  - 支持多張商品圖片輪播顯示
+
+### 錯誤處理
+- API 調用失敗時顯示錯誤信息
+- 商品不存在時重定向到商店頁面
+- 載入狀態提供更好的用戶體驗
+
+### 用戶體驗改進
+- **多圖片支持**: 當商品有多張圖片時，用戶可以瀏覽所有圖片
+- **圖片導航**: 直觀的左右箭頭和指示器
+- **響應式設計**: 適配不同屏幕尺寸
+- **加載狀態**: 顯示載入提示，提升用戶體驗
+
+### 注意事項
+1. **圖片優先級**: 優先使用 `product_images` 數組中的圖片
+2. **單張圖片**: 當只有一張圖片時，不顯示導航控件
+3. **圖片輪播**: 支持循環切換（最後一張後回到第一張）
+
+---
+
 ## [2025-11-27 09:32:22] - Shop 頁面使用 /api/products API 獲取所有商品
 
 ### 修改內容
@@ -781,5 +881,5 @@ const hotProducts = await fetchHotProducts();
 
 ---
 
-**最後更新**: 2025-11-27 09:32:22
+**最後更新**: 2025-11-27 09:35:52
 

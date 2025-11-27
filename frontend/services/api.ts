@@ -184,3 +184,17 @@ export async function fetchProducts(
   }
 }
 
+export async function fetchProductDetail(productId: number): Promise<Product> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch product detail: ${response.statusText}`);
+    }
+    const data: Product = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching product detail:', error);
+    throw error;
+  }
+}
+
