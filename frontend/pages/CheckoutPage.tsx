@@ -38,8 +38,8 @@ export const CheckoutPage: React.FC = () => {
   }, [user, isLoadingUser, navigate, setCart]);
 
   const handleCheckoutSubmit = () => {
-    // 購物車會在訂單創建成功後由後端清空
-    // 這裡不需要手動清空，因為會跳轉到綠界支付頁面
+    // 清空本地購物車狀態（後端已經在創建訂單時清空購物車）
+    setCart([]);
   };
 
   const total = cartData?.total || 0;

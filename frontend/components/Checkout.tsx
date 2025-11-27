@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, CreditCard, Truck, ShieldCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { createOrder, createECPayOrder } from '../services/api';
+import { createECPayOrder } from '../services/api';
 import { getCounties, getDistricts, getZipcode } from '../utils/twzipcode';
 
 interface CheckoutProps {
@@ -75,16 +75,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onBack, onSubmit, total }) =
         ? `${details.county}${details.district}`
         : details.county || details.district || '';
       
-      // 先創建訂單
-      const order = await createOrder({
-        shipping_name: details.name,
-        shipping_address: details.address,
-        shipping_city: shippingCity,
-        shipping_zip: details.zipcode,
-        payment_method: details.payment_method
-      });
-
-      // 然後創建綠界訂單（用於支付）
+      // 創建綠界訂單（會自動創建訂單並清空購物車）
       const ecpayOrder = await createECPayOrder({
         shipping_name: details.name,
         shipping_address: details.address,
@@ -93,7 +84,10 @@ export const Checkout: React.FC<CheckoutProps> = ({ onBack, onSubmit, total }) =
         payment_method: details.payment_method
       });
 
-      // 創建隱藏表單並提交到綠界
+      // 清空本地購物車狀態（後端已經清空，這裡同步前端狀態）
+      onSubmit();
+
+      // 創建隱藏表單並提交到綠界支付頁面
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = ecpayOrder.form_url;
@@ -110,9 +104,9 @@ export const Checkout: React.FC<CheckoutProps> = ({ onBack, onSubmit, total }) =
 
       document.body.appendChild(form);
       form.submit();
-
-      // 清空購物車（訂單已創建）
-      onSubmit();
+      
+      // 注意：提交後會跳轉到綠界支付頁面，支付完成後會自動跳轉到 /shop-finish
+      // 不需要在這裡設置 loading = false，因為頁面會跳轉
     } catch (err: any) {
       setError(err.message || 'Failed to create order. Please try again.');
       setLoading(false);
@@ -169,17 +163,6 @@ export const Checkout: React.FC<CheckoutProps> = ({ onBack, onSubmit, total }) =
                       placeholder="0912345678" 
                     />
                 </div>
-                <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                    <input 
-                      required 
-                      name="address" 
-                      value={details.address} 
-                      onChange={handleChange} 
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
-                      placeholder="Street address" 
-                    />
-                </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">County (縣市)</label>
                     <select
@@ -222,6 +205,17 @@ export const Checkout: React.FC<CheckoutProps> = ({ onBack, onSubmit, total }) =
                       readOnly
                       className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all cursor-not-allowed" 
                       placeholder="Auto-filled" 
+                    />
+                </div>
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <input 
+                      required 
+                      name="address" 
+                      value={details.address} 
+                      onChange={handleChange} 
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
+                      placeholder="Street address" 
                     />
                 </div>
             </div>
