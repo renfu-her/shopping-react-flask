@@ -19,8 +19,8 @@ dependencies = [
     "email-validator>=2.0.0",
     "itsdangerous>=2.1.0",
     "pillow>=10.0.0",
-    "asgiref>=3.7.0",  # ASGI/WSGI 适配器，用于 uWSGI WSGI 模式
-    "gunicorn>=21.2.0",  # WSGI/ASGI 服务器，推荐用于生产环境（解决 _contextvars 错误）
+    "asgiref>=3.7.0", # ASGI/WSGI 适配器，用于 uWSGI WSGI 模式
+    "gunicorn>=21.2.0", # WSGI/ASGI 服务器，推荐用于生产环境（解决 _contextvars 错误）
 ]
 
 [build-system]
