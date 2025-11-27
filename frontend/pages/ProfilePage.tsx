@@ -7,7 +7,7 @@ import { User, Lock, Save, X } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useApp();
+  const { user, setUser, isLoadingUser } = useApp();
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,12 +46,24 @@ export const ProfilePage: React.FC = () => {
     }
   }, [user]);
 
-  // Redirect if not logged in
+  // Redirect if not logged in (after loading completes)
   useEffect(() => {
-    if (!user) {
+    if (!isLoadingUser && !user) {
       navigate('/sign');
     }
-  }, [user, navigate]);
+  }, [user, isLoadingUser, navigate]);
+  
+  // Show loading state while verifying token
+  if (isLoadingUser) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Verifying authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Handle county change - update district and zipcode
   const handleCountyChange = (county: string) => {

@@ -7,6 +7,7 @@ interface AppContextType {
   cart: CartItem[];
   selectedCategory: string | null;
   currentPage: number;
+  isLoadingUser: boolean;
   setUser: (user: User | null) => void;
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   setSelectedCategory: (category: string | null) => void;
@@ -98,6 +99,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     cart,
     selectedCategory,
     currentPage,
+    isLoadingUser,
     setUser,
     setCart,
     setSelectedCategory,
@@ -108,7 +110,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     handleLogin,
     handleLogout,
     handleCategorySelect,
-  }), [user, cart, selectedCategory, currentPage, addToCart, updateQuantity, removeFromCart, handleLogin, handleLogout, handleCategorySelect]);
+  }), [user, cart, selectedCategory, currentPage, isLoadingUser, addToCart, updateQuantity, removeFromCart, handleLogin, handleLogout, handleCategorySelect]);
 
   return (
     <AppContext.Provider value={value}>
