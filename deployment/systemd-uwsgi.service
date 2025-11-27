@@ -1,0 +1,19 @@
+[Unit]
+Description=uWSGI instance to serve shopping-react backend
+After=network.target
+
+[Service]
+User=ai-tracks-shopping-react
+Group=ai-tracks-shopping-react
+WorkingDirectory=/home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend
+Environment="PATH=/home/ai-tracks-shopping-react/htdocs/shopping-react.ai-tracks.com/backend/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+# 如果使用 uv 管理的虚拟环境，确保 PATH 包含 .venv/bin
+ExecStart=/usr/bin/uwsgi --ini /etc/uwsgi/apps-enabled/shopping-react-backend.ini
+Restart=always
+KillSignal=SIGQUIT
+Type=notify
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target
+
