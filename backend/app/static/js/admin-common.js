@@ -52,7 +52,7 @@ async function loadBaseAndInit(initPageFunction) {
         console.log('认证通过，开始加载 base.html');
 
         // 加载 base.html
-        const response = await fetch('/static/base.html', {
+        const response = await fetch('/backend/static/base.html', {
             credentials: 'include'
         });
         
