@@ -1,5 +1,58 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-28 15:25:47] - 移除 react-helmet-async 依賴，改用原生 DOM API 實現 SEO
+
+### 修改內容
+
+#### 移除 react-helmet-async 依賴
+- **時間**: 2025-11-28 15:25:47
+- **目的**: 解決 React 19 兼容性問題，移除不兼容的 react-helmet-async 依賴，改用原生 DOM API 直接操作 head 標籤
+- **修改檔案**:
+  - `components/SEO.tsx` - 重寫 SEO 組件，使用 useEffect 和原生 DOM API
+  - `App.tsx` - 移除 HelmetProvider 包裹
+  - `package.json` - 移除 react-helmet-async 依賴
+
+### 變更詳情
+
+#### 問題背景
+- `react-helmet-async@2.0.5` 不支持 React 19，只支持 React 16.6.0、17.0.0 或 18.0.0
+- 使用 `--legacy-peer-deps` 雖然可以安裝，但在其他環境（如 CI/CD）中會導致依賴衝突錯誤
+
+#### 解決方案
+重寫 SEO 組件，使用 React 的 `useEffect` hook 直接操作 `document.head`：
+- **updateMetaTag**: 創建或更新 meta 標籤（支持 name 和 property 屬性）
+- **updateLinkTag**: 創建或更新 link 標籤（用於 canonical URL）
+- **updateStructuredData**: 管理 JSON-LD 結構化數據腳本
+
+#### 技術實現
+
+**SEO 組件重寫**
+- 使用 `useEffect` 在組件掛載和更新時操作 DOM
+- 直接使用 `document.querySelector` 和 `document.createElement` 管理 head 標籤
+- 自動清理：移除舊的結構化數據腳本，避免重複
+- 完全兼容 React 19，無需額外依賴
+
+**優勢**
+1. **無依賴衝突**: 不依賴第三方庫，完全兼容 React 19
+2. **輕量級**: 減少 bundle 大小
+3. **功能完整**: 保持所有原有 SEO 功能（meta tags、OG tags、Twitter Cards、結構化數據）
+4. **易於維護**: 使用原生 DOM API，代碼更直觀
+
+### 影響範圍
+
+- **依賴管理**: 移除 react-helmet-async，解決 npm install 錯誤
+- **功能**: 所有 SEO 功能保持不變
+- **性能**: 輕微提升（減少一個依賴庫）
+- **兼容性**: 完全兼容 React 19，無需使用 --legacy-peer-deps
+
+### 注意事項
+
+1. SEO 組件現在使用原生 DOM API，確保在瀏覽器環境中運行
+2. 所有頁面的 SEO 功能保持不變，無需修改使用方式
+3. 可以正常運行 `npm install`，無需額外標誌
+
+---
+
 ## [2025-11-28 15:07:01] - 添加完整的 SEO 優化支持
 
 ### 修改內容
