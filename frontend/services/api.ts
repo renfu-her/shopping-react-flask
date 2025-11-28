@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://shopping-react.ai-tracks.com/api';
+const API_BASE_URL = 'https://localhost:8096/api';
 
 // ==================== Types ====================
 

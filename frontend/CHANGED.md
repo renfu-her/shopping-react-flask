@@ -1,5 +1,41 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-28 08:47:45] - 進一步優化打包大小：改進分塊策略和 AiAssistant Lazy Loading
+
+### 修改內容
+
+#### 進一步優化打包大小
+- **時間**: 2025-11-28 08:47:45
+- **目的**: 進一步優化打包大小，將 AiAssistant 改為 lazy loading，並改進手動分塊策略
+- **修改檔案**:
+  - `App.tsx` - 將 AiAssistant 改為 lazy loading
+  - `vite.config.ts` - 改進手動分塊策略，使用函數形式更精確控制分塊
+
+### 變更詳情
+
+#### 新增 Lazy Loading
+- **AiAssistant 組件**:
+  - 將 `AiAssistant` 改為使用 `React.lazy()` 動態載入
+  - 減少主打包檔案大小（因為 `@google/genai` 是一個大型依賴）
+  - 使用獨立的 `Suspense` 邊界包裹，fallback 為 `null`（不顯示載入動畫）
+
+#### 改進手動分塊策略
+- **函數形式的 manualChunks**:
+  - 改用函數形式來更精確地控制分塊策略
+  - 根據模組路徑動態決定分塊歸屬
+  - 更靈活的分塊邏輯
+
+- **分塊策略**:
+  - `react-vendor`: React、React DOM、React Router DOM
+  - `genai-vendor`: `@google/genai` SDK（大型依賴）
+  - `markdown-vendor`: react-markdown
+  - `icons-vendor`: lucide-react
+  - `vendor`: 其他 node_modules 依賴
+  - `api-services`: services/api.ts（大型服務檔案）
+  - `context`: context 目錄下的檔案
+
+---
+
 ## [2025-11-28 08:44:33] - 優化打包大小：實作程式碼分割和手動分塊
 
 ### 修改內容
@@ -56,16 +92,41 @@ const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.H
 </Suspense>
 ```
 
-#### 手動分塊配置
+#### 手動分塊配置（改進後）
 ```typescript
 build: {
   rollupOptions: {
     output: {
-      manualChunks: {
-        'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-        'genai-vendor': ['@google/genai'],
-        'markdown-vendor': ['react-markdown'],
-        'icons-vendor': ['lucide-react'],
+      manualChunks(id) {
+        // Vendor libraries
+        if (id.includes('node_modules')) {
+          // React core
+          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            return 'react-vendor';
+          }
+          // Google GenAI SDK
+          if (id.includes('@google/genai')) {
+            return 'genai-vendor';
+          }
+          // Markdown rendering
+          if (id.includes('react-markdown')) {
+            return 'markdown-vendor';
+          }
+          // UI icons
+          if (id.includes('lucide-react')) {
+            return 'icons-vendor';
+          }
+          // Other node_modules
+          return 'vendor';
+        }
+        // Split large service files
+        if (id.includes('services/api')) {
+          return 'api-services';
+        }
+        // Split context files
+        if (id.includes('context/')) {
+          return 'context';
+        }
       },
     },
   },

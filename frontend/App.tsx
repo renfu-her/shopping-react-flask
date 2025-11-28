@@ -3,8 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
-import { AiAssistant } from './components/AiAssistant';
 import { useAiContext } from './hooks/useAiContext';
+
+// Lazy load AiAssistant to reduce initial bundle size
+const AiAssistant = lazy(() => import('./components/AiAssistant').then(m => ({ default: m.AiAssistant })));
 
 // Lazy load page components for code splitting
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
@@ -57,7 +59,9 @@ const AppContent: React.FC = () => {
 
       <Footer />
       
-      <AiAssistant context={aiContext} />
+      <Suspense fallback={null}>
+        <AiAssistant context={aiContext} />
+      </Suspense>
     </div>
   );
 };
