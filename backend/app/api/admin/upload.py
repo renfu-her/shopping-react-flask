@@ -92,8 +92,8 @@ async def upload_image(
         with open(file_path, "wb") as f:
             f.write(webp_data)
         
-        # 返回文件 URL
-        file_url = f"/static/uploads/{filename}"
+        # 返回文件 URL（使用 /backend/static/ 路徑）
+        file_url = f"/backend/static/uploads/{filename}"
         
         return {
             "url": file_url,

@@ -207,7 +207,7 @@
                 // 如果是完整的 URL（http:// 或 https://），显示为图片
                 if (imageValue.startsWith('http://') || imageValue.startsWith('https://')) {
                     imageHtml = `<img src="${imageValue}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`;
-                } else if (imageValue.startsWith('/backend/static/') || imageValue.startsWith('/uploads/')) {
+                } else if (imageValue.startsWith('/backend/static/')) {
                     // 如果是相对路径的图片，显示为图片
                     imageHtml = `<img src="${imageValue}" alt="${cat.name}" class="w-16 h-16 object-cover rounded">`;
                 } else {

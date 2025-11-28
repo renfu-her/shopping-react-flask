@@ -196,8 +196,10 @@ def delete_product_image(
         # 刪除實際文件
         image_url = image.image_url
         if image_url:
-            # 從 URL 中提取文件名（例如：/static/uploads/filename.webp）
-            if image_url.startswith('/static/uploads/'):
+            # 從 URL 中提取文件名（例如：/backend/static/uploads/filename.webp 或 /static/uploads/filename.webp）
+            if image_url.startswith('/backend/static/uploads/'):
+                filename = image_url.replace('/backend/static/uploads/', '')
+            elif image_url.startswith('/static/uploads/'):
                 filename = image_url.replace('/static/uploads/', '')
                 file_path = UPLOAD_DIR / filename
                 
