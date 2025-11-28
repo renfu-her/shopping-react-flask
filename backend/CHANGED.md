@@ -1,5 +1,52 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-28 10:36:20] - 添加 base_url 配置和修復靜態文件代理
+
+### 修改內容
+
+#### 添加 base_url 配置
+- **時間**: 2025-11-28 10:36:20
+- **目的**: 添加 `base_url` 配置項，允許從 `.env` 文件讀取基礎 URL
+- **修改檔案**:
+  - `app/config.py` - 添加 `base_url` 配置項
+
+### 變更詳情
+
+#### 配置項添加
+- **base_url**: 新增配置項，用於生成完整的 URL
+  - 預設值: `http://localhost:8000`
+  - 可通過 `.env` 文件設置: `BASE_URL=https://shopping-react.ai-tracks.com`
+  - 用途: 在 API 響應中生成完整的 URL，例如圖片 URL、資源 URL 等
+
+#### 使用方式
+在 `.env` 文件中添加：
+```bash
+BASE_URL=https://shopping-react.ai-tracks.com
+```
+
+#### 訪問配置
+```python
+from app.config import settings
+
+# 獲取 base_url
+base_url = settings.base_url
+
+# 生成完整 URL
+image_url = f"{settings.base_url}/static/uploads/image.jpg"
+```
+
+### 影響範圍
+- **配置系統**: 新增 `base_url` 配置項
+- **API 響應**: 可以在 API 響應中使用 `settings.base_url` 生成完整 URL
+- **向後兼容**: 預設值為 `http://localhost:8000`，不影響現有功能
+
+### 注意事項
+1. **生產環境**: 請在 `.env` 文件中設置正確的 `BASE_URL`
+2. **協議**: 確保使用正確的協議（http 或 https）
+3. **域名**: 使用完整的域名，不包含尾部斜線
+
+---
+
 ## [2025-11-27 21:10:04] - 解決 uWSGI `_contextvars` 錯誤，添加 Gunicorn 支持
 
 ### 修改內容

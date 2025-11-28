@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     # Frontend URL
     frontend_url: str = "http://localhost:3000"
     backend_url: str = "http://localhost:8000"
+    # Base URL (用於生成完整的 URL，例如在 API 響應中)
+    base_url: str = "http://localhost:8000"
     
     def get_server_url(self) -> str:
         """獲取 MySQL 伺服器 URL（不包含資料庫名稱），用於創建資料庫"""
