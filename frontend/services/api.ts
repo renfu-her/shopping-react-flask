@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8096/api';
+const API_BASE_URL = 'https://shopping-react.ai-tacks.com/api';
 
 // ==================== Types ====================
 
