@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Product } from '../services/api';
 import { ArrowLeft, ShoppingCart, Star, Check, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getImageUrl } from '../utils/imageUrl';
 
 interface ProductDetailProps {
   product: Product;
@@ -10,15 +11,6 @@ interface ProductDetailProps {
 }
 
 export const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, addToCart }) => {
-  // Convert relative image URL to absolute URL
-  const getImageUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    // If it's a relative path, prepend the backend base URL
-    return `http://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
-  };
 
   // Get all product images (from product_images array or fallback to product.image)
   const allImages = product.product_images && product.product_images.length > 0

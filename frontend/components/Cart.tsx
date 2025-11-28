@@ -1,6 +1,7 @@
 import React from 'react';
 import { CartItem } from '../types';
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
+import { getImageUrl } from '../utils/imageUrl';
 
 interface CartProps {
   items: CartItem[];
@@ -11,15 +12,6 @@ interface CartProps {
 }
 
 export const Cart: React.FC<CartProps> = ({ items, updateQuantity, removeFromCart, onCheckout, onContinueShopping }) => {
-  // Convert relative image URL to absolute URL
-  const getImageUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    // If it's a relative path, prepend the backend base URL
-    return `http://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
-  };
 
   // Get the first image from product_images array or fallback to product.image
   const getProductImage = (item: CartItem & { product_images?: Array<{ image_url: string; order_index: number }> }) => {

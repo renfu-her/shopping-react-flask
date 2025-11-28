@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, ChevronRight } from 'lucide-react';
 import { fetchNews, NewsItem } from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 
 export const NewsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -64,14 +65,6 @@ export const NewsPage: React.FC = () => {
       ) : (
         <div className="grid gap-8 md:grid-cols-3">
           {newsItems.map(item => {
-            // Convert relative image URL to absolute URL
-            const getImageUrl = (url: string) => {
-              if (!url) return '';
-              if (url.startsWith('http://') || url.startsWith('https://')) {
-                return url;
-              }
-              return `http://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
-            };
             const imageUrl = getImageUrl(item.image);
 
             return (

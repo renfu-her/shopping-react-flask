@@ -1,6 +1,7 @@
 import React from 'react';
 import { Product } from '../services/api';
 import { ShoppingCart, Star, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getImageUrl } from '../utils/imageUrl';
 
 interface ProductListProps {
   products: Product[];
@@ -19,15 +20,6 @@ export const ProductList: React.FC<ProductListProps> = ({
   totalPages,
   onPageChange
 }) => {
-  // Convert relative image URL to absolute URL
-  const getImageUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    // If it's a relative path, prepend the backend base URL
-    return `http://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
-  };
 
   return (
     <div className="max-w-7xl mx-auto p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

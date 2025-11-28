@@ -1,4 +1,21 @@
-const API_BASE_URL = 'https://shopping-react.ai-tacks.com/api';
+// 使用環境變數，如果沒有則使用當前域名
+const getApiBaseUrl = (): string => {
+  // 在構建時，Vite 會將 VITE_* 環境變數注入到 import.meta.env
+  const envUrl = (import.meta as any).env?.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  // 在瀏覽器環境中，使用當前域名
+  if (typeof window !== 'undefined') {
+    return `${window.location.protocol}//${window.location.host}/api`;
+  }
+  
+  // 默認值（用於 SSR 或構建時）
+  return 'https://shopping-react.ai-tracks.com/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // ==================== Types ====================
 

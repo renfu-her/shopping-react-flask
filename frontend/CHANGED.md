@@ -1,5 +1,115 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-28 09:29:38] - 修復生產環境 API 連接問題：動態 API URL 和統一圖片處理
+
+### 修改內容
+
+#### 修復生產環境 API 連接問題
+- **時間**: 2025-11-28 09:29:38
+- **目的**: 修復前端在生產環境中嘗試連接 `localhost:8096` 的問題，改為動態使用當前域名
+- **修改檔案**:
+  - `services/api.ts` - 修復 API_BASE_URL 拼寫錯誤，改為動態獲取
+  - `utils/imageUrl.ts` - 新增統一的圖片 URL 處理工具函數
+  - `components/Home.tsx` - 使用統一的圖片處理函數
+  - `components/Cart.tsx` - 使用統一的圖片處理函數
+  - `components/ProductDetail.tsx` - 使用統一的圖片處理函數
+  - `components/ProductList.tsx` - 使用統一的圖片處理函數
+  - `components/NewsDetail.tsx` - 使用統一的圖片處理函數
+  - `pages/NewsPage.tsx` - 使用統一的圖片處理函數
+
+### 變更詳情
+
+#### API Base URL 動態配置
+- **修復拼寫錯誤**: `ai-tacks.com` → `ai-tracks.com`
+- **動態獲取**: API_BASE_URL 現在會自動使用當前域名
+  - 在瀏覽器中：使用 `window.location.protocol` 和 `window.location.host`
+  - 自動構建為：`https://shopping-react.ai-tracks.com/api`（生產環境）
+  - 開發環境：自動使用 `http://localhost:3000/api` 或當前域名
+
+#### 統一圖片 URL 處理
+- **新增工具函數**: `utils/imageUrl.ts`
+  - 自動處理相對路徑和絕對路徑
+  - 在瀏覽器環境中使用當前域名
+  - 移除所有硬編碼的 `localhost:8000`
+
+#### 組件更新
+- **移除硬編碼**: 所有組件中的 `http://localhost:8000` 硬編碼
+- **統一使用**: 所有組件現在使用 `getImageUrl()` 工具函數
+- **自動適配**: 圖片 URL 會根據當前環境自動調整
+
+### 技術細節
+
+#### API Base URL 實現
+```typescript
+const getApiBaseUrl = (): string => {
+  // 支持環境變數 VITE_API_BASE_URL
+  const envUrl = (import.meta as any).env?.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  // 在瀏覽器中，使用當前域名
+  if (typeof window !== 'undefined') {
+    return `${window.location.protocol}//${window.location.host}/api`;
+  }
+  
+  // 默認值
+  return 'https://shopping-react.ai-tracks.com/api';
+};
+```
+
+#### 圖片 URL 處理
+```typescript
+export function getImageUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  
+  // 如果已經是完整 URL，直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // 在瀏覽器環境中，使用當前協議和域名
+  if (typeof window !== 'undefined') {
+    const baseUrl = `${window.location.protocol}//${window.location.host}`;
+    return `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
+  }
+  
+  // 默認值
+  return `https://shopping-react.ai-tracks.com${url.startsWith('/') ? url : '/' + url}`;
+}
+```
+
+### 影響範圍
+
+#### 生產環境修復
+- **API 連接**: 前端現在會正確連接到 `https://shopping-react.ai-tracks.com/api`
+- **圖片載入**: 所有圖片 URL 會使用正確的域名
+- **自動適配**: 無需手動配置，自動使用當前域名
+
+#### 開發環境
+- **本地開發**: 仍然可以正常使用，會自動使用 `http://localhost:3000/api`
+- **靈活性**: 可以通過環境變數 `VITE_API_BASE_URL` 自定義 API 地址
+
+### 使用方式
+
+#### 環境變數（可選）
+如果需要自定義 API 地址，可以在 `.env` 文件中設置：
+```bash
+VITE_API_BASE_URL=https://shopping-react.ai-tracks.com/api
+```
+
+#### 自動行為
+- **生產環境**: 自動使用 `https://shopping-react.ai-tracks.com/api`
+- **開發環境**: 自動使用當前域名（通常是 `http://localhost:3000/api`）
+- **圖片**: 自動使用當前域名處理相對路徑
+
+### 注意事項
+1. **重新構建**: 需要重新執行 `npm run build` 以應用變更
+2. **環境變數**: 如果使用環境變數，需要在構建前設置
+3. **瀏覽器快取**: 可能需要清除瀏覽器快取以看到更新
+
+---
+
 ## [2025-11-28 08:47:45] - 進一步優化打包大小：改進分塊策略和 AiAssistant Lazy Loading
 
 ### 修改內容

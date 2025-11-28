@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, ShieldCheck, Truck, Clock, Newspaper, ChevronRight } from 'lucide-react';
 import { Product, NewsItem } from '../types';
 import { fetchAds, Ad } from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 
 interface HomeProps {
   featuredProducts: Product[];
@@ -37,15 +38,6 @@ export const Home: React.FC<HomeProps> = ({ featuredProducts, newsItems, onShopN
   // Get the first ad (or ad with lowest order_index, which should be first after API sorting)
   const heroAd = ads.length > 0 ? ads[0] : null;
 
-  // Convert relative image URL to absolute URL
-  const getImageUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    // If it's a relative path, prepend the backend base URL
-    return `http://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
-  };
 
   const handleShopNowClick = () => {
     if (heroAd?.link_url) {
@@ -152,9 +144,7 @@ export const Home: React.FC<HomeProps> = ({ featuredProducts, newsItems, onShopN
                 : product.image;
               
               // 转换相对路径为绝对路径
-              const imageUrl = firstImage?.startsWith('http') 
-                ? firstImage 
-                : `http://localhost:8000${firstImage?.startsWith('/') ? firstImage : '/' + firstImage}`;
+              const imageUrl = getImageUrl(firstImage || '');
               
               return (
                 <div key={product.id} className="group cursor-pointer" onClick={() => onProductClick(product)}>

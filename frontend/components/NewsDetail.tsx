@@ -2,6 +2,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { NewsItem } from '../types';
 import { ArrowLeft, Clock, Calendar, Share2 } from 'lucide-react';
+import { getImageUrl } from '../utils/imageUrl';
 
 interface NewsDetailProps {
   newsItem: NewsItem;
@@ -9,15 +10,6 @@ interface NewsDetailProps {
 }
 
 export const NewsDetail: React.FC<NewsDetailProps> = ({ newsItem, onBack }) => {
-  // Convert relative image URL to absolute URL
-  const getImageUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    // If it's a relative path, prepend the backend base URL
-    return `http://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
-  };
 
   const imageUrl = getImageUrl(newsItem.image);
 
