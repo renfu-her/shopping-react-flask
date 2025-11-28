@@ -113,18 +113,43 @@ sudo nano /etc/systemd/system/shopping-react-uvicorn.service
 #   --workers 8        # 工作進程數（建議設置為 CPU 核心數）
 #   --port 8096        # 監聽端口（匹配 Nginx proxy_pass）
 
-# 5. 重新載入 systemd
+# 5. **重要**：停止舊的服務並釋放端口 8096
+
+# 方法 1: 使用 systemctl 停止服務
+sudo systemctl stop uwsgi
+sudo systemctl stop shopping-react-uwsgi
+sudo systemctl stop shopping-react-backend
+
+# 方法 2: 直接 kill 占用端口 8096 的進程
+# 查找占用端口的進程 PID
+sudo lsof -ti :8096
+# 或
+sudo fuser 8096/tcp
+
+# 直接 kill 占用端口的進程（一行命令）
+sudo kill -9 $(sudo lsof -ti :8096)
+# 或
+sudo fuser -k 8096/tcp
+
+# 驗證端口是否已釋放
+sudo lsof -i :8096
+# 應該沒有輸出，表示端口已釋放
+
+# 6. 重新載入 systemd
 sudo systemctl daemon-reload
 
-# 6. 啟動服務
+# 7. 啟動服務
 sudo systemctl start shopping-react-uvicorn
 sudo systemctl enable shopping-react-uvicorn
 
-# 7. 檢查狀態
+# 8. 檢查狀態
 sudo systemctl status shopping-react-uvicorn
 
-# 8. 查看日誌
+# 9. 查看日誌
 sudo tail -f /var/log/uvicorn/shopping-react-backend.log
+# 或如果使用 gunicorn：
+# sudo tail -f /var/log/uvicorn/shopping-react-access.log
+# sudo tail -f /var/log/uvicorn/shopping-react-error.log
 ```
 
 **配置參數說明**：
@@ -155,12 +180,49 @@ sudo nano /etc/systemd/system/shopping-react-uvicorn.service
 #   --worker-connections 1000  # 每個 worker 的最大連接數
 #   --timeout 120           # worker 超時時間（秒）
 
-# 5. 重新載入 systemd
+# 5. **重要**：停止舊的服務並釋放端口 8096
+
+# 方法 1: 使用 systemctl 停止服務
+sudo systemctl stop uwsgi
+sudo systemctl stop shopping-react-uwsgi
+
+# 方法 2: 使用 systemctl 停止服務（如果通過 systemd 啟動）
+sudo systemctl stop shopping-react-uvicorn
+
+# 方法 3: 直接 kill 占用端口 8096 的進程（推薦，快速）
+# 一行命令直接 kill 所有占用端口的進程
+sudo kill -9 $(sudo lsof -ti :8096) 2>/dev/null || true
+# 或使用 fuser
+sudo fuser -k 8096/tcp 2>/dev/null || true
+
+# 方法 4: 停止所有 gunicorn 進程（如果有多個）
+# 查找所有 gunicorn 進程
+ps aux | grep gunicorn | grep -v grep
+# 或
+pgrep -f gunicorn
+
+# 停止所有 gunicorn 進程
+sudo pkill -9 gunicorn
+# 或更精確地只停止與應用相關的 gunicorn
+sudo pkill -9 -f "gunicorn.*app.main:app"
+
+# 驗證端口是否已釋放
+sudo lsof -i :8096
+# 應該沒有輸出，表示端口已釋放
+
+# 驗證 gunicorn 進程是否已停止
+ps aux | grep gunicorn | grep -v grep
+# 應該沒有輸出
+
+# 6. 重新載入 systemd
 sudo systemctl daemon-reload
 
-# 6. 啟動服務
+# 7. 啟動服務
 sudo systemctl start shopping-react-uvicorn
 sudo systemctl enable shopping-react-uvicorn
+
+# 8. 檢查狀態
+sudo systemctl status shopping-react-uvicorn
 ```
 
 **Gunicorn + Uvicorn 配置參數說明**：
