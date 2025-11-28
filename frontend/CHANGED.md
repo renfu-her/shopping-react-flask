@@ -1,5 +1,117 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-28 08:44:33] - 優化打包大小：實作程式碼分割和手動分塊
+
+### 修改內容
+
+#### 優化打包大小：實作程式碼分割和手動分塊
+- **時間**: 2025-11-28 08:44:33
+- **目的**: 優化 Vite 打包大小，將主打包檔案從 673.06 kB 減少，並解決打包警告
+- **修改檔案**:
+  - `App.tsx` - 將所有頁面元件改為 lazy loading
+  - `vite.config.ts` - 配置手動分塊策略
+
+### 變更詳情
+
+#### 程式碼分割 (Code Splitting)
+- **Lazy Loading 頁面元件**:
+  - 所有頁面元件改為使用 `React.lazy()` 動態載入
+  - 包括：HomePage, ShopPage, ProductDetailPage, NewsPage, NewsDetailPage, AboutPage, CartPage, CheckoutPage, SignPage, OrderSuccessPage, ProfilePage
+  - 每個頁面只在需要時才載入，減少初始打包大小
+
+- **Suspense 邊界**:
+  - 添加 `Suspense` 組件包裹所有路由
+  - 提供統一的載入狀態 UI（PageLoader 組件）
+  - 顯示載入動畫和「載入中...」文字
+
+#### 手動分塊配置 (Manual Chunks)
+- **Vendor 分塊策略**:
+  - `react-vendor`: React, React DOM, React Router DOM
+  - `genai-vendor`: Google GenAI SDK
+  - `markdown-vendor`: react-markdown
+  - `icons-vendor`: lucide-react
+
+- **打包大小警告限制**:
+  - 將 `chunkSizeWarningLimit` 從預設 500 kB 調整為 600 kB
+  - 允許稍大的分塊，同時保持優化
+
+### 技術細節
+
+#### Lazy Loading 實作
+```typescript
+// 之前：靜態導入
+import { HomePage } from './pages/HomePage';
+
+// 現在：動態導入
+const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
+```
+
+#### Suspense 使用
+```typescript
+<Suspense fallback={<PageLoader />}>
+  <Routes>
+    <Route path="/" element={<HomePage />} />
+    // ... 其他路由
+  </Routes>
+</Suspense>
+```
+
+#### 手動分塊配置
+```typescript
+build: {
+  rollupOptions: {
+    output: {
+      manualChunks: {
+        'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+        'genai-vendor': ['@google/genai'],
+        'markdown-vendor': ['react-markdown'],
+        'icons-vendor': ['lucide-react'],
+      },
+    },
+  },
+  chunkSizeWarningLimit: 600,
+}
+```
+
+### 影響範圍
+
+#### 打包優化
+- **初始載入**: 主打包檔案大小減少，只包含必要的核心程式碼
+- **按需載入**: 頁面元件只在用戶訪問時才載入
+- **快取策略**: Vendor 分塊可以更好地利用瀏覽器快取
+- **載入效能**: 減少初始載入時間，提升首頁載入速度
+
+#### 用戶體驗
+- **載入狀態**: 頁面切換時顯示載入動畫，提供更好的用戶反饋
+- **效能提升**: 初始打包大小減少，頁面載入更快
+- **快取效率**: Vendor 分塊可以長期快取，減少重複下載
+
+### 預期效果
+
+#### 打包大小優化
+- **主打包檔案**: 從 673.06 kB 減少（具體數值需重新打包後確認）
+- **分塊策略**: Vendor 分塊可以更好地利用瀏覽器快取
+- **按需載入**: 每個頁面元件獨立打包，只在需要時載入
+
+#### 效能提升
+- **初始載入時間**: 減少初始打包大小，提升首頁載入速度
+- **頁面切換**: 使用 lazy loading，頁面切換時才載入對應元件
+- **快取效率**: Vendor 分塊可以長期快取，減少重複下載
+
+### 注意事項
+1. **載入狀態**: 頁面切換時會顯示載入動畫，這是正常行為
+2. **首次載入**: 首次訪問頁面時需要載入對應的程式碼分塊
+3. **快取策略**: Vendor 分塊可以長期快取，但頁面元件分塊會在更新時重新下載
+4. **打包大小**: 重新打包後需要檢查實際的打包大小變化
+
+### 後續優化建議
+1. **進一步分割**: 可以考慮將大型元件（如 ProductList, Checkout）也改為 lazy loading
+2. **預載入**: 可以使用 `<link rel="prefetch">` 預載入可能訪問的頁面
+3. **Tree Shaking**: 確保只打包實際使用的程式碼
+4. **壓縮優化**: 檢查是否有未使用的依賴可以移除
+
+---
+
 ## [2025-11-27 16:56:46] - 按照綠界官方文檔優化 ECPay 參數顯示
 
 ### 修改內容

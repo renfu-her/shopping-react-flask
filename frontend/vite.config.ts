@@ -18,6 +18,23 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              // React and React DOM
+              'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+              // Google GenAI SDK
+              'genai-vendor': ['@google/genai'],
+              // Markdown rendering
+              'markdown-vendor': ['react-markdown'],
+              // UI icons
+              'icons-vendor': ['lucide-react'],
+            },
+          },
+        },
+        chunkSizeWarningLimit: 600,
+      },
     };
 });
