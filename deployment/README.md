@@ -546,13 +546,23 @@ yarn build
 - **前端**: 服務靜態檔案（`/` 路徑）
 - **後端管理界面**: 代理到 `http://127.0.0.1:8096/backend/`（`/backend/` 路徑）
 - **後端 API**: 代理到 `http://127.0.0.1:8096/api/`（`/api/` 路徑）
+- **FastAPI 文檔**: 代理到 `http://127.0.0.1:8096`（`/docs`、`/redoc`、`/openapi.json` 路徑）
+- **API 信息**: 代理到 `http://127.0.0.1:8096/`（`/api-info` 路徑，返回 API 根路徑信息）
 - **HTTPS**: 強制 HTTPS 重定向
 - **靜態檔案快取**: JS/CSS/圖片等快取 1 年
 
 **路徑說明**：
 - `/backend/` → 後端管理界面（如 `/backend/admin`、`/backend/login` 等）
 - `/api/` → 後端 API 接口（如 `/api/auth/login`、`/api/products` 等）
+- `/docs` → FastAPI Swagger UI 文檔
+- `/redoc` → FastAPI ReDoc 文檔
+- `/openapi.json` → OpenAPI JSON 規範
+- `/api-info` → 後端 API 根路徑信息（返回 `{"message":"Shopping Cart API","version":"1.0.0","docs":"/docs","backend":"/backend"}`）
 - `/` → 前端 React 應用（SPA，使用 `try_files` 處理路由）
+
+**注意**：
+- 後端根路徑 `/` 返回 API 信息 JSON，可通過 `/api-info` 端點訪問
+- 或直接訪問後端端口 `http://127.0.0.1:8096/` 獲取 API 信息
 
 ### uWSGI 配置
 
