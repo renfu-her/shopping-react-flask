@@ -1,5 +1,71 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-28 13:49:39] - 修復圖片上傳 URL 路徑為 /backend/static/uploads/
+
+### 修改內容
+
+#### 修復圖片上傳 URL 路徑
+- **時間**: 2025-11-28 13:49:39
+- **目的**: 將圖片上傳 API 返回的 URL 從 `/static/uploads/` 改為 `/backend/static/uploads/`，統一後台管理資源路徑
+- **修改檔案**:
+  - `app/api/admin/upload.py` - 修復上傳 API 返回的 URL 路徑
+  - `app/api/admin/product_images.py` - 修復圖片刪除時的路徑檢查
+  - `app/static/admin/categories/index.html` - 修復圖片路徑檢查
+
+### 變更詳情
+
+#### 上傳 API 路徑修復
+- **問題**: 上傳 API 返回的 URL 為 `/static/uploads/{filename}`，但應該使用 `/backend/static/uploads/{filename}`
+- **修復**: 將返回的 URL 改為 `/backend/static/uploads/{filename}`
+
+#### 圖片刪除路徑修復
+- **支持兩種格式**: 為了向後兼容，同時支持 `/backend/static/uploads/` 和 `/static/uploads/` 兩種路徑格式
+- **路徑檢查**: 更新路徑檢查邏輯，優先檢查新路徑格式
+
+#### HTML 路徑檢查修復
+- **categories/index.html**: 將圖片路徑檢查從 `/uploads/` 改為 `/backend/static/`
+
+### 技術細節
+
+#### 上傳 API 修改
+```python
+# 之前
+file_url = f"/static/uploads/{filename}"
+
+# 現在
+file_url = f"/backend/static/uploads/{filename}"
+```
+
+#### 圖片刪除路徑處理
+```python
+# 支持兩種路徑格式（向後兼容）
+if image_url.startswith('/backend/static/uploads/'):
+    filename = image_url.replace('/backend/static/uploads/', '')
+elif image_url.startswith('/static/uploads/'):
+    filename = image_url.replace('/static/uploads/', '')
+```
+
+#### HTML 路徑檢查
+```javascript
+// 之前
+if (imageValue.startsWith('/backend/static/') || imageValue.startsWith('/uploads/')) {
+
+// 現在
+if (imageValue.startsWith('/backend/static/')) {
+```
+
+### 影響範圍
+- **圖片上傳**: 所有新上傳的圖片 URL 現在使用 `/backend/static/uploads/` 路徑
+- **圖片顯示**: 圖片可以正確顯示在後台管理頁面
+- **圖片刪除**: 支持新舊兩種路徑格式的圖片刪除
+
+### 注意事項
+1. **向後兼容**: 圖片刪除功能仍然支持舊的 `/static/uploads/` 路徑格式
+2. **路徑統一**: 所有後台管理相關的資源現在都在 `/backend/` 路徑下
+3. **現有圖片**: 現有數據庫中的圖片 URL 可能需要更新，或依賴向後兼容處理
+
+---
+
 ## [2025-11-28 12:34:34] - 修復 admin-common.js 中的 base.html 載入路徑
 
 ### 修改內容
