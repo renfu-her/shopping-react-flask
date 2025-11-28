@@ -1,5 +1,44 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-28 12:34:34] - 修復 admin-common.js 中的 base.html 載入路徑
+
+### 修改內容
+
+#### 修復 base.html 載入路徑
+- **時間**: 2025-11-28 12:34:34
+- **目的**: 修復 `admin-common.js` 中載入 `base.html` 的路徑，從 `/static/base.html` 改為 `/backend/static/base.html`
+- **修改檔案**:
+  - `app/static/js/admin-common.js` - 修復 `loadBaseAndInit` 函數中的 base.html 載入路徑
+
+### 變更詳情
+
+#### 路徑修復
+- **問題**: `admin-common.js` 中的 `loadBaseAndInit` 函數嘗試從 `/static/base.html` 載入文件，但該路徑已改為 `/backend/static/base.html`
+- **修復**: 將載入路徑更新為 `/backend/static/base.html`
+
+#### 修改的代碼
+```javascript
+// 之前
+const response = await fetch('/static/base.html', {
+    credentials: 'include'
+});
+
+// 現在
+const response = await fetch('/backend/static/base.html', {
+    credentials: 'include'
+});
+```
+
+### 影響範圍
+- **後台管理頁面**: 所有使用 `loadBaseAndInit` 函數的頁面現在可以正確載入 `base.html`
+- **錯誤修復**: 解決「base.html 中找不到 #app 元素」的錯誤
+
+### 注意事項
+1. **路徑一致性**: 確保所有靜態資源路徑都使用 `/backend/static/`
+2. **重啟服務**: 修改 JavaScript 文件後，需要清除瀏覽器快取或硬刷新頁面
+
+---
+
 ## [2025-11-28 10:45:00] - 統一後台管理靜態文件路徑為 /backend/static
 
 ### 修改內容
