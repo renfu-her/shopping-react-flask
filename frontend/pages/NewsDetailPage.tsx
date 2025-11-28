@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { NewsDetail } from '../components/NewsDetail';
+import { SEO } from '../components/SEO';
 import { fetchNewsDetail, NewsItem } from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 
 export const NewsDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,12 +49,42 @@ export const NewsDetailPage: React.FC = () => {
   if (error || !newsItem) {
     return <Navigate to="/news" replace />;
   }
-  
+
+  const newsImage = getImageUrl(newsItem.image);
+  const newsDescription = newsItem.excerpt || newsItem.content.replace(/[#*`]/g, '').substring(0, 160);
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: newsItem.title,
+    description: newsDescription,
+    image: newsImage,
+    datePublished: newsItem.date,
+    author: {
+      '@type': 'Organization',
+      name: 'Lumina Shop',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Lumina Shop',
+    },
+  };
+
   return (
-    <NewsDetail
-      newsItem={newsItem}
-      onBack={() => navigate('/news')}
-    />
+    <>
+      <SEO
+        title={`${newsItem.title} | News | Lumina Shop`}
+        description={newsDescription}
+        keywords={`${newsItem.title}, news, Lumina Shop, updates`}
+        image={newsImage}
+        type="article"
+        structuredData={structuredData}
+      />
+      <NewsDetail
+        newsItem={newsItem}
+        onBack={() => navigate('/news')}
+      />
+    </>
   );
 };
 

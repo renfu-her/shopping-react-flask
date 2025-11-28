@@ -1,5 +1,111 @@
 # Frontend 更改記錄 (CHANGED)
 
+## [2025-11-28 15:07:01] - 添加完整的 SEO 優化支持
+
+### 修改內容
+
+#### 添加 SEO 優化功能
+- **時間**: 2025-11-28 15:07:01
+- **目的**: 為前端應用添加完整的 SEO（搜尋引擎優化）支持，包括 meta tags、Open Graph、Twitter Cards 和結構化數據
+- **修改檔案**:
+  - `components/SEO.tsx` - 新增 SEO 組件用於統一管理 meta tags
+  - `App.tsx` - 添加 HelmetProvider 包裹應用
+  - `index.html` - 更新基礎 meta tags
+  - `pages/HomePage.tsx` - 添加首頁 SEO
+  - `pages/ShopPage.tsx` - 添加商店頁面 SEO（支持分類動態 SEO）
+  - `pages/ProductDetailPage.tsx` - 添加產品詳情頁 SEO（包含產品結構化數據）
+  - `pages/NewsPage.tsx` - 添加新聞列表頁 SEO
+  - `pages/NewsDetailPage.tsx` - 添加新聞詳情頁 SEO（包含文章結構化數據）
+  - `pages/AboutPage.tsx` - 添加關於頁面 SEO
+  - `package.json` - 添加 react-helmet-async 依賴
+
+### 變更詳情
+
+#### SEO 組件 (`components/SEO.tsx`)
+- **功能**: 統一的 SEO meta tags 管理組件
+- **支持的 Meta Tags**:
+  - Primary Meta Tags: title, description, keywords, author, robots
+  - Open Graph Tags: og:type, og:url, og:title, og:description, og:image, og:site_name, og:locale
+  - Twitter Cards: twitter:card, twitter:url, twitter:title, twitter:description, twitter:image
+  - Additional: theme-color, apple-mobile-web-app tags, canonical URL
+  - Structured Data (JSON-LD): 支持自定義結構化數據
+
+#### 頁面級 SEO 配置
+
+**首頁 (HomePage)**
+- Title: "Lumina Shop - Modern AI-Enhanced E-commerce"
+- Description: 包含特色產品和 AI 購物助手的描述
+- Structured Data: WebSite schema
+
+**商店頁面 (ShopPage)**
+- 動態標題：根據選中的分類生成（如 "Electronics Products - Shop | Lumina Shop"）
+- 動態描述：根據分類生成相應的描述
+- Structured Data: CollectionPage schema
+
+**產品詳情頁 (ProductDetailPage)**
+- 動態標題：使用產品名稱（如 "{Product Title} - Product Details | Lumina Shop"）
+- 動態描述：從產品描述生成（移除 markdown 標記，限制 160 字符）
+- 動態圖片：使用產品圖片作為 og:image
+- Structured Data: Product schema（包含價格、庫存狀態、分類）
+
+**新聞列表頁 (NewsPage)**
+- Title: "Latest News | Lumina Shop"
+- Description: 包含新聞和更新的描述
+- Structured Data: CollectionPage schema
+
+**新聞詳情頁 (NewsDetailPage)**
+- 動態標題：使用新聞標題（如 "{News Title} | News | Lumina Shop"）
+- 動態描述：從新聞摘要或內容生成
+- 動態圖片：使用新聞圖片作為 og:image
+- Structured Data: NewsArticle schema（包含發布日期、作者、發布者）
+
+**關於頁面 (AboutPage)**
+- Title: "About Us | Lumina Shop"
+- Description: 關於 Lumina Shop 的描述
+- Structured Data: AboutPage schema
+
+#### 技術實現
+
+**依賴安裝**
+```bash
+npm install react-helmet-async --legacy-peer-deps
+```
+- 使用 `--legacy-peer-deps` 因為 react-helmet-async 尚未正式支持 React 19
+
+**HelmetProvider 設置**
+- 在 `App.tsx` 中使用 `HelmetProvider` 包裹整個應用
+- 確保所有頁面都能正確更新 head 標籤
+
+**基礎 Meta Tags (index.html)**
+- 添加 description, keywords, author, robots, theme-color 等基礎 meta tags
+- 設置預設的 title 和 description
+
+### SEO 功能特點
+
+1. **動態 Meta Tags**: 根據頁面內容動態生成 title、description 和 keywords
+2. **Open Graph 支持**: 完整的 OG tags 用於社交媒體分享
+3. **Twitter Cards**: 支持 Twitter 卡片預覽
+4. **結構化數據**: 使用 JSON-LD 格式添加結構化數據（Schema.org）
+5. **Canonical URLs**: 自動生成 canonical URL 避免重複內容
+6. **移動端優化**: 添加 Apple mobile web app meta tags
+7. **圖片優化**: 自動處理相對路徑圖片 URL，轉換為完整 URL
+
+### 影響範圍
+
+- **SEO 排名**: 改善搜尋引擎排名和索引
+- **社交分享**: 改善在 Facebook、Twitter 等社交媒體上的分享預覽
+- **用戶體驗**: 更好的瀏覽器標籤顯示和書籤描述
+- **搜尋結果**: 更豐富的搜尋結果展示（結構化數據）
+
+### 注意事項
+
+1. 需要確保所有產品和新聞都有完整的描述和圖片
+2. 建議添加實際的 og-image.jpg 文件到 public 目錄
+3. 可以考慮添加 sitemap.xml 和 robots.txt 進一步優化 SEO
+4. 對於生產環境，建議使用 SSR（Server-Side Rendering）以獲得更好的 SEO 效果
+
+---
+
 ## [2025-11-28 09:29:38] - 修復生產環境 API 連接問題：動態 API URL 和統一圖片處理
 
 ### 修改內容

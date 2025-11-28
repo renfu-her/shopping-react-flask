@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, ChevronRight } from 'lucide-react';
+import { SEO } from '../components/SEO';
 import { fetchNews, NewsItem } from '../services/api';
 import { getImageUrl } from '../utils/imageUrl';
 
@@ -56,8 +57,21 @@ export const NewsPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900">Latest News</h1>
+    <>
+      <SEO
+        title="Latest News | Lumina Shop"
+        description="Stay updated with the latest news, updates, and announcements from Lumina Shop. Discover new products, special offers, and shopping tips."
+        keywords="news, updates, announcements, Lumina Shop, e-commerce news"
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Latest News',
+          description: 'Latest news and updates from Lumina Shop',
+          url: typeof window !== 'undefined' ? window.location.href : '',
+        }}
+      />
+      <div className="max-w-7xl mx-auto py-12 px-4">
+        <h1 className="text-3xl font-bold mb-8 text-gray-900">Latest News</h1>
       {newsItems.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500">No news available at the moment.</p>
@@ -105,7 +119,8 @@ export const NewsPage: React.FC = () => {
           })}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

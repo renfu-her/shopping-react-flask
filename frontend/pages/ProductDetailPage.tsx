@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { ProductDetail } from '../components/ProductDetail';
+import { SEO } from '../components/SEO';
 import { useApp } from '../context/AppContext';
 import { fetchProductDetail, Product } from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,13 +60,43 @@ export const ProductDetailPage: React.FC = () => {
   if (error || !product) {
     return <Navigate to="/shop" replace />;
   }
-  
+
+  const productImage = getImageUrl(product.image);
+  const productDescription = product.description 
+    ? product.description.replace(/[#*`]/g, '').substring(0, 160)
+    : `Buy ${product.title} for $${product.price}. ${product.category_name ? `Category: ${product.category_name}.` : ''}`;
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    description: productDescription,
+    image: productImage,
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+    },
+    category: product.category_name || 'General',
+  };
+
   return (
-    <ProductDetail 
-      product={product} 
-      onBack={() => navigate('/shop')}
-      addToCart={handleAddToCart}
-    />
+    <>
+      <SEO
+        title={`${product.title} - Product Details | Lumina Shop`}
+        description={productDescription}
+        keywords={`${product.title}, ${product.category_name || ''}, product, buy online, Lumina Shop`}
+        image={productImage}
+        type="product"
+        structuredData={structuredData}
+      />
+      <ProductDetail 
+        product={product} 
+        onBack={() => navigate('/shop')}
+        addToCart={handleAddToCart}
+      />
+    </>
   );
 };
 

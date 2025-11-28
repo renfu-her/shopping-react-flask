@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductList } from '../components/ProductList';
 import { CategoryNav } from '../components/CategoryNav';
+import { SEO } from '../components/SEO';
 import { useApp } from '../context/AppContext';
 import { fetchProducts, Product } from '../services/api';
 
@@ -100,8 +101,27 @@ export const ShopPage: React.FC = () => {
     );
   }
 
+  const pageTitle = selectedCategory 
+    ? `${selectedCategory} Products - Shop | Lumina Shop`
+    : 'Shop - Browse All Products | Lumina Shop';
+  const pageDescription = selectedCategory
+    ? `Browse our collection of ${selectedCategory} products. Find the perfect items for your needs with our AI-powered shopping assistant.`
+    : 'Browse our complete collection of products. Find everything you need with our AI-powered shopping assistant.';
+
   return (
     <>
+      <SEO
+        title={pageTitle}
+        description={pageDescription}
+        keywords={`${selectedCategory || 'all'} products, shopping, e-commerce, online store, Lumina Shop`}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: pageTitle,
+          description: pageDescription,
+          url: typeof window !== 'undefined' ? window.location.href : '',
+        }}
+      />
       <CategoryNav 
         onCategoryClick={(categoryName: string) => {
           handleCategorySelect(categoryName);
