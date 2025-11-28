@@ -1,5 +1,91 @@
 # Backend 更改記錄 (CHANGED)
 
+## [2025-11-28 10:45:00] - 統一後台管理靜態文件路徑為 /backend/static
+
+### 修改內容
+
+#### 統一後台管理靜態文件路徑
+- **時間**: 2025-11-28 10:45:00
+- **目的**: 將所有 HTML 文件中的 `/static/` 路徑改為 `/backend/static/`，統一後台管理資源路徑
+- **修改檔案**:
+  - `app/main.py` - 添加 `/backend/static` 掛載點
+  - 所有 `app/static/**/*.html` 文件（21 個文件）- 將 `/static/` 改為 `/backend/static/`
+
+### 變更詳情
+
+#### 後端掛載點
+- **新增掛載點**: `/backend/static` 映射到 `app/static` 目錄
+- **保持兼容**: 原有的 `/static/` 掛載點仍然保留，確保向後兼容
+
+#### HTML 文件更新
+- **路徑統一**: 所有 HTML 文件中的靜態資源引用改為 `/backend/static/`
+- **包含文件**:
+  - CSS 文件：`/backend/static/css/admin-common.css`
+  - JavaScript 文件：`/backend/static/js/admin-common.js`、`admin-upload.js`、`admin-simplemde.js` 等
+  - JavaScript 代碼中的路徑檢查：`/backend/static/` 和 `/uploads/`
+
+#### 修改的文件列表
+- `ads.html`
+- `users.html`
+- `users-refactored.html`
+- `admin/products/index.html`
+- `admin/products/add-edit.html`
+- `admin/categories/index.html`
+- `admin/categories/add-edit.html`
+- `admin/news/index.html`
+- `admin/news/add-edit.html`
+- `admin/users/index.html`
+- `admin/users/add-edit.html`
+- `admin/ads/index.html`
+- `admin/ads/add-edit.html`
+- `admin/about/index.html`
+- `admin/about/add-edit.html`
+- `admin/faq/index.html`
+- `admin/faq/add-edit.html`
+- `admin/orders/index.html`
+
+### 技術細節
+
+#### 後端掛載配置
+```python
+# 掛載靜態文件
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+# 同時掛載到 /backend/static，方便後台管理頁面訪問
+app.mount("/backend/static", StaticFiles(directory=str(static_dir)), name="backend_static")
+```
+
+#### 路徑變更示例
+```html
+<!-- 之前 -->
+<link rel="stylesheet" href="/static/css/admin-common.css">
+<script src="/static/js/admin-common.js"></script>
+
+<!-- 現在 -->
+<link rel="stylesheet" href="/backend/static/css/admin-common.css">
+<script src="/backend/static/js/admin-common.js"></script>
+```
+
+#### JavaScript 代碼中的路徑檢查
+```javascript
+// 之前
+if (imageValue.startsWith('/static/') || imageValue.startsWith('/uploads/')) {
+
+// 現在
+if (imageValue.startsWith('/backend/static/') || imageValue.startsWith('/uploads/')) {
+```
+
+### 影響範圍
+- **後台管理頁面**: 所有後台管理頁面現在使用統一的 `/backend/static/` 路徑
+- **路徑一致性**: 所有後台管理相關資源都在 `/backend/` 路徑下
+- **向後兼容**: 原有的 `/static/` 路徑仍然可用
+
+### 注意事項
+1. **Nginx 配置**: 確保 nginx 配置中的 `location ~ ^/(docs|backend|redoc|openapi\.json)` 能正確代理 `/backend/static/` 路徑
+2. **路徑統一**: 所有後台管理相關的靜態資源現在都在 `/backend/static/` 下
+3. **上傳文件**: `/uploads/` 路徑保持不變（因為上傳的文件可能在其他地方引用）
+
+---
+
 ## [2025-11-28 10:36:20] - 添加 base_url 配置和修復靜態文件代理
 
 ### 修改內容
