@@ -90,6 +90,8 @@ static_dir.mkdir(exist_ok=True)
 
 # 掛載靜態文件
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+# 同時掛載到 /backend/static，方便後台管理頁面訪問
+app.mount("/backend/static", StaticFiles(directory=str(static_dir)), name="backend_static")
 
 
 @app.get("/backend")
